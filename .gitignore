@@ -1,0 +1,31 @@
+# Dependencias y build
+node_modules/
+dist/
+*.local
+.vite/
+*.tsbuildinfo
+coverage/
+
+# Secretos
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
+
+# Logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Material de trabajo local (no se sube a GitHub)
+design/
+CLAUDE.md
+.claude/
+.claude-flow/
+.mcp.json
+*.claude.*
