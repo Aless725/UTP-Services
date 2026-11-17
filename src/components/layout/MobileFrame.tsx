@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
 
 /**
- * En móvil ocupa toda la pantalla; en escritorio simula un iPhone (390×844).
+ * Móvil: ocupa toda la pantalla (respeta notch y barra de inicio con safe-area).
+ * Escritorio: simula un iPhone 15 Pro / 16 (393×852).
  */
 export default function MobileFrame({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-ink sm:p-6">
-      <main className="relative h-dvh w-full overflow-hidden bg-surface sm:h-[844px] sm:max-h-[calc(100dvh-3rem)] sm:w-[390px] sm:rounded-[40px] sm:shadow-float">
+      <main className="relative h-dvh w-full overflow-hidden bg-surface sm:h-[852px] sm:max-h-[calc(100dvh-3rem)] sm:w-[393px] sm:rounded-[48px] sm:ring-8 sm:ring-[#1C1C1E]">
         {children}
       </main>
     </div>

@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import AppLayout from '@/components/layout/AppLayout'
 import MobileFrame from '@/components/layout/MobileFrame'
+import { ToastProvider } from '@/components/ui/Toast'
 import SplashPage from '@/features/onboarding/SplashPage'
 import OnboardingPage from '@/features/onboarding/OnboardingPage'
 import LoginPage from '@/features/auth/LoginPage'
@@ -9,28 +11,39 @@ import NewPasswordPage from '@/features/auth/NewPasswordPage'
 import PasswordUpdatedPage from '@/features/auth/PasswordUpdatedPage'
 import RequireAuth from '@/features/auth/RequireAuth'
 import HomePage from '@/features/home/HomePage'
+import CalendarPage from '@/features/calendar/CalendarPage'
+import CoursesPage from '@/features/courses/CoursesPage'
+import PaymentsPage from '@/features/payments/PaymentsPage'
+import ComingSoonPage from '@/features/more/ComingSoonPage'
 
 export default function App() {
   return (
     <MobileFrame>
-      <Routes>
-        <Route path="/" element={<SplashPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/recuperar" element={<ForgotPasswordPage />} />
-        <Route path="/recuperar/enviado" element={<EmailSentPage />} />
-        <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
-        <Route path="/contrasena-actualizada" element={<PasswordUpdatedPage />} />
-        <Route
-          path="/inicio"
-          element={
-            <RequireAuth>
-              <HomePage />
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/" element={<SplashPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/recuperar" element={<ForgotPasswordPage />} />
+          <Route path="/recuperar/enviado" element={<EmailSentPage />} />
+          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
+          <Route path="/contrasena-actualizada" element={<PasswordUpdatedPage />} />
+          <Route
+            element={
+              <RequireAuth>
+                <AppLayout />
+              </RequireAuth>
+            }
+          >
+            <Route path="/inicio" element={<HomePage />} />
+            <Route path="/calendario" element={<CalendarPage />} />
+            <Route path="/cursos" element={<CoursesPage />} />
+            <Route path="/pagos" element={<PaymentsPage />} />
+            <Route path="/mas/:slug" element={<ComingSoonPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ToastProvider>
     </MobileFrame>
   )
 }
