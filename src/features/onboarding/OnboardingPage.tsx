@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import BackButton from '@/components/ui/BackButton'
+import { useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import { markOnboardingSeen } from '@/lib/storage'
 import Illustration from './Illustrations'
@@ -8,7 +7,6 @@ import { slides } from './slides'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const fromLogin = (useLocation().state as { from?: string } | null)?.from === 'login'
   const [index, setIndex] = useState(0)
   const touchX = useRef<number | null>(null)
   const [drag, setDrag] = useState(0)
@@ -56,7 +54,20 @@ export default function OnboardingPage() {
       }}
     >
       <header className="flex items-center justify-between px-5 pt-5">
-        {fromLogin ? <BackButton to="/login" label="Volver al inicio de sesión" /> : <span />}
+        {/* La primera pantalla no tiene "regresar": se sale con "Saltar". Desde la segunda, vuelve al paso anterior. */}
+        {index > 0 ? (
+          <button
+            key="atras"
+            type="button"
+            onClick={prev}
+            aria-label="Paso anterior"
+            className="pressable animate-fade-in flex h-10 w-10 items-center justify-center rounded-full bg-card text-ink shadow-card"
+          >
+            <Icon name="chevron_left" size={22} />
+          </button>
+        ) : (
+          <span className="h-10 w-10" aria-hidden="true" />
+        )}
         <button
           type="button"
           onClick={finish}
