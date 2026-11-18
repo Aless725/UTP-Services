@@ -26,10 +26,10 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Diseño adaptable: celular, tableta, plegable y doble pantalla | Listo |
 | Reserva de espacios (salas, PCs y cubículos, con QR y reglas de negocio) | Listo |
 | Biblioteca y Trámites | Pendiente |
-| Backend en Supabase: login, perfil, grupos y reservas con RLS y reglas en el servidor | Listo |
+| Backend en Supabase: login, perfil, grupos, reservas, cursos y su contenido, con RLS y reglas en el servidor | Listo |
 | PWA y asistente por voz con IA | Pendiente |
 
-La autenticación, el perfil, los grupos y las reservas usan **Supabase** (Auth + Postgres con RLS). Siguen locales los datos de contenido de los cursos, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen.
+La autenticación, el perfil, los grupos, las reservas y los cursos (incluido su contenido y el avance de cada alumno) usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
 
 ## Tecnologías
 
@@ -64,7 +64,7 @@ npm run typecheck   # revisa los tipos de TypeScript
 ### Backend (Supabase)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email*.
-2. En el **SQL Editor** ejecuta, en orden: `supabase/migrations/0001_esquema.sql`, `0002_funciones.sql`, `0003_lecturas.sql` y `supabase/seed.sql` (crea espacios, grupos y las 3 cuentas de demostración).
+2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0005` de `supabase/migrations/`, luego `supabase/seed.sql` y `supabase/seed_contenido.sql` (espacios, grupos, cursos, contenido y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
 3. Copia `.env.example` a `.env` y completa la URL del proyecto y la llave pública (*publishable* o *anon*):
 
 ```
@@ -137,12 +137,13 @@ supabase/           # migraciones SQL (esquema, reglas, lecturas) y seed de demo
 ## Próximos pasos
 
 1. Biblioteca y Trámites.
-2. Tiempo real en la disponibilidad y contenido de cursos y pagos en Supabase.
+2. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
 3. PWA instalable.
 4. Asistente por voz con IA que ejecute tareas con confirmación del alumno.
 5. Despliegue, guion de demo y evidencia de pruebas de usabilidad.
 
 ## Documentación
 
+- Backend (modelo de datos, seguridad y funciones): [`docs/backend.md`](docs/backend.md)
 - Enunciado del curso: [`docs/requerimientos.md`](docs/requerimientos.md)
 - Plantillas de evaluación de usabilidad: `docs/usabilidad/`
