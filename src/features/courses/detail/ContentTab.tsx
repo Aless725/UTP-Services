@@ -5,6 +5,7 @@ import type { Course } from '../coursesData'
 import {
   CURRENT_WEEK,
   TOTAL_WEEKS,
+  forumTitle,
   metaOf,
   pad2,
   rangeLabel,
@@ -125,7 +126,7 @@ export default function ContentTab({ course, state, onOpenForum }: ContentTabPro
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-info-soft text-info">
                       <Icon name="forum" size={18} />
                     </span>
-                    <span className="flex-1 text-sm text-ink">Foro de Consultas - Semana {w.n}</span>
+                    <span className="flex-1 text-sm text-ink">{forumTitle(w.n)}</span>
                     <Icon name="chevron_right" size={20} className="text-ink-muted" />
                   </button>
 

@@ -355,69 +355,139 @@ export function tasksOf(id: string): Task[] {
 // ───────── Foros ─────────
 
 export interface Post {
+  id: string
   autor: string
   rol: 'Docente' | 'Estudiante'
   texto: string
   /** Texto de tiempo ya formateado ("Hace 2 días"). */
   cuando: string
+  /** Id del comentario al que responde (si es una respuesta). */
+  parent?: string
 }
+
+export type ForumKind = 'calificado' | 'no_calificado'
+export type ForumStatus = 'abierto' | 'cerrado' | 'proximo'
 
 export interface Thread {
   id: string
   titulo: string
   semana: number | null
-  abierto: boolean
+  tipo: ForumKind
+  descripcion: string
+  desde: Date | null
+  hasta: Date | null
+  estado: ForumStatus
+  /** Comentarios y respuestas de ejemplo (docente y compañeros). */
   base: Post[]
 }
 
+/** Los foros de las semanas 3, 7, 11 y 15 son calificados. */
+export const isGradedForum = (week: number) => week % 4 === 3
+
+export const forumTitle = (week: number) =>
+  isGradedForum(week) ? `Foro calificado - Semana ${week}` : `Foro de Consultas - Semana ${week}`
+
 const STUDENT_NAMES = Object.values(STUDENTS)
-const REPLIES = [
+const COMMENTS = [
   'Profesor, ¿podría aclarar el alcance de este punto para la práctica?',
-  'Yo lo resolví usando el ejemplo de la clase; si quieren lo comparto.',
-  'Gracias por el material, me ayudó a entender mejor el caso.',
+  'Yo lo resolví con el ejemplo de la clase; si quieren lo comparto.',
   'Tengo una duda sobre cómo se calificará la entrega de esta semana.',
+  'Me ayudó mucho la lectura, pero no me quedó claro el segundo caso.',
   'Coincido con lo que comentan, sería bueno repasarlo en la próxima sesión.',
 ]
+const ANSWERS = [
+  'Buena pregunta. Revisa la diapositiva 8 y el ejemplo del video; lo retomamos en clase.',
+  'Correcto. Compártelo con el grupo y lo comentamos en la asesoría.',
+  'Se calificará con la rúbrica publicada en el sílabo. Cualquier duda, escríbeme.',
+]
 
-export function threadsOf(id: string, docente: string): Thread[] {
+function endOfDay(d: Date): Date {
+  const e = new Date(d)
+  e.setHours(23, 59, 0, 0)
+  return e
+}
+
+/** Estado del foro según la fecha actual. */
+export function forumStatus(t: Pick<Thread, 'desde' | 'hasta'>, now: Date): ForumStatus {
+  if (!t.desde || !t.hasta) return 'abierto'
+  if (now.getTime() < t.desde.getTime()) return 'proximo'
+  if (now.getTime() > t.hasta.getTime()) return 'cerrado'
+  return 'abierto'
+}
+
+export function threadsOf(id: string, docente: string, now = new Date()): Thread[] {
   const out: Thread[] = [
     {
       id: `${id}-general`,
       titulo: 'Foro general del curso',
       semana: null,
-      abierto: true,
+      tipo: 'no_calificado',
+      descripcion: 'Espacio para dudas generales del curso, coordinación entre compañeros y avisos no urgentes.',
+      desde: null,
+      hasta: null,
+      estado: 'abierto',
       base: [
         {
-          autor: docente,
-          rol: 'Docente',
-          cuando: 'Hace 3 meses',
-          texto: 'Bienvenidos. Este es el espacio para dudas generales del curso, coordinación entre compañeros y avisos no urgentes.',
+          id: `${id}-g1`,
+          autor: STUDENT_NAMES[hash(id) % STUDENT_NAMES.length],
+          rol: 'Estudiante',
+          cuando: 'Hace 2 meses',
+          texto: COMMENTS[0],
         },
-        { autor: STUDENT_NAMES[hash(id) % STUDENT_NAMES.length], rol: 'Estudiante', cuando: 'Hace 2 meses', texto: REPLIES[0] },
+        { id: `${id}-g1r`, autor: docente, rol: 'Docente', cuando: 'Hace 2 meses', texto: ANSWERS[0], parent: `${id}-g1` },
       ],
     },
   ]
+
   for (let n = 1; n <= TOTAL_WEEKS; n++) {
     const tema = topicOf(id, n)
-    const open = n <= CURRENT_WEEK + 1
-    const k = n <= CURRENT_WEEK ? 1 + (hash(`${id}|f${n}`) % 3) : 0
-    const base: Post[] = open
-      ? [
-          {
+    const graded = isGradedForum(n)
+    const { start, end } = weekRange(n)
+    // Calificados: solo durante su semana. De consultas: hasta el final de la semana siguiente.
+    const desde = start
+    const hasta = endOfDay(graded ? end : addDays(end, 7))
+    const estado = forumStatus({ desde, hasta }, now)
+
+    const base: Post[] = []
+    if (estado !== 'proximo') {
+      const k = n <= CURRENT_WEEK ? 1 + (hash(`${id}|f${n}`) % 3) : 0
+      for (let j = 0; j < k; j++) {
+        const cid = `${id}-f${n}-c${j}`
+        const ago = Math.max(1, (CURRENT_WEEK - n) * 7 - j - 1)
+        base.push({
+          id: cid,
+          autor: STUDENT_NAMES[hash(`${id}${n}${j}`) % STUDENT_NAMES.length],
+          rol: 'Estudiante',
+          cuando: n < CURRENT_WEEK ? `Hace ${ago} días` : 'Hace 1 día',
+          texto: COMMENTS[hash(`${id}${n}${j}t`) % COMMENTS.length],
+        })
+        // El docente responde a algunos comentarios.
+        if (hash(`${id}${n}${j}r`) % 3 !== 0) {
+          base.push({
+            id: `${cid}r`,
             autor: docente,
             rol: 'Docente',
-            cuando: n < CURRENT_WEEK ? `Hace ${(CURRENT_WEEK - n) * 7} días` : 'Esta semana',
-            texto: `Foro de consultas de la semana ${n}. Comparte aquí tus dudas sobre «${tema}». Responderé durante la semana.`,
-          },
-          ...Array.from({ length: k }, (_, j): Post => ({
-            autor: STUDENT_NAMES[hash(`${id}${n}${j}`) % STUDENT_NAMES.length],
-            rol: 'Estudiante',
-            cuando: n < CURRENT_WEEK ? `Hace ${(CURRENT_WEEK - n) * 7 - j - 1} días` : 'Hace 1 día',
-            texto: REPLIES[hash(`${id}${n}${j}t`) % REPLIES.length],
-          })),
-        ]
-      : []
-    out.push({ id: `${id}-f${n}`, titulo: `Foro de Consultas - Semana ${n}`, semana: n, abierto: open, base })
+            cuando: n < CURRENT_WEEK ? `Hace ${Math.max(1, ago - 1)} días` : 'Hoy',
+            texto: ANSWERS[hash(`${id}${n}${j}a`) % ANSWERS.length],
+            parent: cid,
+          })
+        }
+      }
+    }
+
+    out.push({
+      id: `${id}-f${n}`,
+      titulo: forumTitle(n),
+      semana: n,
+      tipo: graded ? 'calificado' : 'no_calificado',
+      descripcion: graded
+        ? `Participa con un aporte propio y comenta el de un compañero sobre «${tema}». Se califica la calidad del análisis, no la extensión.`
+        : `Comparte aquí tus dudas sobre «${tema}». El docente y tus compañeros responderán durante la semana.`,
+      desde,
+      hasta,
+      estado,
+      base,
+    })
   }
   return out
 }
