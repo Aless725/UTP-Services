@@ -126,3 +126,37 @@ select * from (
   select 'Gestión del Servicio TI', 'Casos de ITIL para el examen', 'Virtual', (now() at time zone 'America/Lima')::date + 3, time '18:00', time '19:30',
          null, null, 'https://utpvirtual.zoom.us/demo-gti', 'Zoom', 6, 6
 ) g;
+
+-- ───────────────────────── Cursos, matrícula y avance (0004) ─────────────────────────
+update public.profiles set plan_codigo = 'SIST26P2A' where plan_codigo = '';
+
+insert into public.terms (id, nombre, estado, semana_actual, semanas_total, inicio, fin)
+values ('2026-2', 'Ciclo 2026-2', 'En curso', 13, 18, '2026-08-17', '2026-12-19')
+on conflict (id) do update set
+  nombre = excluded.nombre, estado = excluded.estado, semana_actual = excluded.semana_actual,
+  semanas_total = excluded.semanas_total, inicio = excluded.inicio, fin = excluded.fin;
+
+insert into public.courses (id, nombre, docente, creditos, modalidad) values
+  ('gti', 'Gestión del Servicio TI',     'García Flores, Mateo',      4, 'Presencial'),
+  ('ihm', 'Interacción Hombre Máquina',  'Salazar Ruiz, Kevin',       4, 'Virtual'),
+  ('dwi', 'Desarrollo Web Integrado',    'Minaya Castillo, Juan',     3, 'Presencial'),
+  ('ci2', 'Curso Integrador II',         'Álvarez Velasquez, Rocío',  5, 'Presencial')
+on conflict (id) do update set
+  nombre = excluded.nombre, docente = excluded.docente, creditos = excluded.creditos, modalidad = excluded.modalidad;
+
+-- Los 3 alumnos de demostración llevan los 4 cursos del ciclo.
+insert into public.enrollments (user_id, course_id, term_id, orden)
+select p.id, c.id, '2026-2', c.orden
+from public.profiles p
+cross join (values ('gti', 1), ('ihm', 2), ('dwi', 3), ('ci2', 4)) as c(id, orden)
+on conflict do nothing;
+
+insert into public.progress_stats (user_id, grupo, orden, etiqueta, valor, decimales)
+select p.id, s.grupo, s.orden, s.etiqueta, s.valor, s.decimales
+from public.profiles p
+cross join (values
+  ('Avance',    1, 'Cursos requeridos', 66,   0), ('Avance',    2, 'Aprobados',  50,   0), ('Avance',    3, 'Pendientes', 16,   0),
+  ('Créditos',  1, 'Créditos requeridos', 197, 0), ('Créditos',  2, 'Aprobados', 149,  0), ('Créditos',  3, 'Pendientes', 48,  0),
+  ('Electivos', 1, 'Créditos requeridos', 3,  0), ('Electivos', 2, 'Aprobados', 0.28, 2), ('Electivos', 3, 'Pendientes', 2.72, 2)
+) as s(grupo, orden, etiqueta, valor, decimales)
+on conflict (user_id, grupo, orden) do update set etiqueta = excluded.etiqueta, valor = excluded.valor, decimales = excluded.decimales;
