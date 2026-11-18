@@ -1,8 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import { getSession, signIn as doSignIn, signOut as doSignOut, type Session } from './authService'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { resetGroups } from '@/features/groups/groupsStore'
+import { resetReservations } from '@/features/reservations/reservationsStore'
+import { fetchSession, restoreSession, signIn as doSignIn, signOut as doSignOut, type Session } from './authService'
 
 interface AuthState {
   session: Session | null
+  /** false mientras se recupera la sesión guardada (evita parpadear al login). */
+  ready: boolean
   signIn: (usuario: string, password: string) => Promise<Session>
   signOut: () => void
 }
@@ -10,7 +16,38 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(() => getSession())
+  const [session, setSession] = useState<Session | null>(null)
+  const [ready, setReady] = useState(false)
+  const queryClient = useQueryClient()
+
+  const clearData = useCallback(() => {
+    resetGroups()
+    resetReservations()
+    queryClient.clear()
+  }, [queryClient])
+
+  useEffect(() => {
+    let alive = true
+    restoreSession()
+      .then((s) => alive && setSession(s))
+      .catch(() => undefined)
+      .finally(() => alive && setReady(true))
+
+    // Cierre de sesión desde otra pestaña o sesión caducada.
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'SIGNED_OUT') {
+        setSession(null)
+        clearData()
+      } else if (event === 'SIGNED_IN' && s) {
+        // Fuera del callback para no bloquear a Supabase con otra consulta.
+        setTimeout(() => fetchSession().then((p) => alive && p && setSession(p)), 0)
+      }
+    })
+    return () => {
+      alive = false
+      data.subscription.unsubscribe()
+    }
+  }, [clearData])
 
   const signIn = useCallback(async (usuario: string, password: string) => {
     const s = await doSignIn(usuario, password)
@@ -19,11 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(() => {
-    doSignOut()
     setSession(null)
-  }, [])
+    clearData()
+    void doSignOut()
+  }, [clearData])
 
-  const value = useMemo(() => ({ session, signIn, signOut }), [session, signIn, signOut])
+  const value = useMemo(() => ({ session, ready, signIn, signOut }), [session, ready, signIn, signOut])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
