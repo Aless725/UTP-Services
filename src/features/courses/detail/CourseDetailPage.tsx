@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import FlowHeader from '@/components/layout/FlowHeader'
-import Chip from '@/components/ui/Chip'
+import Icon from '@/components/ui/Icon'
 import { courses, type Course } from '../coursesData'
 import AnnouncementsTab from './AnnouncementsTab'
 import ContentTab from './ContentTab'
@@ -28,7 +28,6 @@ function CourseDetail({ course }: { course: Course }) {
   const [tab, setTab] = useState<TabId>('contenido')
   const [forumWeek, setForumWeek] = useState<number | null>(null)
   const state = useCourseState(course.id)
-  const bar = useRef<HTMLDivElement>(null)
 
   const pendingTasks = useMemo(
     () => tasksOf(course.id).filter((t) => !t.entregadaDemo && !state.entregas[t.id]).length,
@@ -39,24 +38,16 @@ function CourseDetail({ course }: { course: Course }) {
     [course.id, course.docente, state.leidos],
   )
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'silabo', label: 'Sílabo' },
-    { id: 'contenido', label: 'Contenido' },
-    { id: 'evaluaciones', label: 'Evaluaciones' },
-    { id: 'tareas', label: pendingTasks ? `Tareas (${pendingTasks})` : 'Tareas' },
-    { id: 'foros', label: 'Foros' },
-    { id: 'notas', label: 'Notas' },
-    { id: 'anuncios', label: unread ? `Anuncios (${unread})` : 'Anuncios' },
-    { id: 'zoom', label: 'Zoom' },
+  const tabs: { id: TabId; label: string; icon: string; badge?: number }[] = [
+    { id: 'silabo', label: 'Sílabo', icon: 'description' },
+    { id: 'contenido', label: 'Contenido', icon: 'folder_open' },
+    { id: 'evaluaciones', label: 'Evaluaciones', icon: 'fact_check' },
+    { id: 'tareas', label: 'Tareas', icon: 'assignment', badge: pendingTasks },
+    { id: 'foros', label: 'Foros', icon: 'forum' },
+    { id: 'notas', label: 'Notas', icon: 'grade' },
+    { id: 'anuncios', label: 'Anuncios', icon: 'campaign', badge: unread },
+    { id: 'zoom', label: 'Zoom', icon: 'videocam' },
   ]
-
-  // La pestaña elegida siempre queda visible en la barra deslizable.
-  useEffect(() => {
-    const reduce = document.documentElement.dataset.reduceMotion === 'true'
-    bar.current
-      ?.querySelector('[aria-selected="true"]')
-      ?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })
-  }, [tab])
 
   const openForum = (week: number) => {
     setForumWeek(week)
@@ -72,24 +63,38 @@ function CourseDetail({ course }: { course: Course }) {
         subtitle={`${course.docente} · ${course.creditos} créditos · ${course.modalidad}`}
       />
 
-      <div
-        ref={bar}
-        role="tablist"
-        aria-label="Secciones del curso"
-        className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-5"
-      >
-        {tabs.map((t) => (
-          <Chip
-            key={t.id}
-            active={tab === t.id}
-            onClick={() => {
-              setForumWeek(null)
-              setTab(t.id)
-            }}
-          >
-            {t.label}
-          </Chip>
-        ))}
+      {/* Las 8 secciones visibles a la vez: sin deslizar. */}
+      <div role="tablist" aria-label="Secciones del curso" className="mt-4 grid grid-cols-4 gap-2 px-5">
+        {tabs.map((t) => {
+          const on = tab === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-label={t.badge ? `${t.label}, ${t.badge} pendientes` : t.label}
+              onClick={() => {
+                setForumWeek(null)
+                setTab(t.id)
+              }}
+              className={`pressable relative flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 transition-colors duration-200 ${
+                on ? 'bg-ink text-surface' : 'bg-card text-ink-muted shadow-card'
+              }`}
+            >
+              <Icon name={t.icon} size={22} filled={on} />
+              <span className="max-w-full truncate text-[0.625rem] font-semibold leading-none">{t.label}</span>
+              {!!t.badge && (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.5625rem] font-bold leading-none text-white"
+                >
+                  {t.badge}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <div key={tab} className="animate-rise px-5 pt-4" role="tabpanel">
