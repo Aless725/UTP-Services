@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { eventsFor, type CalEvent } from '@/features/calendar/calendarData'
+import { courses } from '@/features/courses/coursesData'
 import { addDays, sameDay, shortWeekday, startOfDay } from '@/lib/date'
 
 interface AgendaDay {
@@ -71,7 +72,7 @@ export default function HomePage() {
                 </p>
               </div>
               <Link
-                to="/calendario"
+                to={`/cursos/${courses.find((c) => c.nombre === e.title)?.id ?? ''}`}
                 className="pressable block flex-1 rounded-card bg-card p-3.5 shadow-card"
               >
                 {e.modalidad && <Badge tone={e.modalidad === 'Virtual' ? 'virtual' : 'presencial'}>{e.modalidad}</Badge>}

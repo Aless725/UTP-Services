@@ -115,7 +115,7 @@ function Enrolled() {
           {list.map((c) => (
             <li key={c.id}>
               <Link
-                to="/mas/curso"
+                to={`/cursos/${c.id}`}
                 className="pressable flex min-h-16 items-center gap-2 rounded-card bg-card p-3.5 shadow-card"
               >
                 <span className="min-w-0 flex-1">

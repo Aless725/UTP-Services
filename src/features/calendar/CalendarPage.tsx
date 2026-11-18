@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import PageHeader from '@/components/layout/PageHeader'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
+import { useToast } from '@/components/ui/Toast'
+import { courses } from '@/features/courses/coursesData'
 import { addDays, longDay, monthYear, sameDay, startOfDay } from '@/lib/date'
 import { eventsFor, hasHighlights, kindLabel, type CalEvent, type EventKind } from './calendarData'
 
@@ -26,6 +28,7 @@ function buildGrid(month: Date): Date[] {
 
 export default function CalendarPage() {
   const navigate = useNavigate()
+  const { show } = useToast()
   const today = useMemo(() => startOfDay(new Date()), [])
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
@@ -37,6 +40,13 @@ export default function CalendarPage() {
     () => eventsFor(selected).filter((e) => filter === 'todo' || e.kind === filter),
     [selected, filter],
   )
+
+  // Las clases abren el detalle de su curso; el resto de actividades aún no tiene detalle.
+  const openEvent = (e: CalEvent) => {
+    const course = e.kind === 'clase' ? courses.find((c) => c.nombre === e.title) : undefined
+    if (course) navigate(`/cursos/${course.id}`)
+    else show('El detalle de esta actividad estará disponible pronto', 'info')
+  }
 
   const goMonth = (delta: number) => {
     setDir(delta > 0 ? 1 : -1)
@@ -172,7 +182,7 @@ export default function CalendarPage() {
         ) : (
           <ul key={selected.toISOString() + filter} className="stagger mt-3 space-y-3">
             {events.map((e) => (
-              <EventRow key={e.id} event={e} onOpen={() => navigate('/mas/curso')} />
+              <EventRow key={e.id} event={e} onOpen={() => openEvent(e)} />
             ))}
           </ul>
         )}

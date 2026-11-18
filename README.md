@@ -21,6 +21,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Pantallas principales: Inicio, Calendario, Cursos, Pagos y menú *Más de UTP+* | Listo |
 | Mi Perfil y Accesibilidad (texto, daltonismo, contraste, movimiento, modo oscuro) | Listo |
 | Grupos de estudio (explorar, crear, unirse, mis grupos) | Listo |
+| Detalle del curso (sílabo, contenido, evaluaciones, tareas, foros, notas, anuncios y Zoom) | Listo |
 | Animaciones y transiciones suaves | Listo |
 | Diseño adaptable: celular, tableta, plegable y doble pantalla | Listo |
 | Reserva de espacios (salas, PCs y cubículos, con QR y reglas de negocio) | Listo |
@@ -87,6 +88,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Reserva de espacios** (menú *Más de UTP+ → Espacios*): buscar y filtrar salas grupales, PCs de biblioteca y cubículos por fecha y sede; elegir horario según la disponibilidad; agregar integrantes por código de alumno; confirmar con las normas; recibir un código `RES-AAAA-NNNN` con **QR real**; y ver, cancelar o descargar al calendario desde *Mis reservas*.
   - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
+- **Detalle del curso** (tocar un curso o una clase): sílabo (con descarga), contenido con información del curso, bibliografía y las 18 semanas (foro de consultas y materiales con avance), evaluaciones, tareas con entrega de archivo, foros donde se puede responder, notas con cálculo de lo que falta para aprobar, anuncios y datos de Zoom con la próxima sesión.
 - **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
@@ -119,7 +121,7 @@ src/
 │  └─ ui/          # botón, chip, hoja inferior, diálogo, interruptor…
 ├─ features/
 │  ├─ onboarding/  ├─ auth/        ├─ home/
-│  ├─ calendar/    ├─ courses/     ├─ payments/
+│  ├─ calendar/    ├─ courses/     ├─ payments/   # courses/detail: detalle del curso
 │  ├─ groups/      ├─ profile/     ├─ accessibility/
 │  ├─ reservations/  # reserva de espacios (reglas en rules.ts)
 │  └─ more/        # menú Más de UTP+

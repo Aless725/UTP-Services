@@ -10,6 +10,7 @@ export interface MasterLocation {
 
 const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas)(\/|$)/
 const DETAIL_PATH = [
+  /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
   /^\/perfil\/accesibilidad\/?$/,
   /^\/mas\/[^/]+\/?$/,
@@ -29,6 +30,7 @@ export function masterFor(detail: string, last: MasterLocation | null): MasterLo
     return { pathname: '/grupos', search: last?.pathname === '/grupos' ? last.search : '' }
   }
   if (/^\/perfil/.test(detail)) return { pathname: '/perfil', search: '' }
+  if (/^\/cursos/.test(detail)) return { pathname: '/cursos', search: '' }
   if (/^\/reservas/.test(detail)) {
     // Los pasos se abren junto a la pantalla de reservas desde donde se empezó.
     const keep = last && /^\/reservas/.test(last.pathname) && !isDetailPath(last.pathname)

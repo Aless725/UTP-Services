@@ -34,12 +34,14 @@ import MembersPage from '@/features/reservations/MembersPage'
 import ConfirmPage from '@/features/reservations/ConfirmPage'
 import ConfirmedPage from '@/features/reservations/ConfirmedPage'
 import MyReservationsPage from '@/features/reservations/MyReservationsPage'
+import CourseDetailPage from '@/features/courses/detail/CourseDetailPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
   <>
+    <Route path="/cursos/:id" element={<CourseDetailPage />} />
     <Route path="/grupos/nuevo" element={<CreateGroupPage />} />
     <Route path="/grupos/creado/:id" element={<GroupCreatedPage />} />
     <Route path="/grupos/:id" element={<GroupDetailPage />} />
