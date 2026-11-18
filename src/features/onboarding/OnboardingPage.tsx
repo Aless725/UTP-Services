@@ -9,6 +9,9 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const touchX = useRef<number | null>(null)
+  const [drag, setDrag] = useState(0)
+  const dragging = useRef(false)
+  const rawDx = useRef(0)
   const isLast = index === slides.length - 1
 
   const finish = () => {
@@ -18,19 +21,33 @@ export default function OnboardingPage() {
   const next = () => (isLast ? finish() : setIndex((i) => i + 1))
   const prev = () => setIndex((i) => Math.max(0, i - 1))
 
-  const onTouchEnd = (e: React.TouchEvent) => {
+  const onTouchMove = (e: React.TouchEvent) => {
     if (touchX.current === null) return
-    const dx = e.changedTouches[0].clientX - touchX.current
+    let dx = e.touches[0].clientX - touchX.current
+    rawDx.current = dx
+    // Resistencia en los extremos para que no se "escape" la primera ni la última
+    if ((index === 0 && dx > 0) || (isLast && dx < 0)) dx *= 0.3
+    dragging.current = true
+    setDrag(dx)
+  }
+
+  const onTouchEnd = () => {
+    const dx = rawDx.current
+    rawDx.current = 0
     touchX.current = null
-    if (dx < -50) next()
-    else if (dx > 50) prev()
+    dragging.current = false
+    setDrag(0)
+    if (dx < -60) next()
+    else if (dx > 60) prev()
   }
 
   return (
     <section
       className="relative flex h-full flex-col bg-surface"
       onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
+      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
       onKeyDown={(e) => {
         if (e.key === 'ArrowRight') next()
         if (e.key === 'ArrowLeft') prev()
@@ -48,8 +65,8 @@ export default function OnboardingPage() {
 
       <div className="overflow-hidden" aria-live="polite">
         <div
-          className="flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
+          className={`flex ease-smooth ${dragging.current ? '' : 'transition-transform duration-500'}`}
+          style={{ transform: `translate3d(calc(-${index * 100}% + ${drag}px), 0, 0)` }}
         >
           {slides.map((s, i) => (
             <article
@@ -81,9 +98,10 @@ export default function OnboardingPage() {
               className="flex h-6 items-center px-0.5"
             >
               <span
-                className={`block h-1.5 rounded-full transition-all duration-300 ${
-                  i === index ? 'w-5 bg-primary' : 'w-1.5 bg-ink-faint'
+                className={`block h-1.5 w-5 origin-left rounded-full transition-[transform,background-color] duration-300 ease-smooth ${
+                  i === index ? 'bg-primary' : 'bg-ink-faint'
                 }`}
+                style={{ transform: `scaleX(${i === index ? 1 : 0.3})` }}
               />
             </button>
           ))}

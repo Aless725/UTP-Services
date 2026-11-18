@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
+import Presence from '@/components/ui/Presence'
 import TextField from '@/components/ui/TextField'
 import AuthLayout, { AuthHeading } from './AuthLayout'
 import { useAuth } from './AuthContext'
@@ -75,15 +76,15 @@ export default function LoginPage() {
         </form>
       </AuthLayout>
 
-      {status === 'loading' && (
+      <Presence show={status === 'loading'}>
         <Modal
           icon="progress_activity"
           spinning
           title="Iniciando sesión"
           description="Estamos validando tus credenciales. Espera un momento."
         />
-      )}
-      {status === 'success' && (
+      </Presence>
+      <Presence show={status === 'success'}>
         <Modal
           icon="check"
           title="Acceso exitoso"
@@ -91,15 +92,15 @@ export default function LoginPage() {
           actionLabel="Continuar"
           onAction={() => navigate('/inicio', { replace: true })}
         />
-      )}
-      {status === 'error' && (
+      </Presence>
+      <Presence show={status === 'error'}>
         <Modal
           icon="warning"
           title="Usuario o contraseña incorrectos"
           actionLabel="Intentar nuevamente"
           onAction={() => setStatus('idle')}
         />
-      )}
+      </Presence>
     </>
   )
 }

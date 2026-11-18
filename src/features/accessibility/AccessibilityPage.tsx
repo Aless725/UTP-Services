@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import DarkHeader from '@/components/layout/DarkHeader'
 import Icon from '@/components/ui/Icon'
 import Modal from '@/components/ui/Modal'
+import Presence from '@/components/ui/Presence'
 import Switch from '@/components/ui/Switch'
 import { useToast } from '@/components/ui/Toast'
 import { FONT_STOPS, useAccessibility, type Cvd } from './AccessibilityContext'
@@ -47,10 +48,12 @@ export default function AccessibilityPage() {
                 </span>
                 <div className="relative flex-1">
                   <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-fill/10" />
-                  <div
-                    className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary transition-[width] duration-200"
-                    style={{ width: `calc(${THUMB / 2}px + (100% - ${THUMB}px) * ${p})` }}
-                  />
+                  <div className="absolute top-1/2 h-1 -translate-y-1/2" style={{ left: THUMB / 2, right: THUMB / 2 }}>
+                    <div
+                      className="h-full origin-left rounded-full bg-primary transition-transform duration-300 ease-smooth"
+                      style={{ transform: `scaleX(${p})` }}
+                    />
+                  </div>
                   {FONT_STOPS.map((_, i) => (
                     <span
                       key={i}
@@ -184,7 +187,7 @@ export default function AccessibilityPage() {
         </section>
       </div>
 
-      {confirmReset && (
+      <Presence show={confirmReset}>
         <Modal
           icon="restart_alt"
           title="¿Restablecer ajustes?"
@@ -198,7 +201,7 @@ export default function AccessibilityPage() {
           secondaryLabel="Cancelar"
           onSecondary={() => setConfirmReset(false)}
         />
-      )}
+      </Presence>
     </div>
   )
 }

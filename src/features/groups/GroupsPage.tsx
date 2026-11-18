@@ -109,7 +109,7 @@ function Explore({ groups }: { groups: ReturnType<typeof useGroups> }) {
           text="Prueba con otro curso o crea tu propio grupo."
         />
       ) : (
-        <ul className="stagger mt-3 space-y-3" aria-live="polite">
+        <ul key={filter} className="stagger mt-3 space-y-3" aria-live="polite">
           {list.map((g) => (
             <li key={g.id}>
               <GroupCard group={g} />

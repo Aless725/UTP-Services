@@ -19,7 +19,7 @@ export default function Switch({ checked, onChange, label }: SwitchProps) {
     >
       <span
         aria-hidden="true"
-        className="absolute left-0.5 top-0.5 h-[27px] w-[27px] rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+        className="absolute left-0.5 top-0.5 h-[27px] w-[27px] rounded-full bg-white transition-transform duration-300 ease-smooth"
         style={{ transform: `translate3d(${checked ? 20 : 0}px, 0, 0)` }}
       />
     </button>

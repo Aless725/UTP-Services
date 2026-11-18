@@ -40,7 +40,7 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
             return (
             <>
               <span
-                className={`transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${
+                className={`transition-transform duration-300 ease-smooth ${
                   isActive ? '-translate-y-0.5 scale-110' : ''
                 }`}
               >

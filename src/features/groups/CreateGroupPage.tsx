@@ -98,7 +98,7 @@ export default function CreateGroupPage() {
           >
             <span
               aria-hidden="true"
-              className="absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-md bg-card shadow-card transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+              className="absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-md bg-card shadow-card transition-transform duration-300 ease-smooth"
               style={{ transform: `translate3d(${modalidad === 'Virtual' ? 100 : 0}%, 0, 0)` }}
             />
             {(['Presencial', 'Virtual'] as const).map((m) => (

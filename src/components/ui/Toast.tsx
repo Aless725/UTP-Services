@@ -9,17 +9,28 @@ const ToastContext = createContext<ToastApi>({ show: () => {} })
 
 export const useToast = () => useContext(ToastContext)
 
+const VISIBLE_MS = 2400
+const EXIT_MS = 220
+
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{ id: number; message: string; icon: string } | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
+  const [toast, setToast] = useState<{ id: number; message: string; icon: string; leaving: boolean } | null>(null)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const clear = () => {
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+  }
 
   const show = useCallback((message: string, icon = 'info') => {
-    clearTimeout(timer.current)
-    setToast({ id: Date.now(), message, icon })
-    timer.current = setTimeout(() => setToast(null), 2600)
+    clear()
+    setToast({ id: Date.now(), message, icon, leaving: false })
+    timers.current = [
+      setTimeout(() => setToast((t) => (t ? { ...t, leaving: true } : t)), VISIBLE_MS),
+      setTimeout(() => setToast(null), VISIBLE_MS + EXIT_MS),
+    ]
   }, [])
 
-  useEffect(() => () => clearTimeout(timer.current), [])
+  useEffect(() => clear, [])
 
   return (
     <ToastContext.Provider value={{ show }}>
@@ -32,7 +43,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast && (
           <div
             key={toast.id}
-            className="animate-toast-in flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-medium text-surface"
+            className={`flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-medium text-surface ${
+              toast.leaving ? 'animate-toast-out' : 'animate-toast-in'
+            }`}
           >
             <Icon name={toast.icon} size={16} />
             {toast.message}

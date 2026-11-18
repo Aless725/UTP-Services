@@ -79,8 +79,8 @@ function Enrolled() {
             <div className="border-t border-fill/5 px-3.5 pb-3.5 pt-3">
               <div className="h-1.5 overflow-hidden rounded-full bg-fill/5">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
-                  style={{ width: expanded ? `${pct}%` : '0%' }}
+                  className="h-full origin-left rounded-full bg-primary transition-transform duration-700 ease-smooth"
+                  style={{ transform: `scaleX(${expanded ? pct / 100 : 0})` }}
                 />
               </div>
               <p className="mt-2 text-[0.6875rem] text-ink-muted">

@@ -93,7 +93,7 @@ export default function CalendarPage() {
         <div
           key={month.toISOString()}
           role="grid"
-          className={`grid grid-cols-7 gap-y-0.5 ${dir > 0 ? 'animate-[rise_0.3s_ease-out_backwards]' : 'animate-fade-in'}`}
+          className={`grid grid-cols-7 gap-y-0.5 ${dir > 0 ? 'animate-slide-next' : 'animate-slide-prev'}`}
         >
           {grid.map((d) => {
             const inMonth = d.getMonth() === month.getMonth()
@@ -110,7 +110,7 @@ export default function CalendarPage() {
                 className="pressable relative mx-auto flex h-11 w-11 items-center justify-center"
               >
                 <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-xs transition-all duration-200 ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-xs transition-colors duration-200 ${
                     isSelected
                       ? 'scale-100 bg-primary font-bold text-white shadow-card'
                       : isToday

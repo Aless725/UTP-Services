@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import Icon from './Icon'
+import { useLeaving } from './Presence'
 
 interface ModalProps {
   icon: string
@@ -15,7 +16,10 @@ interface ModalProps {
   children?: ReactNode
 }
 
-/** Diálogo centrado sobre un fondo atenuado. Se renderiza dentro del marco móvil. */
+/**
+ * Diálogo centrado sobre un fondo atenuado. Se renderiza dentro del marco móvil.
+ * Úsalo dentro de <Presence> para que también anime su salida.
+ */
 export default function Modal({
   icon,
   spinning,
@@ -29,19 +33,26 @@ export default function Modal({
   children,
 }: ModalProps) {
   const btn = useRef<HTMLButtonElement>(null)
+  const leaving = useLeaving()
 
   useEffect(() => {
     btn.current?.focus()
   }, [])
 
   return (
-    <div className="animate-fade-in absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-5">
+    <div
+      className={`absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-5 ${
+        leaving ? 'pointer-events-none animate-fade-out' : 'animate-fade-in'
+      }`}
+    >
       <div
         role="alertdialog"
         aria-modal="true"
         aria-live="assertive"
         aria-label={title}
-        className="animate-sheet-up w-full rounded-[22px] bg-card px-5 pb-5 pt-6 text-center shadow-float"
+        className={`w-full rounded-[22px] bg-card px-5 pb-5 pt-6 text-center shadow-float ${
+          leaving ? 'animate-sheet-down' : 'animate-sheet-up'
+        }`}
       >
         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary">
           <Icon name={icon} size={22} className={spinning ? 'animate-spin' : ''} />

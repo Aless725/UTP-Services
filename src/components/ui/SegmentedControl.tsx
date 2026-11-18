@@ -18,7 +18,7 @@ export default function SegmentedControl<T extends string>({
     <div role="tablist" aria-label={label} className="relative flex rounded-full bg-fill/[0.06] p-1">
       <span
         aria-hidden="true"
-        className="absolute inset-y-1 rounded-full bg-card shadow-card transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+        className="absolute inset-y-1 rounded-full bg-card shadow-card transition-transform duration-300 ease-smooth"
         style={{
           width: `calc(${width}% - 4px)`,
           transform: `translateX(${index * 100}%)`,

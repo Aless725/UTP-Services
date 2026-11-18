@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
 import Modal from '@/components/ui/Modal'
+import Presence from '@/components/ui/Presence'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { genero } from '@/features/profile/profileData'
@@ -127,7 +128,7 @@ function JoinGroup({ g }: { g: GroupView }) {
         </div>
       </div>
 
-      {status === 'joining' && (
+      <Presence show={status === 'joining'}>
         <Modal
           icon="progress_activity"
           spinning
@@ -138,9 +139,9 @@ function JoinGroup({ g }: { g: GroupView }) {
             Tu lugar aún no está confirmado. Esto puede tardar unos segundos.
           </p>
         </Modal>
-      )}
+      </Presence>
 
-      {(status === 'offline' || status === 'full') && (
+      <Presence show={status === 'offline' || status === 'full'}>
         <Modal
           icon={status === 'offline' ? 'wifi_off' : 'group_off'}
           title={status === 'offline' ? 'No pudimos confirmar tu cupo' : 'Este grupo ya se llenó'}
@@ -166,7 +167,7 @@ function JoinGroup({ g }: { g: GroupView }) {
             </div>
           )}
         </Modal>
-      )}
+      </Presence>
     </div>
   )
 }
