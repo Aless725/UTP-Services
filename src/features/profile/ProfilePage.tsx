@@ -30,12 +30,16 @@ export default function ProfilePage() {
     setEditing(true)
   }
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (nombre.trim().split(/\s+/).length < 2) return setError('Ingresa tu nombre completo.')
     if (!/^\d{8}$/.test(dni)) return setError('El DNI debe tener 8 dígitos.')
-    save({ nombreCompleto: nombre.trim(), dni })
-    setEditing(false)
-    show('Datos actualizados', 'check_circle')
+    try {
+      await save({ nombreCompleto: nombre.trim(), dni })
+      setEditing(false)
+      show('Datos actualizados', 'check_circle')
+    } catch {
+      setError('No pudimos guardar tus datos. Revisa tu conexión e inténtalo de nuevo.')
+    }
   }
 
   const copy = async () => {

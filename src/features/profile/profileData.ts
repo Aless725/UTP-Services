@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { codigoToEmail } from '@/features/auth/validation'
 
 export interface ProfileData {
@@ -41,17 +42,7 @@ const FALLBACK: ProfileData = {
   campus: 'Lima Centro',
 }
 
-const pKey = (c: string) => `utp.perfil.${c}`
 const aKey = (c: string) => `utp.avatar.${c}`
-
-function read<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : null
-  } catch {
-    return null
-  }
-}
 
 /** "Isabel Kiara Aldara Cruz" → "Isabel Aldara" */
 export function displayName(full: string): string {
@@ -61,12 +52,9 @@ export function displayName(full: string): string {
 
 export const emailOf = codigoToEmail
 
-/** Perfil del alumno con edición local (nombre y DNI) y foto. */
+/** Perfil del alumno: se lee y edita en Supabase (nombre y DNI); la foto queda en el dispositivo. */
 export function useProfile(codigo: string) {
-  const [data, setData] = useState<ProfileData>(() => ({
-    ...(BASE[codigo] ?? FALLBACK),
-    ...(read<Partial<ProfileData>>(pKey(codigo)) ?? {}),
-  }))
+  const [data, setData] = useState<ProfileData>(() => BASE[codigo] ?? FALLBACK)
   const [avatar, setAvatarState] = useState<string | null>(() => {
     try {
       return localStorage.getItem(aKey(codigo))
@@ -75,16 +63,45 @@ export function useProfile(codigo: string) {
     }
   })
 
+  useEffect(() => {
+    if (!codigo) return
+    let alive = true
+    supabase
+      .from('profiles')
+      .select('nombre_completo, dni, carrera, modalidad, campuses(nombre)')
+      .eq('codigo', codigo)
+      .maybeSingle()
+      .then(({ data: row }) => {
+        if (!alive || !row) return
+        const rel = row.campuses as unknown as { nombre: string } | { nombre: string }[] | null
+        const campus = Array.isArray(rel) ? rel[0]?.nombre : rel?.nombre
+        setData((d) => ({
+          nombreCompleto: row.nombre_completo,
+          dni: row.dni,
+          carrera: row.carrera,
+          modalidad: row.modalidad,
+          campus: campus ?? d.campus,
+        }))
+      })
+    return () => {
+      alive = false
+    }
+  }, [codigo])
+
   const save = useCallback(
-    (patch: Pick<ProfileData, 'nombreCompleto' | 'dni'>) => {
+    async (patch: Pick<ProfileData, 'nombreCompleto' | 'dni'>) => {
+      const previous = data
       setData((d) => ({ ...d, ...patch }))
-      try {
-        localStorage.setItem(pKey(codigo), JSON.stringify(patch))
-      } catch {
-        /* noop */
+      const { error } = await supabase
+        .from('profiles')
+        .update({ nombre_completo: patch.nombreCompleto, dni: patch.dni })
+        .eq('codigo', codigo)
+      if (error) {
+        setData(previous)
+        throw error
       }
     },
-    [codigo],
+    [codigo, data],
   )
 
   const setAvatar = useCallback(

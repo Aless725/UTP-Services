@@ -55,23 +55,19 @@ export default function ConfirmPage() {
   const confirm = async () => {
     setBusy(true)
     setFailure(null)
-    await new Promise((r) => setTimeout(r, 900))
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       setBusy(false)
       return setFailure({ kind: 'offline' })
     }
     try {
-      const r = createReservation(
-        {
-          spaceId: space.id,
-          fecha: draft.fecha,
-          inicio: draft.inicio!,
-          fin,
-          motivo: sala ? draft.motivo : 'Uso individual',
-          miembros: sala ? draft.miembros : [codigo],
-        },
-        codigo,
-      )
+      const r = await createReservation({
+        spaceId: space.id,
+        fecha: draft.fecha,
+        inicio: draft.inicio!,
+        fin,
+        motivo: sala ? draft.motivo : 'Uso individual',
+        miembros: sala ? draft.miembros : [codigo],
+      })
       navigate(`/reservas/confirmada/${r.codigo}`, { replace: true })
       reset()
     } catch (e) {

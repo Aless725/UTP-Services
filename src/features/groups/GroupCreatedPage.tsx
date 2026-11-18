@@ -6,7 +6,8 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { genero } from '@/features/profile/profileData'
 import GroupInfoCard from './GroupInfoCard'
 import { shareGroup } from './groupActions'
-import { useGroups } from './groupsStore'
+import PageLoading from '@/components/ui/PageLoading'
+import { useGroups, useGroupsLoaded } from './groupsStore'
 
 export default function GroupCreatedPage() {
   const { id } = useParams()
@@ -16,6 +17,9 @@ export default function GroupCreatedPage() {
   const { show } = useToast()
   const g = useGroups(codigo).find((x) => x.id === id)
 
+  const loaded = useGroupsLoaded()
+
+  if (!g && !loaded) return <PageLoading />
   if (!g || !g.esOrganizador) return <Navigate to="/grupos" replace />
 
   const share = async () => {

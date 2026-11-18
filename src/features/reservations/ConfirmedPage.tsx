@@ -7,6 +7,7 @@ import QrCode from '@/components/ui/QrCode'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { dayCompactYear, parseISO } from '@/lib/date'
+import PageLoading from '@/components/ui/PageLoading'
 import { useReservationData } from './reservationsStore'
 import { addReservationToCalendar, qrPayload, reservedTitle } from './reservationUtils'
 import { getSpace, shortPlace } from './spacesData'
@@ -16,10 +17,11 @@ export default function ConfirmedPage() {
   const { session } = useAuth()
   const navigate = useNavigate()
   const { show } = useToast()
-  const { mine } = useReservationData(session?.codigo ?? '')
+  const { mine, loaded } = useReservationData(session?.codigo ?? '')
   const r = mine.find((x) => x.codigo === code)
   const space = getSpace(r?.spaceId)
 
+  if (!r && !loaded) return <PageLoading />
   if (!r || !space) return <Navigate to="/reservas" replace />
 
   const others = r.miembros.length - 1

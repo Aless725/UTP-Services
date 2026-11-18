@@ -44,10 +44,10 @@ export default function MyReservationsPage() {
     return tab === 'proxima' ? items : [...items].reverse()
   }, [mine, tab, now])
 
-  const doCancel = () => {
+  const doCancel = async () => {
     if (!cancelTarget) return
     try {
-      const res = cancelReservation(cancelTarget.id, codigo)
+      const res = await cancelReservation(cancelTarget.id)
       show(res.penalty ? `Reserva cancelada · penalidad de ${SETTINGS.penaltyDays} días` : 'Reserva cancelada', 'event_busy')
     } catch (e) {
       show(e instanceof ReservationError ? e.message : 'No se pudo cancelar', 'error')

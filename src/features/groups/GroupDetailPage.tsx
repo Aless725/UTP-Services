@@ -9,7 +9,8 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { genero } from '@/features/profile/profileData'
 import GroupInfoCard from './GroupInfoCard'
 import { addGroupToCalendar, shareGroup } from './groupActions'
-import { JoinError, joinGroup, useGroups, type GroupView } from './groupsStore'
+import PageLoading from '@/components/ui/PageLoading'
+import { JoinError, joinGroup, useGroups, useGroupsLoaded, type GroupView } from './groupsStore'
 import SeatBar from './SeatBar'
 
 export default function GroupDetailPage() {
@@ -17,7 +18,9 @@ export default function GroupDetailPage() {
   const { session } = useAuth()
   const codigo = session?.codigo ?? ''
   const g = useGroups(codigo).find((x) => x.id === id)
+  const loaded = useGroupsLoaded()
 
+  if (!g && !loaded) return <PageLoading />
   if (!g) {
     return (
       <div className="px-5 pt-[max(env(safe-area-inset-top),20px)]">
@@ -65,15 +68,13 @@ type JoinStatus = 'idle' | 'joining' | 'offline' | 'full'
 
 /** Detalle de un grupo al que todavía no perteneces. */
 function JoinGroup({ g }: { g: GroupView }) {
-  const { session } = useAuth()
-  const codigo = session?.codigo ?? ''
   const navigate = useNavigate()
   const [status, setStatus] = useState<JoinStatus>('idle')
 
   const join = async () => {
     setStatus('joining')
     try {
-      await joinGroup(g.id, codigo)
+      await joinGroup(g.id)
       navigate(`/grupos/${g.id}`, { replace: true, state: { fresh: true } })
     } catch (e) {
       setStatus(e instanceof JoinError && e.reason === 'full' ? 'full' : 'offline')

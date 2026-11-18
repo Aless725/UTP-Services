@@ -29,14 +29,22 @@ export default function CreateGroupPage() {
   const [cupos, setCupos] = useState(5)
   const [error, setError] = useState<string | null>(null)
 
-  const submit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false)
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     const input = { curso, tema, modalidad, fecha, inicio, fin, lugar, enlace, cupos }
     const err = validateNewGroup(input)
     setError(err)
     if (err) return
-    const id = createGroup(input, codigo)
-    navigate(`/grupos/creado/${id}`, { replace: true })
+    setSaving(true)
+    try {
+      const id = await createGroup(input)
+      navigate(`/grupos/creado/${id}`, { replace: true })
+    } catch {
+      setError('No pudimos crear el grupo. Revisa tu conexión e inténtalo de nuevo.')
+      setSaving(false)
+    }
   }
 
   return (
@@ -223,9 +231,10 @@ export default function CreateGroupPage() {
 
       <button
         type="submit"
-        className="pressable mt-4 min-h-12 w-full rounded-full bg-primary text-sm font-semibold text-white"
+        disabled={saving}
+        className="pressable mt-4 min-h-12 w-full rounded-full bg-primary text-sm font-semibold text-white disabled:opacity-60"
       >
-        Crear grupo
+        {saving ? 'Creando…' : 'Crear grupo'}
       </button>
     </form>
   )
