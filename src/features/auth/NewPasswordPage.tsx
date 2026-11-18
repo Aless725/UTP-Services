@@ -40,7 +40,7 @@ export default function NewPasswordPage() {
           title="Nueva contraseña"
           subtitle="Crea una contraseña segura para volver a ingresar a UTP+Service."
         />
-        <p className="-mt-3 mb-4 text-[11px] font-semibold text-ink">Usuario: {usuario}</p>
+        <p className="-mt-3 mb-4 text-[0.6875rem] font-semibold text-ink">Usuario: {usuario}</p>
 
         <div className="space-y-4">
           <TextField
@@ -61,12 +61,12 @@ export default function NewPasswordPage() {
         </div>
 
         <div className="mt-5" aria-live="polite">
-          <p className="text-[11px] font-semibold text-ink">Tu contraseña debe incluir:</p>
+          <p className="text-[0.6875rem] font-semibold text-ink">Tu contraseña debe incluir:</p>
           <ul className="mt-2 space-y-1.5">
             {passwordRules.map((r) => {
               const ok = r.test(password)
               return (
-                <li key={r.id} className="flex items-center gap-2 text-[11px] text-ink-muted">
+                <li key={r.id} className="flex items-center gap-2 text-[0.6875rem] text-ink-muted">
                   <Icon name={ok ? 'check' : 'radio_button_unchecked'} size={14} className={ok ? 'text-primary' : 'text-ink-faint'} />
                   <span>
                     {r.label}

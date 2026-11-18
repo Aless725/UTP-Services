@@ -26,14 +26,14 @@ export default function PaymentsPage() {
     <>
       <PageHeader title="Pagos" />
 
-      <section aria-label="Monto pendiente" className="mx-5 mt-4 rounded-card bg-white p-4 shadow-card">
+      <section aria-label="Monto pendiente" className="mx-5 mt-4 rounded-card bg-card p-4 shadow-card">
         <p className="text-xs text-ink-muted">Monto pendiente</p>
         <p key={total} className="animate-pop mt-1 text-[1.75rem] font-extrabold leading-none text-ink">
           {money(total)}
         </p>
         {siguiente ? (
           <>
-            <p className="mt-2 flex items-center gap-1 text-[11px] text-ink-muted">
+            <p className="mt-2 flex items-center gap-1 text-[0.6875rem] text-ink-muted">
               <Icon name="schedule" size={14} className="text-primary" />
               {venceTexto(siguiente)}
             </p>
@@ -58,9 +58,9 @@ export default function PaymentsPage() {
           <h2 id="cuotas" className="text-sm font-bold text-ink">
             Mis cuotas
           </h2>
-          <span className="text-[11px] font-semibold text-primary">Ciclo 2026-2</span>
+          <span className="text-[0.6875rem] font-semibold text-primary">Ciclo 2026-2</span>
         </div>
-        <ul className="stagger mt-3 divide-y divide-black/5 overflow-hidden rounded-card bg-white shadow-card">
+        <ul className="stagger mt-3 divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
           {cuotas.map((c) => {
             const pagada = pagadas.includes(c.id)
             return (
@@ -82,13 +82,13 @@ export default function PaymentsPage() {
                     <span className="block text-xs font-bold text-ink">
                       Cuota {c.numero} · {c.mes}
                     </span>
-                    <span className="block text-[10px] text-ink-muted">
+                    <span className="block text-[0.625rem] text-ink-muted">
                       {pagada ? (c.detalleFijo ?? 'Pagada hoy') : venceTexto(c)}
                     </span>
                   </span>
                   <span className="text-right">
                     <span className="block text-xs font-bold text-ink">{money(c.monto)}</span>
-                    <span className={`block text-[10px] font-semibold ${pagada ? 'text-success' : 'text-primary'}`}>
+                    <span className={`block text-[0.625rem] font-semibold ${pagada ? 'text-success' : 'text-primary'}`}>
                       {pagada ? 'Pagado' : 'Pendiente'}
                     </span>
                   </span>
@@ -100,14 +100,14 @@ export default function PaymentsPage() {
 
         <Link
           to="/mas/historial"
-          className="pressable mt-4 flex min-h-14 items-center gap-3 rounded-card bg-white p-3.5 shadow-card"
+          className="pressable mt-4 flex min-h-14 items-center gap-3 rounded-card bg-card p-3.5 shadow-card"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">
             <Icon name="receipt_long" size={18} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-bold text-ink">Historial y constancias</span>
-            <span className="block text-[10px] text-ink-muted">Consulta y descarga tus comprobantes</span>
+            <span className="block text-[0.625rem] text-ink-muted">Consulta y descarga tus comprobantes</span>
           </span>
           <Icon name="chevron_right" size={20} className="text-ink-muted" />
         </Link>

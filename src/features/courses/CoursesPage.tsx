@@ -47,7 +47,7 @@ function Enrolled() {
 
   return (
     <div className="mx-5 mt-4">
-      <section className="overflow-hidden rounded-card bg-white shadow-card">
+      <section className="overflow-hidden rounded-card bg-card shadow-card">
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
@@ -56,10 +56,10 @@ function Enrolled() {
         >
           <span>
             <span className="block text-sm font-bold text-ink">{cycle.nombre}</span>
-            <span className="block text-[11px] text-ink-muted">{courses.length} cursos</span>
+            <span className="block text-[0.6875rem] text-ink-muted">{courses.length} cursos</span>
           </span>
           <span className="text-right">
-            <span className="flex items-center justify-end gap-0.5 text-[11px] text-ink-muted">
+            <span className="flex items-center justify-end gap-0.5 text-[0.6875rem] text-ink-muted">
               {cycle.estado}
               <Icon
                 name="expand_more"
@@ -67,7 +67,7 @@ function Enrolled() {
                 className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
               />
             </span>
-            <span className="block text-[11px] font-bold text-primary">
+            <span className="block text-[0.6875rem] font-bold text-primary">
               Semana {cycle.semanaActual} de {cycle.semanasTotal}
             </span>
           </span>
@@ -76,14 +76,14 @@ function Enrolled() {
           className={`grid transition-all duration-300 ease-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
         >
           <div className="overflow-hidden">
-            <div className="border-t border-black/5 px-3.5 pb-3.5 pt-3">
-              <div className="h-1.5 overflow-hidden rounded-full bg-black/5">
+            <div className="border-t border-fill/5 px-3.5 pb-3.5 pt-3">
+              <div className="h-1.5 overflow-hidden rounded-full bg-fill/5">
                 <div
                   className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
                   style={{ width: expanded ? `${pct}%` : '0%' }}
                 />
               </div>
-              <p className="mt-2 text-[11px] text-ink-muted">
+              <p className="mt-2 text-[0.6875rem] text-ink-muted">
                 {cycle.inicio} – {cycle.fin}
               </p>
             </div>
@@ -91,7 +91,7 @@ function Enrolled() {
         </div>
       </section>
 
-      <label className="mt-3 flex min-h-11 items-center gap-2 rounded-card bg-white px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
+      <label className="mt-3 flex min-h-11 items-center gap-2 rounded-card bg-card px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
         <Icon name="search" size={18} className="text-ink-muted" />
         <input
           type="search"
@@ -105,7 +105,7 @@ function Enrolled() {
 
       <h2 className="mt-5 text-sm font-bold text-ink">Mis Cursos</h2>
       {list.length === 0 ? (
-        <div className="animate-rise mt-3 rounded-card bg-white py-8 text-center shadow-card">
+        <div className="animate-rise mt-3 rounded-card bg-card py-8 text-center shadow-card">
           <Icon name="search_off" size={28} className="text-ink-faint" />
           <p className="mt-1 text-sm font-medium text-ink">Sin resultados</p>
           <p className="text-xs text-ink-muted">Prueba con otro nombre.</p>
@@ -116,14 +116,14 @@ function Enrolled() {
             <li key={c.id}>
               <Link
                 to="/mas/curso"
-                className="pressable flex min-h-16 items-center gap-2 rounded-card bg-white p-3.5 shadow-card"
+                className="pressable flex min-h-16 items-center gap-2 rounded-card bg-card p-3.5 shadow-card"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[10px] text-ink-muted">
+                  <span className="block text-[0.625rem] text-ink-muted">
                     {c.docente} · {c.creditos} créditos
                   </span>
                   <span className="block text-sm font-bold text-ink">{c.nombre}</span>
-                  <span className="block text-[10px] font-semibold text-ink-muted">{c.modalidad}</span>
+                  <span className="block text-[0.625rem] font-semibold text-ink-muted">{c.modalidad}</span>
                 </span>
                 <Icon name="chevron_right" size={20} className="text-ink-muted" />
               </Link>
@@ -139,7 +139,7 @@ function Curriculum() {
   return (
     <div className="mx-5 mt-5">
       <h2 className="text-sm font-bold text-ink">Información académica</h2>
-      <dl className="stagger mt-3 rounded-card bg-white px-3.5 py-1 shadow-card">
+      <dl className="stagger mt-3 rounded-card bg-card px-3.5 py-1 shadow-card">
         {academicInfo.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3 py-2.5">
             <dt className="text-xs text-ink-muted">{r.label}</dt>
@@ -151,13 +151,13 @@ function Curriculum() {
       {progress.map((g) => (
         <section key={g.title} className="mt-5">
           <h2 className="text-sm font-bold text-ink">{g.title}</h2>
-          <div className="mt-3 grid grid-cols-3 divide-x divide-black/5 rounded-card bg-white py-4 shadow-card">
+          <div className="mt-3 grid grid-cols-3 divide-x divide-fill/5 rounded-card bg-card py-4 shadow-card">
             {g.items.map((s) => (
               <div key={s.label} className="px-3.5">
                 <p className="text-2xl font-extrabold tabular-nums text-ink">
                   <CountUp value={s.value} decimals={s.decimals} />
                 </p>
-                <p className="mt-0.5 text-[11px] leading-tight text-ink-muted">{s.label}</p>
+                <p className="mt-0.5 text-[0.6875rem] leading-tight text-ink-muted">{s.label}</p>
               </div>
             ))}
           </div>

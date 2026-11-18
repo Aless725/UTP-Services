@@ -2,13 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ───────── Tokens de tema (canales RGB) ───────── */
+:root {
+  --font-scale: 1;
+  --c-surface: 242 242 247;
+  --c-card: 255 255 255;
+  --c-ink: 10 10 10;
+  --c-ink-muted: 107 107 112;
+  --c-ink-faint: 174 174 180;
+  --c-fill: 0 0 0;
+  --c-primary: 181 13 48;
+  --c-primary-dark: 143 10 38;
+  --c-primary-soft: 251 233 238;
+  --c-success: 15 130 64;
+  --c-success-soft: 228 246 236;
+  --c-info: 47 111 237;
+  --c-info-soft: 230 238 253;
+  --card-bw: 1px;
+  --card-bc: 0 0 0 / 0.06;
+  --float-a: 0.1;
+  color-scheme: light;
+}
+
+/* Modo oscuro */
+:root[data-theme='dark'] {
+  --c-surface: 20 20 22;
+  --c-card: 38 38 41;
+  --c-ink: 245 245 247;
+  --c-ink-muted: 165 165 172;
+  --c-ink-faint: 98 98 106;
+  --c-fill: 255 255 255;
+  --c-primary: 226 53 83;
+  --c-primary-dark: 190 35 62;
+  --c-primary-soft: 62 26 34;
+  --c-success: 52 199 120;
+  --c-success-soft: 24 54 38;
+  --c-info: 100 150 255;
+  --c-info-soft: 28 40 70;
+  --card-bc: 255 255 255 / 0.08;
+  --float-a: 0.4;
+  color-scheme: dark;
+}
+
+/* Daltonismo: protanopia y deuteranopia (rojo/verde) → azul + naranja */
+:root[data-cvd='protanopia'],
+:root[data-cvd='deuteranopia'] {
+  --c-primary: 0 90 200;
+  --c-primary-dark: 0 66 160;
+  --c-primary-soft: 226 238 252;
+  --c-success: 176 92 0;
+  --c-success-soft: 253 238 217;
+  --c-info: 118 60 170;
+  --c-info-soft: 240 230 250;
+}
+:root[data-theme='dark'][data-cvd='protanopia'],
+:root[data-theme='dark'][data-cvd='deuteranopia'] {
+  --c-primary: 56 120 240;
+  --c-primary-dark: 40 96 205;
+  --c-primary-soft: 24 38 72;
+  --c-success: 245 158 11;
+  --c-success-soft: 60 40 8;
+  --c-info: 190 140 255;
+  --c-info-soft: 44 30 70;
+}
+
+/* Daltonismo: tritanopia (azul/amarillo) → magenta + verde azulado */
+:root[data-cvd='tritanopia'] {
+  --c-primary: 176 16 96;
+  --c-primary-dark: 140 10 76;
+  --c-primary-soft: 251 230 241;
+  --c-success: 0 120 120;
+  --c-success-soft: 220 245 245;
+  --c-info: 110 70 170;
+  --c-info-soft: 238 232 250;
+}
+:root[data-theme='dark'][data-cvd='tritanopia'] {
+  --c-primary: 232 70 130;
+  --c-primary-dark: 196 50 108;
+  --c-primary-soft: 66 24 46;
+  --c-success: 40 200 200;
+  --c-success-soft: 16 52 52;
+  --c-info: 190 150 255;
+  --c-info-soft: 44 32 72;
+}
+
+/* Alto contraste */
+:root[data-contrast='high'] {
+  --c-ink-muted: 52 52 58;
+  --c-ink-faint: 110 110 118;
+  --c-primary: 150 8 38;
+  --card-bw: 1.5px;
+  --card-bc: 0 0 0 / 0.7;
+}
+:root[data-theme='dark'][data-contrast='high'] {
+  --c-ink-muted: 222 222 228;
+  --c-ink-faint: 160 160 168;
+  --c-primary: 255 110 135;
+  --card-bc: 255 255 255 / 0.75;
+}
+
 @layer base {
   html {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-ink font-sans text-ink antialiased;
+    @apply bg-neutral-900 font-sans text-ink antialiased;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
   }
@@ -41,19 +140,18 @@
   .material-symbols-outlined.filled {
     font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
-}
 
-@layer components {
-  /* Microinteracción de toque: se hunde ligeramente al presionar */
+  /* Microinteracción de toque (solo transform y color) */
   .pressable {
-    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.18s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.18s ease;
   }
   .pressable:active {
     transform: scale(0.97);
   }
+
   /* Entrada escalonada de hijos directos */
   .stagger > * {
-    animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation: rise 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) backwards;
   }
   .stagger > *:nth-child(1) { animation-delay: 0ms; }
   .stagger > *:nth-child(2) { animation-delay: 50ms; }
@@ -63,8 +161,78 @@
   .stagger > *:nth-child(6) { animation-delay: 250ms; }
   .stagger > *:nth-child(7) { animation-delay: 300ms; }
   .stagger > *:nth-child(n + 8) { animation-delay: 350ms; }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
+
+  /* Borde fino en lugar de sombra pesada (se refuerza con "Alto contraste") */
+  .shadow-card {
+    box-shadow: 0 0 0 var(--card-bw) rgb(var(--card-bc));
+  }
+  /* Elevación suave solo para elementos flotantes (barra, hojas, diálogos) */
+  .shadow-float {
+    box-shadow: 0 2px 14px rgb(0 0 0 / var(--float-a)), 0 0 0 1px rgb(var(--card-bc));
+  }
+
+  /* Superficie translúcida (se vuelve sólida con "Reducir transparencia") */
+  .glass {
+    background-color: rgb(var(--c-card) / 0.94);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  /* Control deslizante del tamaño de texto */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    width: 100%;
+    height: 32px;
+    margin: 0;
+    cursor: pointer;
+  }
+  .slider::-webkit-slider-runnable-track { background: transparent; height: 32px; }
+  .slider::-moz-range-track { background: transparent; height: 32px; }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 26px;
+    width: 26px;
+    margin-top: 3px;
+    border-radius: 9999px;
+    background: rgb(var(--c-card));
+    border: 2px solid rgb(var(--c-primary));
+    transition: transform 0.18s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .slider::-moz-range-thumb {
+    height: 22px;
+    width: 22px;
+    border-radius: 9999px;
+    background: rgb(var(--c-card));
+    border: 2px solid rgb(var(--c-primary));
+  }
+  .slider:active::-webkit-slider-thumb { transform: scale(1.12); }
+  .slider:focus-visible { outline: 2px solid rgb(var(--c-primary)); outline-offset: 4px; border-radius: 9999px; }
+}
+
+/* ───────── Preferencias de accesibilidad ───────── */
+:root[data-bold='true'] body { font-weight: 600; }
+:root[data-bold='true'] .font-medium { font-weight: 700; }
+:root[data-bold='true'] .font-semibold { font-weight: 800; }
+:root[data-bold='true'] .font-bold { font-weight: 800; }
+
+:root[data-reduce-transparency='true'] .glass {
+  background-color: rgb(var(--c-card));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-reduce-motion='true'] *,
+:root[data-reduce-motion='true'] *::before,
+:root[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0.01ms !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -72,6 +240,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

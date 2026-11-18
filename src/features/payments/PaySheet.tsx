@@ -39,7 +39,7 @@ export default function PaySheet({ cuota, onClose, onPaid }: PaySheetProps) {
     <BottomSheet open={!!cuota} onClose={() => !busy && onClose()} title="Pagar cuota">
       {last && step !== 'done' && (
         <div>
-          <dl className="divide-y divide-black/5 rounded-card bg-surface px-3.5">
+          <dl className="divide-y divide-fill/5 rounded-card bg-surface px-3.5">
             <Row label="Concepto" value={`Cuota ${last.numero} · ${last.mes}`} />
             <Row label="Método" value="Tarjeta •••• 4242" />
             <Row label="Total a pagar" value={money(last.monto)} strong />
@@ -59,7 +59,7 @@ export default function PaySheet({ cuota, onClose, onPaid }: PaySheetProps) {
               `Confirmar pago · ${money(last.monto)}`
             )}
           </button>
-          <p className="mt-2 text-center text-[11px] text-ink-muted">Pago de demostración, no se realiza ningún cobro.</p>
+          <p className="mt-2 text-center text-[0.6875rem] text-ink-muted">Pago de demostración, no se realiza ningún cobro.</p>
         </div>
       )}
       {last && step === 'done' && (

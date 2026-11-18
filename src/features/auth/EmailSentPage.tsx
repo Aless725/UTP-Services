@@ -47,7 +47,7 @@ export default function EmailSentPage() {
       {/* Solo demo: simula abrir el enlace recibido por correo */}
       <Link
         to={`/nueva-contrasena?u=${usuario}`}
-        className="mx-auto mt-auto flex min-h-11 items-center text-[11px] text-ink-faint underline"
+        className="mx-auto mt-auto flex min-h-11 items-center text-[0.6875rem] text-ink-faint underline"
       >
         Demo: abrir enlace del correo
       </Link>

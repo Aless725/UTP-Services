@@ -15,10 +15,10 @@ export default function SegmentedControl<T extends string>({
   const index = options.findIndex((o) => o.value === value)
   const width = 100 / options.length
   return (
-    <div role="tablist" aria-label={label} className="relative flex rounded-full bg-black/[0.06] p-1">
+    <div role="tablist" aria-label={label} className="relative flex rounded-full bg-fill/[0.06] p-1">
       <span
         aria-hidden="true"
-        className="absolute inset-y-1 rounded-full bg-white shadow-card transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="absolute inset-y-1 rounded-full bg-card shadow-card transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
         style={{
           width: `calc(${width}% - 4px)`,
           transform: `translateX(${index * 100}%)`,

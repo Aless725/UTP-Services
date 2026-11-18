@@ -2,7 +2,7 @@ interface LogoProps {
   size?: 'md' | 'lg'
 }
 
-/** Logotipo UTP+Service: tres cuadros negros, "+" rojo y "Service". */
+/** Logotipo UTP+Service: tres cuadros, "+" de acento y "Service". */
 export default function Logo({ size = 'lg' }: LogoProps) {
   const box = size === 'lg' ? 'h-10 w-10 text-2xl' : 'h-8 w-8 text-xl'
   const word = size === 'lg' ? 'text-[1.7rem]' : 'text-2xl'
@@ -11,13 +11,13 @@ export default function Logo({ size = 'lg' }: LogoProps) {
       {['U', 'T', 'P'].map((l) => (
         <span
           key={l}
-          className={`${box} flex items-center justify-center bg-black font-extrabold leading-none text-white`}
+          className={`${box} flex items-center justify-center bg-ink font-extrabold leading-none text-surface`}
         >
           {l}
         </span>
       ))}
-      <span className={`${word} font-extrabold leading-none text-[#E8606F]`}>+</span>
-      <span className={`${word} font-bold leading-none text-black`}>Service</span>
+      <span className={`${word} font-extrabold leading-none text-primary`}>+</span>
+      <span className={`${word} font-bold leading-none text-ink`}>Service</span>
     </div>
   )
 }

@@ -6,8 +6,8 @@ import type { ReactNode } from 'react'
  */
 export default function MobileFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-ink sm:p-6">
-      <main className="relative h-dvh w-full overflow-hidden bg-surface sm:h-[852px] sm:max-h-[calc(100dvh-3rem)] sm:w-[393px] sm:rounded-[48px] sm:ring-8 sm:ring-[#1C1C1E]">
+    <div className="flex min-h-dvh items-center justify-center bg-neutral-900 sm:p-6">
+      <main className="relative h-dvh w-full overflow-hidden bg-surface sm:h-[852px] sm:max-h-[calc(100dvh-3rem)] sm:w-[393px] sm:rounded-[48px] sm:ring-8 sm:ring-neutral-800">
         {children}
       </main>
     </div>

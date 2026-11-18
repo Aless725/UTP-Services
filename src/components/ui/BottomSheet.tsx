@@ -54,7 +54,7 @@ export default function BottomSheet({ open, onClose, title, children, floating }
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute z-10 bg-white shadow-float ${
+        className={`absolute z-10 bg-card shadow-float ${
           floating
             ? 'inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+96px)] rounded-[22px]'
             : 'inset-x-0 bottom-0 rounded-t-[28px] pb-[calc(env(safe-area-inset-bottom)+20px)]'

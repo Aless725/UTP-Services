@@ -52,7 +52,7 @@ export default function CalendarPage() {
     <>
       <PageHeader title="Calendario" />
 
-      <section aria-label="Calendario mensual" className="mx-5 mt-4 rounded-card bg-white p-3.5 shadow-card">
+      <section aria-label="Calendario mensual" className="mx-5 mt-4 rounded-card bg-card p-3.5 shadow-card">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-ink">{monthYear(month)}</h2>
           <div className="flex items-center gap-1">
@@ -82,7 +82,7 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        <div className="mt-1 grid grid-cols-7 text-center text-[10px] font-medium text-ink-muted">
+        <div className="mt-1 grid grid-cols-7 text-center text-[0.625rem] font-medium text-ink-muted">
           {WEEKDAYS.map((d, i) => (
             <span key={i} className="py-1">
               {d}
@@ -124,7 +124,7 @@ export default function CalendarPage() {
                 </span>
                 {hasHighlights(d) && inMonth && (
                   <span
-                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-primary'}`}
+                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${isSelected ? 'bg-card' : 'bg-primary'}`}
                     style={isSelected ? { bottom: 7 } : undefined}
                   />
                 )}
@@ -147,7 +147,7 @@ export default function CalendarPage() {
             aria-selected={filter === f.value}
             onClick={() => setFilter(f.value)}
             className={`pressable min-h-9 shrink-0 rounded-full px-4 text-xs font-medium transition-colors ${
-              filter === f.value ? 'bg-[#1C1C1E] text-white' : 'bg-white text-ink-muted shadow-card'
+              filter === f.value ? 'bg-ink text-surface' : 'bg-card text-ink-muted shadow-card'
             }`}
           >
             {f.label}
@@ -164,7 +164,7 @@ export default function CalendarPage() {
         </div>
 
         {events.length === 0 ? (
-          <div key={selected.toISOString() + filter} className="animate-rise mt-4 flex flex-col items-center rounded-card bg-white py-10 text-center shadow-card">
+          <div key={selected.toISOString() + filter} className="animate-rise mt-4 flex flex-col items-center rounded-card bg-card py-10 text-center shadow-card">
             <Icon name="event_available" size={32} className="text-ink-faint" />
             <p className="mt-2 text-sm font-medium text-ink">Sin actividades</p>
             <p className="text-xs text-ink-muted">Disfruta tu tiempo libre.</p>
@@ -186,16 +186,16 @@ function EventRow({ event: e, onOpen }: { event: CalEvent; onOpen: () => void })
     <li className="flex items-center gap-3">
       <div className="w-11 shrink-0 text-center leading-tight">
         <p className="text-xs font-bold text-ink">{e.start}</p>
-        <p className="text-[11px] text-ink-muted">{e.end}</p>
+        <p className="text-[0.6875rem] text-ink-muted">{e.end}</p>
       </div>
       <button
         type="button"
         onClick={onOpen}
-        className="pressable flex min-h-16 flex-1 items-center gap-2 rounded-card bg-white p-3 text-left shadow-card"
+        className="pressable flex min-h-16 flex-1 items-center gap-2 rounded-card bg-card p-3 text-left shadow-card"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-bold text-ink">{e.title}</p>
-          <p className="text-[11px] text-ink-muted">
+          <p className="text-[0.6875rem] text-ink-muted">
             {kindLabel(e.kind)} · {e.place}
           </p>
           <div className="mt-1.5">

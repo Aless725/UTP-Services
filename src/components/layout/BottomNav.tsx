@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
+import PlusIcon from '@/components/ui/PlusIcon'
 
 const tabs = [
   { to: '/inicio', label: 'Inicio', icon: 'home' },
@@ -15,10 +16,14 @@ interface BottomNavProps {
 
 /** Barra inferior flotante con acceso a "Más de UTP+". */
 export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
+  const { pathname } = useLocation()
+  // En "Mi Perfil" la pestaña activa es Inicio, desde donde se accede.
+  const activeOf = (to: string, isActive: boolean) =>
+    isActive || (to === '/inicio' && ['/perfil', '/grupos', '/mas'].some((p) => pathname.startsWith(p)))
   return (
     <nav
       aria-label="Navegación principal"
-      className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-20 flex h-[68px] items-center rounded-[26px] bg-white/95 px-2 shadow-float backdrop-blur"
+      className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-20 flex h-[68px] items-center rounded-[26px] glass px-2 shadow-float"
     >
       {tabs.map((t) => (
         <NavLink
@@ -26,22 +31,25 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
           to={t.to}
           className={({ isActive }) =>
             `pressable group flex h-full min-w-11 flex-1 flex-col items-center justify-center gap-0.5 ${
-              isActive ? 'text-primary' : 'text-ink-muted'
+              activeOf(t.to, isActive) ? 'text-primary' : 'text-ink-muted'
             }`
           }
         >
-          {({ isActive }) => (
+          {({ isActive: a }) => {
+            const isActive = activeOf(t.to, a)
+            return (
             <>
               <span
-                className={`transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                className={`transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${
                   isActive ? '-translate-y-0.5 scale-110' : ''
                 }`}
               >
                 <Icon name={t.icon} size={22} filled={isActive} />
               </span>
-              <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{t.label}</span>
+              <span className={`text-[0.625rem] ${isActive ? 'font-bold' : 'font-medium'}`}>{t.label}</span>
             </>
-          )}
+            )
+          }}
         </NavLink>
       ))}
       <button
@@ -50,10 +58,10 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
         aria-label="Más de UTP+"
         aria-expanded={moreOpen}
         aria-haspopup="dialog"
-        className="pressable ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-card"
+        className="pressable ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white"
       >
         <span className={`transition-transform duration-300 ease-out ${moreOpen ? 'rotate-45' : ''}`}>
-          <Icon name="add" size={26} />
+          <PlusIcon size={24} />
         </span>
       </button>
     </nav>

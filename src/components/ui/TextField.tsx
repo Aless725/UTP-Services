@@ -24,7 +24,7 @@ export default function TextField({ label, helper, error, type = 'text', ...prop
           type={isPassword && visible ? 'text' : type}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={`h-11 w-full rounded-lg bg-white px-3 text-sm text-ink outline-none ring-1 transition-shadow placeholder:text-ink-faint focus:ring-2 focus:ring-primary ${
+          className={`h-11 w-full rounded-lg bg-card px-3 text-sm text-ink outline-none ring-1 transition-shadow placeholder:text-ink-faint focus:ring-2 focus:ring-primary ${
             error ? 'ring-primary' : 'ring-transparent'
           } ${isPassword ? 'pr-11' : ''}`}
           {...props}

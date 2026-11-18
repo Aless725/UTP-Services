@@ -1,80 +1,79 @@
 import type { Config } from 'tailwindcss'
 
+/** Color basado en variable CSS (canales RGB) para permitir temas y opacidad. */
+const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`
+
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#B50D30',
-          dark: '#8F0A26',
-          soft: '#FBE9EE',
+          DEFAULT: v('primary'),
+          dark: v('primary-dark'),
+          soft: v('primary-soft'),
         },
-        surface: '#F2F2F7',
-        card: '#FFFFFF',
+        surface: v('surface'),
+        card: v('card'),
         ink: {
-          DEFAULT: '#0A0A0A',
-          muted: '#6B6B70',
-          faint: '#C7C7CC',
+          DEFAULT: v('ink'),
+          muted: v('ink-muted'),
+          faint: v('ink-faint'),
         },
+        fill: v('fill'),
         success: {
-          DEFAULT: '#12A150',
-          soft: '#E4F6EC',
+          DEFAULT: v('success'),
+          soft: v('success-soft'),
         },
         info: {
-          DEFAULT: '#2F6FED',
-          soft: '#E6EEFD',
+          DEFAULT: v('info'),
+          soft: v('info-soft'),
         },
-        danger: '#B50D30',
+        danger: v('primary'),
       },
       borderRadius: {
         card: '14px',
-      },
-      boxShadow: {
-        card: '0 1px 2px rgba(0,0,0,0.04), 0 6px 18px rgba(0,0,0,0.06)',
-        float: '0 8px 24px rgba(0,0,0,0.12)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       keyframes: {
         pageIn: {
-          from: { opacity: '0', transform: 'translateY(8px)' },
-          to: { opacity: '1', transform: 'none' },
+          from: { opacity: '0', transform: 'translate3d(0, 8px, 0)' },
+          to: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
         },
         fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } },
         fadeOut: { from: { opacity: '1' }, to: { opacity: '0' } },
         sheetUp: {
-          from: { opacity: '0', transform: 'translateY(24px) scale(0.98)' },
-          to: { opacity: '1', transform: 'none' },
+          from: { opacity: '0', transform: 'translate3d(0, 24px, 0)' },
+          to: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
         },
         sheetDown: {
-          from: { opacity: '1', transform: 'none' },
-          to: { opacity: '0', transform: 'translateY(24px) scale(0.98)' },
+          from: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
+          to: { opacity: '0', transform: 'translate3d(0, 24px, 0)' },
         },
         rise: {
-          from: { opacity: '0', transform: 'translateY(10px)' },
-          to: { opacity: '1', transform: 'none' },
+          from: { opacity: '0', transform: 'translate3d(0, 10px, 0)' },
+          to: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
         },
         pop: {
-          '0%': { opacity: '0', transform: 'scale(0.6)' },
-          '60%': { opacity: '1', transform: 'scale(1.12)' },
+          '0%': { opacity: '0', transform: 'scale(0.7)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         toastIn: {
-          from: { opacity: '0', transform: 'translateY(12px) scale(0.96)' },
-          to: { opacity: '1', transform: 'none' },
+          from: { opacity: '0', transform: 'translate3d(0, 12px, 0)' },
+          to: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
         },
       },
       animation: {
-        'page-in': 'pageIn 0.35s cubic-bezier(0.22,1,0.36,1) backwards',
-        'fade-in': 'fadeIn 0.2s ease-out backwards',
+        'page-in': 'pageIn 0.4s cubic-bezier(0.25,0.8,0.25,1) backwards',
+        'fade-in': 'fadeIn 0.25s ease-out backwards',
         'fade-out': 'fadeOut 0.2s ease-in forwards',
-        'sheet-up': 'sheetUp 0.32s cubic-bezier(0.22,1,0.36,1) backwards',
-        'sheet-down': 'sheetDown 0.2s ease-in forwards',
-        rise: 'rise 0.45s cubic-bezier(0.22,1,0.36,1) backwards',
-        pop: 'pop 0.45s cubic-bezier(0.34,1.56,0.64,1) backwards',
-        'toast-in': 'toastIn 0.28s cubic-bezier(0.22,1,0.36,1) backwards',
+        'sheet-up': 'sheetUp 0.38s cubic-bezier(0.25,0.8,0.25,1) backwards',
+        'sheet-down': 'sheetDown 0.22s ease-in forwards',
+        rise: 'rise 0.45s cubic-bezier(0.25,0.8,0.25,1) backwards',
+        pop: 'pop 0.4s cubic-bezier(0.25,0.8,0.25,1) backwards',
+        'toast-in': 'toastIn 0.3s cubic-bezier(0.25,0.8,0.25,1) backwards',
       },
       fontSize: {
         title: ['1.5rem', { lineHeight: '1.2', fontWeight: '800' }],

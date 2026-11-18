@@ -15,6 +15,8 @@ import CalendarPage from '@/features/calendar/CalendarPage'
 import CoursesPage from '@/features/courses/CoursesPage'
 import PaymentsPage from '@/features/payments/PaymentsPage'
 import ComingSoonPage from '@/features/more/ComingSoonPage'
+import ProfilePage from '@/features/profile/ProfilePage'
+import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
 
 export default function App() {
   return (
@@ -39,6 +41,8 @@ export default function App() {
             <Route path="/calendario" element={<CalendarPage />} />
             <Route path="/cursos" element={<CoursesPage />} />
             <Route path="/pagos" element={<PaymentsPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/perfil/accesibilidad" element={<AccessibilityPage />} />
             <Route path="/mas/:slug" element={<ComingSoonPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

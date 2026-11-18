@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast && (
           <div
             key={toast.id}
-            className="animate-toast-in flex items-center gap-2 rounded-full bg-[#1C1C1E] px-4 py-2.5 text-xs font-medium text-white shadow-float"
+            className="animate-toast-in flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-medium text-surface"
           >
             <Icon name={toast.icon} size={16} />
             {toast.message}

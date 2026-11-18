@@ -92,7 +92,7 @@ export default function OnboardingPage() {
           type="button"
           onClick={next}
           aria-label={isLast ? 'Comenzar' : 'Siguiente'}
-          className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#1C1C1E] text-white shadow-float transition-transform active:scale-95"
+          className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-ink text-surface transition-transform active:scale-95"
         >
           <Icon name="arrow_forward" size={26} />
         </button>

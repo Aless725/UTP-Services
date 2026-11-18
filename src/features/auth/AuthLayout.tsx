@@ -25,13 +25,13 @@ export function AuthHeading({ title, subtitle }: { title: string; subtitle?: str
 /** Tarjeta de confirmación (correo enviado / cuenta lista). */
 export function InfoCard({ icon, title, caption }: { icon: string; title: string; caption: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-card bg-white p-3">
+    <div className="flex items-center gap-3 rounded-card bg-card p-3">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
         <Icon name={icon} size={20} />
       </span>
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold text-ink">{title}</p>
-        <p className="text-[11px] text-ink-muted">{caption}</p>
+        <p className="text-[0.6875rem] text-ink-muted">{caption}</p>
       </div>
     </div>
   )

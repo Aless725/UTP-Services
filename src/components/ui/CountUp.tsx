@@ -9,7 +9,7 @@ interface CountUpProps {
 /** Cuenta de 0 al valor. Sin animación si el usuario prefiere menos movimiento. */
 export default function CountUp({ value, decimals = 0, duration = 800 }: CountUpProps) {
   const reduce =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    typeof document !== 'undefined' && document.documentElement.dataset.reduceMotion === 'true'
   const [n, setN] = useState(reduce ? value : 0)
 
   useEffect(() => {
