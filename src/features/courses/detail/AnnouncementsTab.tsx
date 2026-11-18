@@ -1,69 +1,96 @@
 import { useMemo, useState } from 'react'
+import BottomSheet from '@/components/ui/BottomSheet'
 import Icon from '@/components/ui/Icon'
-import { dayCompactYear } from '@/lib/date'
+import { diffDays, parseISO, startOfDay, toISO, dayCompactYear } from '@/lib/date'
 import type { Course } from '../coursesData'
-import { announcementsOf } from './courseContent'
+import { announcementsOf, type Announcement } from './courseContent'
 import type { CourseStateApi } from './useCourseState'
 
+/** "Hoy", "Ayer", "Hace 3 días", "Hace 2 semanas" o la fecha si es antigua. */
+function ago(d: Date): string {
+  const n = diffDays(d, startOfDay(new Date()))
+  if (n <= 0) return 'Hoy'
+  if (n === 1) return 'Ayer'
+  if (n < 7) return `Hace ${n} días`
+  if (n < 30) return `Hace ${Math.floor(n / 7)} ${Math.floor(n / 7) === 1 ? 'semana' : 'semanas'}`
+  return dayCompactYear(parseISO(toISO(d)))
+}
+
+/**
+ * Lista limpia: solo título, antigüedad y un punto si es nuevo.
+ * El texto completo se lee al tocar, en una hoja, para no saturar la pantalla.
+ */
 export default function AnnouncementsTab({ course, state }: { course: Course; state: CourseStateApi }) {
   const items = useMemo(() => announcementsOf(course.id, course.docente), [course.id, course.docente])
-  const [open, setOpen] = useState<string | null>(null)
-  const isNew = (id: string, nuevo: boolean) => nuevo && !state.leidos.includes(id)
-  const unread = items.filter((a) => isNew(a.id, a.nuevo)).length
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [last, setLast] = useState<Announcement | null>(null)
+  const current = items.find((a) => a.id === openId) ?? null
+  if (current && current !== last) setLast(current)
+  const shown = current ?? last
 
-  const toggle = (id: string) => {
-    setOpen((o) => (o === id ? null : id))
-    state.markRead(id)
+  const isNew = (a: Announcement) => a.nuevo && !state.leidos.includes(a.id)
+  const unread = items.filter(isNew)
+
+  const open = (a: Announcement) => {
+    setOpenId(a.id)
+    state.markRead(a.id)
   }
 
   return (
     <div>
-      <p className="px-1 text-xs text-ink-muted" aria-live="polite">
-        {unread > 0 ? `${unread} sin leer` : 'Estás al día con los anuncios'}
-      </p>
-      <ul className="stagger mt-2 space-y-3">
-        {items.map((a) => {
-          const expanded = open === a.id
-          const fresh = isNew(a.id, a.nuevo)
+      <div className="flex min-h-9 items-center justify-between px-1">
+        <p className="text-xs text-ink-muted" aria-live="polite">
+          {unread.length > 0 ? `${unread.length} sin leer` : 'Estás al día'}
+        </p>
+        {unread.length > 0 && (
+          <button
+            type="button"
+            onClick={() => unread.forEach((a) => state.markRead(a.id))}
+            className="flex min-h-9 items-center text-xs font-semibold text-primary"
+          >
+            Marcar como leídos
+          </button>
+        )}
+      </div>
+
+      <ul className="stagger mt-1 overflow-hidden rounded-card bg-card shadow-card">
+        {items.map((a, i) => {
+          const fresh = isNew(a)
           return (
-            <li key={a.id} className="overflow-hidden rounded-card bg-card shadow-card">
+            <li key={a.id} className={i > 0 ? 'border-t border-fill/5' : ''}>
               <button
                 type="button"
-                onClick={() => toggle(a.id)}
-                aria-expanded={expanded}
-                className="pressable flex min-h-16 w-full items-start gap-3 p-4 text-left"
+                onClick={() => open(a)}
+                className="pressable flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left active:bg-surface"
               >
                 <span
-                  className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                    fresh ? 'bg-primary-soft text-primary' : 'bg-fill/5 text-ink-muted'
-                  }`}
-                >
-                  <Icon name="campaign" size={18} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className={`text-sm ${fresh ? 'font-extrabold' : 'font-bold'} text-ink`}>{a.titulo}</span>
-                    {fresh && <span aria-label="Nuevo" className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                  </span>
-                  <span className="mt-0.5 block text-[0.6875rem] text-ink-muted">
-                    {course.docente} · {dayCompactYear(a.fecha)}
-                  </span>
-                  {expanded ? (
-                    <span className="animate-rise mt-2 block text-sm leading-snug text-ink">{a.texto}</span>
-                  ) : (
-                    <span className="mt-1 line-clamp-1 block text-xs text-ink-muted">{a.texto}</span>
-                  )}
-                </span>
-                <Icon
-                  name="expand_more"
-                  size={20}
-                  className={`mt-1 shrink-0 text-ink-muted transition-transform duration-300 ease-smooth ${expanded ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${fresh ? 'bg-primary' : 'bg-transparent'}`}
                 />
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate text-sm ${fresh ? 'font-extrabold' : 'font-medium'} text-ink`}>
+                    {a.titulo}
+                    {fresh && <span className="sr-only"> (nuevo)</span>}
+                  </span>
+                  <span className="block text-[0.6875rem] text-ink-muted">{ago(a.fecha)}</span>
+                </span>
+                <Icon name="chevron_right" size={20} className="shrink-0 text-ink-muted" />
               </button>
             </li>
           )
         })}
       </ul>
+
+      <BottomSheet open={!!current} onClose={() => setOpenId(null)} title={shown?.titulo ?? 'Anuncio'}>
+        {shown && (
+          <div className="pb-2">
+            <p className="text-xs text-ink-muted">
+              {course.docente} · {ago(shown.fecha)}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-ink">{shown.texto}</p>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   )
 }
