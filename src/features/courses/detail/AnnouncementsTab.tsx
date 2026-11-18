@@ -4,6 +4,8 @@ import Icon from '@/components/ui/Icon'
 import { diffDays, parseISO, startOfDay, toISO, dayCompactYear } from '@/lib/date'
 import type { Course } from '../coursesData'
 import { announcementsOf, type Announcement } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 import type { CourseStateApi } from './useCourseState'
 
 /** "Hoy", "Ayer", "Hace 3 días", "Hace 2 semanas" o la fecha si es antigua. */
@@ -21,7 +23,8 @@ function ago(d: Date): string {
  * El texto completo se lee al tocar, en una hoja, para no saturar la pantalla.
  */
 export default function AnnouncementsTab({ course, state }: { course: Course; state: CourseStateApi }) {
-  const items = useMemo(() => announcementsOf(course.id, course.docente), [course.id, course.docente])
+  const raw = useRaw()
+  const items = useMemo(() => announcementsOf(raw), [raw])
   const [openId, setOpenId] = useState<string | null>(null)
   const [last, setLast] = useState<Announcement | null>(null)
   const current = items.find((a) => a.id === openId) ?? null

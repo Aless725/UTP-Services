@@ -6,8 +6,9 @@ import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { diffDays, startOfDay } from '@/lib/date'
 import { useNow } from '@/hooks/useNow'
-import type { Course } from '../coursesData'
 import { tasksOf, type Task } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 import type { CourseStateApi } from './useCourseState'
 
 type Filter = 'pendientes' | 'entregadas'
@@ -15,7 +16,7 @@ type Filter = 'pendientes' | 'entregadas'
 const fmtDue = (d: Date) =>
   `${d.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', '')}, 23:59`
 
-export default function TasksTab({ course, state }: { course: Course; state: CourseStateApi }) {
+export default function TasksTab({ state }: { state: CourseStateApi }) {
   const { show } = useToast()
   const now = useNow(60000)
   const [filter, setFilter] = useState<Filter>('pendientes')
@@ -23,8 +24,9 @@ export default function TasksTab({ course, state }: { course: Course; state: Cou
   const [file, setFile] = useState<File | null>(null)
   const input = useRef<HTMLInputElement>(null)
 
-  const tasks = useMemo(() => tasksOf(course.id), [course.id])
-  const delivered = (t: Task) => t.entregadaDemo || !!state.entregas[t.id]
+  const raw = useRaw()
+  const tasks = useMemo(() => tasksOf(raw), [raw])
+  const delivered = (t: Task) => !!state.entregas[t.id]
   const pending = tasks.filter((t) => !delivered(t))
   const done = tasks.filter(delivered)
   const list = filter === 'pendientes' ? pending : done
@@ -36,8 +38,10 @@ export default function TasksTab({ course, state }: { course: Course; state: Cou
 
   const submit = () => {
     if (!target || !file) return
-    state.deliver(target.id, file.name)
-    show('Tarea entregada', 'task_alt')
+    state
+      .deliver(target.id, file.name)
+      .then(() => show('Tarea entregada', 'task_alt'))
+      .catch(() => show('No pudimos entregar la tarea. Inténtalo de nuevo.', 'error'))
     close()
   }
 
@@ -80,8 +84,8 @@ export default function TasksTab({ course, state }: { course: Course; state: Cou
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted">
                     <Icon name="attach_file" size={14} />
                     {entrega ? entrega.archivo : `Entrega_${t.semana}.pdf`}
-                    {t.notaDemo !== undefined && (
-                      <span className="ml-auto font-bold text-ink">Nota: {t.notaDemo}</span>
+                    {entrega?.nota !== undefined && (
+                      <span className="ml-auto font-bold text-ink">Nota: {entrega.nota}</span>
                     )}
                   </p>
                 ) : (

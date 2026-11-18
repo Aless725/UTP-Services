@@ -1,38 +1,17 @@
 import { addDays, startOfDay, toISO } from '@/lib/date'
-import { STUDENTS } from '@/features/reservations/spacesData'
-import { cycle, type Course } from '../coursesData'
+import type { Course } from '../coursesData'
 
-export const TOTAL_WEEKS = cycle.semanasTotal
-export const CURRENT_WEEK = cycle.semanaActual
+/**
+ * Contenido de un curso a partir de los datos de Supabase (RawCourse).
+ * Las fechas de semanas, evaluaciones y foros se calculan en relación con la semana actual del ciclo,
+ * así la demostración siempre está vigente.
+ */
+
 export const PASS_GRADE = 11
 
-// ───────── Semanas ─────────
+// ───────── Datos tal como llegan de la base ─────────
 
-/** Lunes de la semana actual: la semana CURRENT_WEEK siempre es "esta semana". */
-function thisMonday(today: Date): Date {
-  const d = startOfDay(today)
-  return addDays(d, -((d.getDay() + 6) % 7))
-}
-
-export function weekRange(n: number, today = new Date()) {
-  const start = addDays(thisMonday(today), (n - CURRENT_WEEK) * 7)
-  return { start, end: addDays(start, 6) }
-}
-
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic']
-
-/** "9 – 15 nov" o "30 nov – 6 dic" */
-export function rangeLabel(a: Date, b: Date): string {
-  return a.getMonth() === b.getMonth()
-    ? `${a.getDate()} – ${b.getDate()} ${MONTHS[a.getMonth()]}`
-    : `${a.getDate()} ${MONTHS[a.getMonth()]} – ${b.getDate()} ${MONTHS[b.getMonth()]}`
-}
-
-export const pad2 = (n: number) => String(n).padStart(2, '0')
-
-// ───────── Datos propios de cada curso ─────────
-
-interface Meta {
+export interface Meta {
   codigo: string
   horas: number
   sumilla: string
@@ -47,166 +26,63 @@ interface Meta {
   zoom: { dow: number; inicio: string; fin: string; tipo: string }[]
 }
 
-const META: Record<string, Meta> = {
-  ihm: {
-    codigo: 'ISIS-4521',
-    horas: 4,
-    sumilla:
-      'El curso introduce los principios de la interacción humano-computador y del diseño centrado en el usuario. Aborda la investigación con usuarios, el diseño y prototipado de interfaces, la accesibilidad y la evaluación de usabilidad, incluyendo modalidades emergentes como la voz y los entornos móviles.',
-    logro:
-      'Al finalizar el curso, el estudiante diseña, implementa y evalúa un producto interactivo funcional, aplicando principios de usabilidad, accesibilidad y diseño inclusivo con evidencia de pruebas con usuarios.',
-    metodologia:
-      'Aprendizaje basado en proyectos. Cada semana combina una sesión de teoría aplicada, un taller de diseño y un espacio de consulta en el aula virtual. El proyecto se construye de forma incremental y se evalúa con usuarios reales.',
-    temas: [
-      'Introducción a la IHC y la usabilidad',
-      'Factores humanos y percepción',
-      'Principios del diseño de interacción',
-      'Heurísticas de Nielsen',
-      'Investigación con usuarios',
-      'Personas y escenarios de uso',
-      'Arquitectura de información',
-      'Prototipado de baja fidelidad',
-      'Prototipado de alta fidelidad',
-      'Sistemas de diseño',
-      'Accesibilidad e inclusión',
-      'Interfaces por voz y multimodales',
-      'Evaluación heurística',
-      'Pruebas de usabilidad y cuestionario SUS',
-      'Inteligencia artificial en la interacción',
-      'Presentación de proyectos',
-    ],
-    proyecto: 'Proyecto final (MVP)',
-    bibBase: [
-      'Norman, D. (2013). The Design of Everyday Things (ed. revisada). Basic Books.',
-      'Preece, J., Sharp, H. y Rogers, Y. (2019). Interaction Design: Beyond Human-Computer Interaction (5.ª ed.). Wiley.',
-    ],
-    bibComp: [
-      'Nielsen, J. (1993). Usability Engineering. Morgan Kaufmann.',
-      'Shneiderman, B. et al. (2016). Designing the User Interface (6.ª ed.). Pearson.',
-      'Krug, S. (2014). Don’t Make Me Think, Revisited. New Riders.',
-    ],
-    zoom: [
-      { dow: 2, inicio: '10:30', fin: '12:00', tipo: 'Clase virtual' },
-      { dow: 4, inicio: '10:30', fin: '12:00', tipo: 'Clase virtual' },
-    ],
-  },
-  gti: {
-    codigo: 'ISIS-3310',
-    horas: 4,
-    sumilla:
-      'El curso presenta los fundamentos de la gestión de servicios de tecnologías de la información. Revisa el ciclo de vida del servicio, los procesos de estrategia, diseño, transición y operación, y el gobierno de TI con marcos de referencia como ITIL y COBIT.',
-    logro:
-      'Al finalizar el curso, el estudiante propone y documenta un modelo de gestión de servicios de TI para una organización, definiendo catálogo, niveles de servicio y procesos de operación y mejora continua.',
-    metodologia:
-      'Clases con estudio de casos, simulaciones de mesa de servicio y trabajo colaborativo. La evaluación combina prácticas calificadas, tareas académicas y un caso de estudio integrador.',
-    temas: [
-      'Fundamentos de la gestión de servicios de TI',
-      'Ciclo de vida del servicio',
-      'Estrategia del servicio',
-      'Diseño del servicio',
-      'Catálogo y niveles de servicio (SLA)',
-      'Gestión de la demanda y la capacidad',
-      'Gestión de la disponibilidad',
-      'Transición del servicio',
-      'Gestión de cambios',
-      'Gestión de configuraciones y activos',
-      'Operación del servicio',
-      'Gestión de incidentes',
-      'Gestión de problemas',
-      'Mesa de servicio',
-      'Mejora continua del servicio',
-      'Gobierno de TI y casos integradores',
-    ],
-    proyecto: 'Caso de estudio',
-    bibBase: [
-      'AXELOS (2019). ITIL Foundation, ITIL 4 Edition. TSO.',
-      'ISACA (2018). COBIT 2019 Framework: Introduction and Methodology. ISACA.',
-    ],
-    bibComp: [
-      'ISO/IEC 20000-1:2018. Information technology — Service management.',
-      'Hunnebeck, L. (2011). ITIL Service Design (ed. 2011). TSO.',
-    ],
-    zoom: [{ dow: 5, inicio: '18:00', fin: '19:00', tipo: 'Asesoría' }],
-  },
-  dwi: {
-    codigo: 'ISIS-3405',
-    horas: 5,
-    sumilla:
-      'El curso desarrolla las competencias para construir aplicaciones web modernas de extremo a extremo. Aborda HTML, CSS y JavaScript, el desarrollo de interfaces con React y TypeScript, el consumo de APIs, la seguridad, las pruebas y el despliegue.',
-    logro:
-      'Al finalizar el curso, el estudiante desarrolla y despliega una aplicación web completa, responsiva y accesible, integrando un servicio de backend y aplicando buenas prácticas de calidad y seguridad.',
-    metodologia:
-      'Laboratorios guiados en cada sesión, desarrollo incremental de un proyecto web y revisiones de código entre pares. El avance se verifica en repositorio y en el despliegue.',
-    temas: [
-      'Fundamentos de la web moderna',
-      'HTML5 semántico y accesibilidad',
-      'CSS y diseño responsivo',
-      'JavaScript moderno (ES6+)',
-      'Programación asíncrona y APIs REST',
-      'TypeScript esencial',
-      'Introducción a React',
-      'Estado y eventos en React',
-      'Enrutamiento y formularios',
-      'Consumo de datos y caché',
-      'Autenticación y seguridad web',
-      'Backend como servicio (Supabase)',
-      'Pruebas y calidad de código',
-      'Rendimiento y despliegue',
-      'PWA y experiencia móvil',
-      'Presentación del proyecto web',
-    ],
-    proyecto: 'Proyecto web',
-    bibBase: [
-      'Banks, A. y Porcello, E. (2020). Learning React (2.ª ed.). O’Reilly.',
-      'Haverbeke, M. (2018). Eloquent JavaScript (3.ª ed.). No Starch Press.',
-    ],
-    bibComp: [
-      'Flanagan, D. (2020). JavaScript: The Definitive Guide (7.ª ed.). O’Reilly.',
-      'Freeman, A. (2019). Pro TypeScript. Apress.',
-    ],
-    zoom: [{ dow: 3, inicio: '19:00', fin: '20:00', tipo: 'Asesoría' }],
-  },
-  ci2: {
-    codigo: 'ISIS-4610',
-    horas: 6,
-    sumilla:
-      'El curso integra los conocimientos de la carrera en el desarrollo de una solución de software para un problema real. Cubre metodologías ágiles, requerimientos, arquitectura, calidad, integración continua, documentación técnica y la sustentación del producto.',
-    logro:
-      'Al finalizar el curso, el estudiante gestiona y entrega una solución de software integrada, trabajando en equipo con una metodología ágil, y la sustenta con evidencias técnicas y de calidad.',
-    metodologia:
-      'Trabajo en equipos por sprints con revisiones quincenales. Cada sprint produce un incremento funcional que se demuestra y se retroalimenta con el docente.',
-    temas: [
-      'Metodologías ágiles y Scrum',
-      'Levantamiento de requerimientos',
-      'Historias de usuario y backlog',
-      'Arquitectura de software',
-      'Modelado y diseño de la solución',
-      'Control de versiones y trabajo colaborativo',
-      'Integración continua',
-      'Planificación del proyecto integrador',
-      'Desarrollo incremental',
-      'Aseguramiento de la calidad',
-      'Pruebas de integración',
-      'Gestión de riesgos',
-      'Documentación técnica',
-      'Despliegue y operación',
-      'Sustentación y demostración',
-      'Cierre y lecciones aprendidas',
-    ],
-    proyecto: 'Proyecto integrador',
-    bibBase: [
-      'Hunt, A. y Thomas, D. (2019). The Pragmatic Programmer (2.ª ed.). Addison-Wesley.',
-      'Schwaber, K. y Sutherland, J. (2020). The Scrum Guide. scrumguides.org.',
-    ],
-    bibComp: [
-      'Martin, R. (2017). Clean Architecture. Prentice Hall.',
-      'Sommerville, I. (2016). Software Engineering (10.ª ed.). Pearson.',
-    ],
-    zoom: [{ dow: 4, inicio: '18:30', fin: '19:30', tipo: 'Asesoría' }],
-  },
+export type MaterialKind = 'Presentación' | 'Lectura' | 'Video'
+export type ForumKind = 'calificado' | 'no_calificado'
+export type ForumStatus = 'abierto' | 'cerrado' | 'proximo'
+
+export interface RawCourse {
+  id: string
+  term: { nombre: string; semanaActual: number; semanasTotal: number }
+  meta: Meta
+  zoom: { meetingId: string; passcode: string; url: string }
+  materials: { id: string; semana: number; tipo: MaterialKind; titulo: string; detalle: string }[]
+  evaluations: { id: string; clave: string; nombre: string; semana: number; peso: number; nota: number | null }[]
+  tasks: { id: string; titulo: string; semana: number }[]
+  threads: { id: string; titulo: string; semana: number | null; tipo: ForumKind; descripcion: string }[]
+  posts: {
+    id: string
+    thread_id: string
+    autor: string
+    rol: 'Docente' | 'Estudiante'
+    texto: string
+    cuando_demo: string | null
+    parent_id: string | null
+    created_at: string
+  }[]
+  announcements: {
+    id: string
+    titulo: string
+    texto: string
+    hace_dias: number | null
+    semana: number | null
+    dia: number | null
+    nuevo: boolean
+  }[]
 }
 
-// ───────── Utilidades deterministas ─────────
+// ───────── Semanas ─────────
+
+/** Lunes de la semana actual: la semana "actual" del ciclo siempre es "esta semana". */
+function thisMonday(today: Date): Date {
+  const d = startOfDay(today)
+  return addDays(d, -((d.getDay() + 6) % 7))
+}
+
+export function weekRange(n: number, currentWeek: number, today = new Date()) {
+  const start = addDays(thisMonday(today), (n - currentWeek) * 7)
+  return { start, end: addDays(start, 6) }
+}
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic']
+
+/** "9 – 15 nov" o "30 nov – 6 dic" */
+export function rangeLabel(a: Date, b: Date): string {
+  return a.getMonth() === b.getMonth()
+    ? `${a.getDate()} – ${b.getDate()} ${MONTHS[a.getMonth()]}`
+    : `${a.getDate()} ${MONTHS[a.getMonth()]} – ${b.getDate()} ${MONTHS[b.getMonth()]}`
+}
+
+export const pad2 = (n: number) => String(n).padStart(2, '0')
 
 export function hash(str: string): number {
   let h = 2166136261
@@ -217,19 +93,17 @@ export function hash(str: string): number {
   return h >>> 0
 }
 
-export const metaOf = (id: string): Meta => META[id] ?? META.ihm
+export const metaOf = (raw: RawCourse): Meta => raw.meta
 
 /** Tema de la semana n. */
-export function topicOf(id: string, week: number): string {
+export function topicOf(raw: RawCourse, week: number): string {
   if (week === 9) return 'Examen parcial'
-  if (week === TOTAL_WEEKS) return 'Examen final'
-  const t = metaOf(id).temas
-  return t[week < 9 ? week - 1 : week - 2]
+  if (week === raw.term.semanasTotal) return 'Examen final'
+  return raw.meta.temas[week < 9 ? week - 1 : week - 2] ?? `Semana ${week}`
 }
 
 // ───────── Contenido de las semanas ─────────
 
-export type MaterialKind = 'Presentación' | 'Lectura' | 'Video'
 export interface Material {
   id: string
   kind: MaterialKind
@@ -246,23 +120,21 @@ export interface Week {
   materiales: Material[]
 }
 
-export function weeksOf(id: string): Week[] {
-  return Array.from({ length: TOTAL_WEEKS }, (_, i) => {
+export function weeksOf(raw: RawCourse): Week[] {
+  const { semanaActual, semanasTotal } = raw.term
+  return Array.from({ length: semanasTotal }, (_, i) => {
     const n = i + 1
-    const { start, end } = weekRange(n)
-    const tema = topicOf(id, n)
-    const exam = n === 9 || n === TOTAL_WEEKS
-    const mats: Material[] = exam
-      ? [
-          { id: `${id}-s${n}-guia`, kind: 'Lectura', title: `Guía de repaso — ${tema}`, detail: '12 páginas' },
-          { id: `${id}-s${n}-pres`, kind: 'Presentación', title: 'Resumen de unidades evaluadas', detail: '18 diapositivas' },
-        ]
-      : [
-          { id: `${id}-s${n}-pres`, kind: 'Presentación', title: `Presentación — ${tema}`, detail: `${14 + (hash(id + n) % 12)} diapositivas` },
-          { id: `${id}-s${n}-lect`, kind: 'Lectura', title: `Lectura de la semana ${n}`, detail: `${8 + (hash(id + 'l' + n) % 14)} páginas` },
-          { id: `${id}-s${n}-vid`, kind: 'Video', title: `Video — ${tema}`, detail: `${8 + (hash(id + 'v' + n) % 10)} min` },
-        ]
-    return { n, tema, inicio: start, fin: end, actual: n === CURRENT_WEEK, materiales: mats }
+    const { start, end } = weekRange(n, semanaActual)
+    return {
+      n,
+      tema: topicOf(raw, n),
+      inicio: start,
+      fin: end,
+      actual: n === semanaActual,
+      materiales: raw.materials
+        .filter((m) => m.semana === n)
+        .map((m) => ({ id: m.id, kind: m.tipo, title: m.titulo, detail: m.detalle })),
+    }
   })
 }
 
@@ -279,24 +151,18 @@ export interface Evaluation {
   nota?: number
 }
 
-export function evaluationsOf(id: string): Evaluation[] {
-  const scheme = [
-    { id: 'ta1', nombre: 'Tarea académica 1', semana: 3, peso: 5 },
-    { id: 'pc1', nombre: 'Práctica calificada 1', semana: 5, peso: 10 },
-    { id: 'ep', nombre: 'Examen parcial', semana: 9, peso: 20 },
-    { id: 'ta2', nombre: 'Tarea académica 2', semana: 11, peso: 5 },
-    { id: 'pc2', nombre: 'Práctica calificada 2', semana: 13, peso: 15 },
-    { id: 'pf', nombre: metaOf(id).proyecto, semana: 16, peso: 15 },
-    { id: 'ef', nombre: 'Examen final', semana: TOTAL_WEEKS, peso: 30 },
-  ]
-  return scheme.map((e) => {
-    const estado: EvalState =
-      e.semana < CURRENT_WEEK ? 'calificada' : e.semana === CURRENT_WEEK ? 'esta_semana' : 'proxima'
+export function evaluationsOf(raw: RawCourse): Evaluation[] {
+  const current = raw.term.semanaActual
+  return raw.evaluations.map((e) => {
+    const estado: EvalState = e.semana < current ? 'calificada' : e.semana === current ? 'esta_semana' : 'proxima'
     return {
-      ...e,
-      fecha: addDays(weekRange(e.semana).start, 3),
+      id: e.id,
+      nombre: e.nombre,
+      semana: e.semana,
+      peso: e.peso,
+      fecha: addDays(weekRange(e.semana, current).start, 3),
       estado,
-      nota: estado === 'calificada' ? 11 + (hash(`${id}|${e.id}`) % 8) : undefined,
+      nota: e.nota ?? undefined,
     }
   })
 }
@@ -331,24 +197,13 @@ export interface Task {
   titulo: string
   semana: number
   vence: Date
-  /** Entrega y nota de ejemplo para las tareas ya vencidas. */
-  entregadaDemo: boolean
-  notaDemo?: number
 }
 
-export function tasksOf(id: string): Task[] {
-  return [2, 4, 6, 8, 10, 12, 13, 14, 15].map((n, i) => {
-    const vence = addDays(weekRange(n).end, 0)
+export function tasksOf(raw: RawCourse): Task[] {
+  return raw.tasks.map((t) => {
+    const vence = new Date(weekRange(t.semana, raw.term.semanaActual).end)
     vence.setHours(23, 59, 0, 0)
-    const past = n < CURRENT_WEEK
-    return {
-      id: `${id}-t${n}`,
-      titulo: `Actividad ${i + 1}: ${topicOf(id, n)}`,
-      semana: n,
-      vence,
-      entregadaDemo: past,
-      notaDemo: past ? 12 + (hash(`${id}|t${n}`) % 7) : undefined,
-    }
+    return { id: t.id, titulo: t.titulo, semana: t.semana, vence }
   })
 }
 
@@ -365,9 +220,6 @@ export interface Post {
   parent?: string
 }
 
-export type ForumKind = 'calificado' | 'no_calificado'
-export type ForumStatus = 'abierto' | 'cerrado' | 'proximo'
-
 export interface Thread {
   id: string
   titulo: string
@@ -377,7 +229,7 @@ export interface Thread {
   desde: Date | null
   hasta: Date | null
   estado: ForumStatus
-  /** Comentarios y respuestas de ejemplo (docente y compañeros). */
+  /** Comentarios y respuestas (docente, compañeros y propios). */
   base: Post[]
 }
 
@@ -386,20 +238,6 @@ export const isGradedForum = (week: number) => week % 4 === 3
 
 export const forumTitle = (week: number) =>
   isGradedForum(week) ? `Foro calificado - Semana ${week}` : `Foro de Consultas - Semana ${week}`
-
-const STUDENT_NAMES = Object.values(STUDENTS)
-const COMMENTS = [
-  'Profesor, ¿podría aclarar el alcance de este punto para la práctica?',
-  'Yo lo resolví con el ejemplo de la clase; si quieren lo comparto.',
-  'Tengo una duda sobre cómo se calificará la entrega de esta semana.',
-  'Me ayudó mucho la lectura, pero no me quedó claro el segundo caso.',
-  'Coincido con lo que comentan, sería bueno repasarlo en la próxima sesión.',
-]
-const ANSWERS = [
-  'Buena pregunta. Revisa la diapositiva 8 y el ejemplo del video; lo retomamos en clase.',
-  'Correcto. Compártelo con el grupo y lo comentamos en la asesoría.',
-  'Se calificará con la rúbrica publicada en el sílabo. Cualquier duda, escríbeme.',
-]
 
 function endOfDay(d: Date): Date {
   const e = new Date(d)
@@ -415,81 +253,48 @@ export function forumStatus(t: Pick<Thread, 'desde' | 'hasta'>, now: Date): Foru
   return 'abierto'
 }
 
-export function threadsOf(id: string, docente: string, now = new Date()): Thread[] {
-  const out: Thread[] = [
-    {
-      id: `${id}-general`,
-      titulo: 'Foro general del curso',
-      semana: null,
-      tipo: 'no_calificado',
-      descripcion: 'Espacio para dudas generales del curso, coordinación entre compañeros y avisos no urgentes.',
-      desde: null,
-      hasta: null,
-      estado: 'abierto',
-      base: [
-        {
-          id: `${id}-g1`,
-          autor: STUDENT_NAMES[hash(id) % STUDENT_NAMES.length],
-          rol: 'Estudiante',
-          cuando: 'Hace 2 meses',
-          texto: COMMENTS[0],
-        },
-        { id: `${id}-g1r`, autor: docente, rol: 'Docente', cuando: 'Hace 2 meses', texto: ANSWERS[0], parent: `${id}-g1` },
-      ],
-    },
-  ]
+/** "Ahora", "Hoy, 14:05", "Ayer" o "Hace 3 días" a partir de una fecha ISO. */
+export function timeAgo(iso: string, now = new Date()): string {
+  const d = new Date(iso)
+  const days = Math.round((startOfDay(now).getTime() - startOfDay(d).getTime()) / 86400000)
+  if (now.getTime() - d.getTime() < 60000) return 'Ahora'
+  if (days <= 0) return `Hoy, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+  if (days === 1) return 'Ayer'
+  return `Hace ${days} días`
+}
 
-  for (let n = 1; n <= TOTAL_WEEKS; n++) {
-    const tema = topicOf(id, n)
-    const graded = isGradedForum(n)
-    const { start, end } = weekRange(n)
-    // Calificados: solo durante su semana. De consultas: hasta el final de la semana siguiente.
-    const desde = start
-    const hasta = endOfDay(graded ? end : addDays(end, 7))
-    const estado = forumStatus({ desde, hasta }, now)
-
-    const base: Post[] = []
-    if (estado !== 'proximo') {
-      const k = n <= CURRENT_WEEK ? 1 + (hash(`${id}|f${n}`) % 3) : 0
-      for (let j = 0; j < k; j++) {
-        const cid = `${id}-f${n}-c${j}`
-        const ago = Math.max(1, (CURRENT_WEEK - n) * 7 - j - 1)
-        base.push({
-          id: cid,
-          autor: STUDENT_NAMES[hash(`${id}${n}${j}`) % STUDENT_NAMES.length],
-          rol: 'Estudiante',
-          cuando: n < CURRENT_WEEK ? `Hace ${ago} días` : 'Hace 1 día',
-          texto: COMMENTS[hash(`${id}${n}${j}t`) % COMMENTS.length],
-        })
-        // El docente responde a algunos comentarios.
-        if (hash(`${id}${n}${j}r`) % 3 !== 0) {
-          base.push({
-            id: `${cid}r`,
-            autor: docente,
-            rol: 'Docente',
-            cuando: n < CURRENT_WEEK ? `Hace ${Math.max(1, ago - 1)} días` : 'Hoy',
-            texto: ANSWERS[hash(`${id}${n}${j}a`) % ANSWERS.length],
-            parent: cid,
-          })
-        }
-      }
+export function threadsOf(raw: RawCourse, now = new Date()): Thread[] {
+  const current = raw.term.semanaActual
+  return raw.threads.map((t) => {
+    let desde: Date | null = null
+    let hasta: Date | null = null
+    if (t.semana !== null) {
+      const { start, end } = weekRange(t.semana, current)
+      // Calificados: solo durante su semana. De consultas: hasta el final de la semana siguiente.
+      desde = start
+      hasta = endOfDay(t.tipo === 'calificado' ? end : addDays(end, 7))
     }
-
-    out.push({
-      id: `${id}-f${n}`,
-      titulo: forumTitle(n),
-      semana: n,
-      tipo: graded ? 'calificado' : 'no_calificado',
-      descripcion: graded
-        ? `Participa con un aporte propio y comenta el de un compañero sobre «${tema}». Se califica la calidad del análisis, no la extensión.`
-        : `Comparte aquí tus dudas sobre «${tema}». El docente y tus compañeros responderán durante la semana.`,
+    return {
+      id: t.id,
+      titulo: t.titulo,
+      semana: t.semana,
+      tipo: t.tipo,
+      descripcion: t.descripcion,
       desde,
       hasta,
-      estado,
-      base,
-    })
-  }
-  return out
+      estado: forumStatus({ desde, hasta }, now),
+      base: raw.posts
+        .filter((p) => p.thread_id === t.id)
+        .map((p) => ({
+          id: p.id,
+          autor: p.autor,
+          rol: p.rol,
+          texto: p.texto,
+          cuando: p.cuando_demo ?? timeAgo(p.created_at, now),
+          parent: p.parent_id ?? undefined,
+        })),
+    }
+  })
 }
 
 // ───────── Anuncios ─────────
@@ -503,46 +308,18 @@ export interface Announcement {
   nuevo: boolean
 }
 
-export function announcementsOf(id: string, docente: string): Announcement[] {
+export function announcementsOf(raw: RawCourse): Announcement[] {
   const today = startOfDay(new Date())
-  const pc2 = evaluationsOf(id).find((e) => e.id === 'pc2')
-  return [
-    {
-      id: `${id}-a5`,
-      titulo: `Recordatorio: ${pc2?.nombre}`,
-      texto: `Esta semana se rinde la ${pc2?.nombre?.toLowerCase()}. Revisen el material hasta la semana ${CURRENT_WEEK} y lleguen 10 minutos antes. Pueden consultar sus dudas en el foro de la semana.`,
-      fecha: addDays(today, -1),
-      nuevo: true,
-    },
-    {
-      id: `${id}-a4`,
-      titulo: 'Cambio en el horario de asesoría',
-      texto: `Esta semana la asesoría con ${docente} se realizará por Zoom. El enlace y el código de acceso están en la pestaña Zoom del curso.`,
-      fecha: addDays(today, -3),
-      nuevo: true,
-    },
-    {
-      id: `${id}-a3`,
-      titulo: 'Resultados del examen parcial',
-      texto: 'Ya están publicadas las notas del examen parcial. Quienes deseen revisar su evaluación pueden solicitar una cita durante la asesoría.',
-      fecha: addDays(weekRange(10).start, 2),
-      nuevo: false,
-    },
-    {
-      id: `${id}-a2`,
-      titulo: 'Material complementario disponible',
-      texto: 'Se agregó lectura complementaria a las semanas 4 a 6. No es obligatoria, pero ayuda a profundizar los temas de las prácticas.',
-      fecha: addDays(weekRange(5).start, 1),
-      nuevo: false,
-    },
-    {
-      id: `${id}-a1`,
-      titulo: 'Bienvenida al curso',
-      texto: 'Les doy la bienvenida al ciclo. En el sílabo encontrarán la sumilla, el sistema de evaluación y el cronograma. Cualquier duda, escríbanme por el foro general.',
-      fecha: addDays(weekRange(1).start, 0),
-      nuevo: false,
-    },
-  ]
+  return raw.announcements.map((a) => ({
+    id: a.id,
+    titulo: a.titulo,
+    texto: a.texto,
+    nuevo: a.nuevo,
+    fecha:
+      a.hace_dias !== null
+        ? addDays(today, -a.hace_dias)
+        : addDays(weekRange(a.semana ?? 1, raw.term.semanaActual).start, a.dia ?? 0),
+  }))
 }
 
 // ───────── Zoom ─────────
@@ -554,24 +331,23 @@ export interface ZoomSession {
   tipo: string
 }
 
-export function zoomInfo(id: string) {
-  const h = hash(`zoom|${id}`)
-  const meetingId = `8${String(h % 1_000_000_000).padStart(9, '0')}`
+export function zoomInfo(raw: RawCourse) {
+  const id = raw.zoom.meetingId
   return {
-    meetingId,
-    meetingIdSpaced: `${meetingId.slice(0, 3)} ${meetingId.slice(3, 7)} ${meetingId.slice(7)}`,
-    passcode: String(100000 + (hash(`pass|${id}`) % 900000)),
-    url: `https://utpvirtual.zoom.us/j/${meetingId}`,
+    meetingId: id,
+    meetingIdSpaced: `${id.slice(0, 3)} ${id.slice(3, 7)} ${id.slice(7)}`,
+    passcode: raw.zoom.passcode,
+    url: raw.zoom.url,
   }
 }
 
 /** Próximas sesiones de Zoom a partir de ahora. */
-export function upcomingZoom(id: string, now: Date, count = 4): ZoomSession[] {
+export function upcomingZoom(raw: RawCourse, now: Date, count = 4): ZoomSession[] {
   const sessions: ZoomSession[] = []
   const start = startOfDay(now)
   for (let i = 0; i < 28 && sessions.length < count; i++) {
     const d = addDays(start, i)
-    for (const z of metaOf(id).zoom) {
+    for (const z of raw.meta.zoom) {
       if (d.getDay() !== z.dow) continue
       const end = new Date(`${toISO(d)}T${z.fin}:00`)
       if (end.getTime() > now.getTime()) sessions.push({ fecha: toISO(d), inicio: z.inicio, fin: z.fin, tipo: z.tipo })
@@ -580,11 +356,12 @@ export function upcomingZoom(id: string, now: Date, count = 4): ZoomSession[] {
   return sessions.slice(0, count)
 }
 
-export function recordingsOf(id: string) {
-  return [CURRENT_WEEK - 1, CURRENT_WEEK - 2, CURRENT_WEEK - 3].map((n) => ({
-    id: `${id}-rec${n}`,
-    titulo: `Sesión de la semana ${n} — ${topicOf(id, n)}`,
-    duracion: `${70 + (hash(`${id}rec${n}`) % 35)} min`,
+export function recordingsOf(raw: RawCourse) {
+  const current = raw.term.semanaActual
+  return [current - 1, current - 2, current - 3].map((n) => ({
+    id: `${raw.id}-rec${n}`,
+    titulo: `Sesión de la semana ${n} — ${topicOf(raw, n)}`,
+    duracion: `${70 + (hash(`${raw.id}rec${n}`) % 35)} min`,
   }))
 }
 
@@ -596,11 +373,12 @@ export interface Unit {
   temas: string[]
 }
 
-export function unitsOf(id: string): Unit[] {
+export function unitsOf(raw: RawCourse): Unit[] {
+  const total = raw.term.semanasTotal
   const range = (a: number, b: number) =>
     Array.from({ length: b - a + 1 }, (_, i) => a + i)
-      .filter((n) => n !== 9 && n !== TOTAL_WEEKS)
-      .map((n) => topicOf(id, n))
+      .filter((n) => n !== 9 && n !== total)
+      .map((n) => topicOf(raw, n))
   return [
     { nombre: 'Unidad 1', semanas: 'Semanas 1 a 4', temas: range(1, 4) },
     { nombre: 'Unidad 2', semanas: 'Semanas 5 a 9', temas: [...range(5, 8), 'Examen parcial'] },
@@ -610,12 +388,12 @@ export function unitsOf(id: string): Unit[] {
 }
 
 /** Texto plano del sílabo para descargar. */
-export function syllabusText(course: Course): string {
-  const m = metaOf(course.id)
-  const evals = evaluationsOf(course.id)
+export function syllabusText(course: Course, raw: RawCourse): string {
+  const m = raw.meta
+  const evals = evaluationsOf(raw)
   const lines = [
     `SÍLABO — ${course.nombre.toUpperCase()}`,
-    `Código: ${m.codigo} · ${course.creditos} créditos · ${course.modalidad} · Ciclo ${cycle.nombre.replace('Ciclo ', '')}`,
+    `Código: ${m.codigo} · ${course.creditos} créditos · ${course.modalidad} · Ciclo ${raw.term.nombre.replace('Ciclo ', '')}`,
     `Docente: ${course.docente}`,
     '',
     'SUMILLA',
@@ -628,7 +406,7 @@ export function syllabusText(course: Course): string {
     m.metodologia,
     '',
     'UNIDADES DE APRENDIZAJE',
-    ...unitsOf(course.id).flatMap((u) => [`${u.nombre} (${u.semanas})`, ...u.temas.map((t) => `  - ${t}`)]),
+    ...unitsOf(raw).flatMap((u) => [`${u.nombre} (${u.semanas})`, ...u.temas.map((t) => `  - ${t}`)]),
     '',
     'SISTEMA DE EVALUACIÓN',
     ...evals.map((e) => `  - ${e.nombre} (semana ${e.semana}): ${e.peso}%`),

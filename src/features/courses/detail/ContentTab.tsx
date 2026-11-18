@@ -1,18 +1,15 @@
 import { useMemo, useState } from 'react'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
-import type { Course } from '../coursesData'
 import {
-  CURRENT_WEEK,
-  TOTAL_WEEKS,
   forumTitle,
-  metaOf,
   pad2,
   rangeLabel,
   weeksOf,
   type Material,
   type MaterialKind,
 } from './courseContent'
+import { useRaw } from './useCourseRaw'
 import type { CourseStateApi } from './useCourseState'
 
 const KIND_ICON: Record<MaterialKind, string> = {
@@ -22,15 +19,17 @@ const KIND_ICON: Record<MaterialKind, string> = {
 }
 
 interface ContentTabProps {
-  course: Course
   state: CourseStateApi
   /** Abre el foro de consultas de una semana (pestaña Foros). */
   onOpenForum: (week: number) => void
 }
 
-export default function ContentTab({ course, state, onOpenForum }: ContentTabProps) {
-  const meta = metaOf(course.id)
-  const weeks = useMemo(() => weeksOf(course.id), [course.id])
+export default function ContentTab({ state, onOpenForum }: ContentTabProps) {
+  const raw = useRaw()
+  const meta = raw.meta
+  const CURRENT_WEEK = raw.term.semanaActual
+  const TOTAL_WEEKS = raw.term.semanasTotal
+  const weeks = useMemo(() => weeksOf(raw), [raw])
   const [open, setOpen] = useState<Set<number>>(new Set([CURRENT_WEEK]))
   const [openContent, setOpenContent] = useState<Set<number>>(new Set([CURRENT_WEEK]))
 

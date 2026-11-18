@@ -6,15 +6,18 @@ import { dayCompact, parseISO, relativeDay, startOfDay } from '@/lib/date'
 import { buildIcs, downloadIcs } from '@/lib/ics'
 import type { Course } from '../coursesData'
 import { recordingsOf, upcomingZoom, zoomInfo, type ZoomSession } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 
 const at = (s: ZoomSession, hhmm: string) => new Date(`${s.fecha}T${hhmm}:00`)
 
 export default function ZoomTab({ course }: { course: Course }) {
   const { show } = useToast()
   const now = useNow(30000)
-  const info = useMemo(() => zoomInfo(course.id), [course.id])
-  const sessions = useMemo(() => upcomingZoom(course.id, now), [course.id, now])
-  const recs = useMemo(() => recordingsOf(course.id), [course.id])
+  const raw = useRaw()
+  const info = useMemo(() => zoomInfo(raw), [raw])
+  const sessions = useMemo(() => upcomingZoom(raw, now), [raw, now])
+  const recs = useMemo(() => recordingsOf(raw), [raw])
   const next = sessions[0]
 
   const copy = async (label: string, value: string) => {

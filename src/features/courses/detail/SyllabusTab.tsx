@@ -2,18 +2,21 @@ import type { ReactNode } from 'react'
 import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { downloadText } from '@/lib/download'
-import { cycle, type Course } from '../coursesData'
-import { evaluationsOf, metaOf, syllabusText, unitsOf } from './courseContent'
+import type { Course } from '../coursesData'
+import { evaluationsOf, syllabusText, unitsOf } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 
 export default function SyllabusTab({ course }: { course: Course }) {
   const { show } = useToast()
-  const meta = metaOf(course.id)
-  const evals = evaluationsOf(course.id)
+  const raw = useRaw()
+  const meta = raw.meta
+  const evals = evaluationsOf(raw)
 
   const rows: [string, string][] = [
     ['Código', meta.codigo],
     ['Créditos', String(course.creditos)],
-    ['Periodo', cycle.nombre.replace('Ciclo ', '')],
+    ['Periodo', raw.term.nombre.replace('Ciclo ', '')],
     ['Modalidad', course.modalidad],
     ['Horas por semana', `${meta.horas} h`],
     ['Docente', course.docente],
@@ -42,7 +45,7 @@ export default function SyllabusTab({ course }: { course: Course }) {
 
       <Section title="Unidades de aprendizaje">
         <ol className="space-y-4">
-          {unitsOf(course.id).map((u) => (
+          {unitsOf(raw).map((u) => (
             <li key={u.nombre}>
               <div className="flex items-baseline justify-between">
                 <h3 className="text-sm font-bold text-ink">{u.nombre}</h3>
@@ -85,7 +88,7 @@ export default function SyllabusTab({ course }: { course: Course }) {
       <button
         type="button"
         onClick={() => {
-          downloadText(`silabo-${course.id}.txt`, syllabusText(course))
+          downloadText(`silabo-${course.id}.txt`, syllabusText(course, raw))
           show('Sílabo descargado', 'download')
         }}
         className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-white"

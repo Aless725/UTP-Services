@@ -3,6 +3,8 @@ import Chip from '@/components/ui/Chip'
 import Icon from '@/components/ui/Icon'
 import type { Course } from '../coursesData'
 import { PASS_GRADE, evaluationsOf, summarize } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 
 const f = (n: number) => n.toFixed(2)
 const GOALS = [PASS_GRADE, 14, 16, 18]
@@ -13,8 +15,9 @@ function parseGrade(raw: string): number | null {
   return raw.trim() !== '' && Number.isFinite(n) && n >= 0 && n <= 20 ? n : null
 }
 
-export default function GradesTab({ course }: { course: Course }) {
-  const evals = useMemo(() => evaluationsOf(course.id), [course.id])
+export default function GradesTab(_props: { course: Course }) {
+  const raw = useRaw()
+  const evals = useMemo(() => evaluationsOf(raw), [raw])
   const sum = useMemo(() => summarize(evals), [evals])
 
   return (

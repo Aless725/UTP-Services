@@ -3,18 +3,17 @@ import BottomSheet from '@/components/ui/BottomSheet'
 import Chip from '@/components/ui/Chip'
 import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
-import { useAuth } from '@/features/auth/AuthContext'
-import { STUDENTS, initialsOf } from '@/features/reservations/spacesData'
+import { initialsOf } from '@/features/reservations/spacesData'
 import { useNow } from '@/hooks/useNow'
 import { diffDays, startOfDay } from '@/lib/date'
-import type { Course } from '../coursesData'
 import { rangeLabel, threadsOf, type Post, type Thread } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 import type { CourseStateApi } from './useCourseState'
 
 type Filter = 'abiertos' | 'calificados' | 'todos'
 
 interface ForumsTabProps {
-  course: Course
   state: CourseStateApi
   /** Foro que se abre al entrar (viene del contenido de una semana). */
   initialThread?: string | null
@@ -32,14 +31,15 @@ function availability(t: Thread, now: Date): { text: string; tone: 'ok' | 'off' 
   return { text: d <= 0 ? 'Cierra hoy' : d === 1 ? 'Cierra mañana' : `Cierra en ${d} días`, tone: 'ok' }
 }
 
-export default function ForumsTab({ course, state, initialThread = null }: ForumsTabProps) {
+export default function ForumsTab({ state, initialThread = null }: ForumsTabProps) {
   const now = useNow(60000)
-  const threads = useMemo(() => threadsOf(course.id, course.docente, now), [course.id, course.docente, now])
+  const raw = useRaw()
+  const threads = useMemo(() => threadsOf(raw, now), [raw, now])
   const [filter, setFilter] = useState<Filter>(initialThread ? 'todos' : 'abiertos')
   const [openId, setOpenId] = useState<string | null>(initialThread)
   const current = threads.find((t) => t.id === openId) ?? null
 
-  const total = (t: Thread) => t.base.length + (state.posts[t.id]?.length ?? 0)
+  const total = (t: Thread) => t.base.length
   const visible = threads.filter((t) =>
     filter === 'abiertos' ? t.estado === 'abierto' : filter === 'calificados' ? t.tipo === 'calificado' : true,
   )
@@ -132,7 +132,6 @@ function ThreadSheet({
   onClose: () => void
   state: CourseStateApi
 }) {
-  const { session } = useAuth()
   const { show } = useToast()
   const [text, setText] = useState('')
   const [replyTo, setReplyTo] = useState<Post | null>(null)
@@ -141,29 +140,28 @@ function ThreadSheet({
   if (thread && thread !== last) setLast(thread)
   const t = thread ?? last
 
-  const autor = session ? (STUDENTS[session.codigo] ?? session.nombre) : 'Estudiante'
-  const mine: Post[] = t ? (state.posts[t.id] ?? []).map((p, i) => ({ ...p, id: p.id ?? `${t.id}-u${i}` })) : []
-  const all = t ? [...t.base, ...mine] : []
+  const all: Post[] = t ? t.base : []
   const roots = all.filter((p) => !p.parent)
   const repliesOf = (id: string) => all.filter((p) => p.parent === id)
   const canPost = !!t && t.estado === 'abierto'
   const av = t ? availability(t, now) : null
 
-  const publish = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false)
+
+  const publish = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!t || text.trim().length < 2) return
-    const d = new Date()
-    state.addPost(t.id, {
-      id: `${t.id}-u${Date.now().toString(36)}`,
-      autor,
-      rol: 'Estudiante',
-      texto: text.trim(),
-      cuando: `Hoy, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
-      parent: replyTo?.id,
-    })
-    setText('')
-    setReplyTo(null)
-    show(replyTo ? 'Respuesta publicada' : 'Comentario publicado', 'send')
+    if (!t || sending || text.trim().length < 2) return
+    setSending(true)
+    try {
+      await state.addPost(t.id, { texto: text.trim(), parent: replyTo?.id })
+      setText('')
+      setReplyTo(null)
+      show(replyTo ? 'Respuesta publicada' : 'Comentario publicado', 'send')
+    } catch {
+      show('No pudimos publicar tu comentario. Inténtalo de nuevo.', 'error')
+    } finally {
+      setSending(false)
+    }
   }
 
   const close = () => {

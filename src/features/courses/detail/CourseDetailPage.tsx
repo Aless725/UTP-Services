@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import FlowHeader from '@/components/layout/FlowHeader'
 import Icon from '@/components/ui/Icon'
-import { courses, type Course } from '../coursesData'
+import PageLoading from '@/components/ui/PageLoading'
+import type { Course } from '../coursesData'
+import { useCourses } from '../useCourses'
 import AnnouncementsTab from './AnnouncementsTab'
 import ContentTab from './ContentTab'
 import EvaluationsTab from './EvaluationsTab'
@@ -13,29 +15,54 @@ import TasksTab from './TasksTab'
 import ZoomTab from './ZoomTab'
 import { announcementsOf, tasksOf } from './courseContent'
 import { useCourseState } from './useCourseState'
+import { CourseRawContext, useCourseRaw, useRaw } from './useCourseRaw'
 
 type TabId = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'foros' | 'notas' | 'anuncios' | 'zoom'
 
 export default function CourseDetailPage() {
   const { id } = useParams()
-  const course = courses.find((c) => c.id === id)
+  const courses = useCourses()
+  const course = courses.data?.courses.find((c) => c.id === id)
+  const { raw, isLoading, isError, refetch } = useCourseRaw(course?.id ?? '', courses.data?.cycle)
+
+  if (courses.isLoading) return <PageLoading />
   if (!course) return <Navigate to="/cursos" replace />
+  if (isError) {
+    return (
+      <div className="px-5 pt-[max(env(safe-area-inset-top),20px)]">
+        <FlowHeader title={course.nombre} back="/cursos" backLabel="Volver a cursos" />
+        <div role="alert" className="mt-6 rounded-card bg-card p-5 text-center shadow-card">
+          <Icon name="cloud_off" size={28} className="text-ink-faint" />
+          <p className="mt-1 text-sm font-medium text-ink">No pudimos cargar el curso</p>
+          <button type="button" onClick={() => refetch()} className="pressable mt-2 min-h-11 text-sm font-semibold text-primary">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+  if (isLoading || !raw) return <PageLoading />
   // La clave reinicia el estado al pasar de un curso a otro.
-  return <CourseDetail key={course.id} course={course} />
+  return (
+    <CourseRawContext.Provider value={raw}>
+      <CourseDetail key={course.id} course={course} />
+    </CourseRawContext.Provider>
+  )
 }
 
 function CourseDetail({ course }: { course: Course }) {
   const [tab, setTab] = useState<TabId>('contenido')
   const [forumWeek, setForumWeek] = useState<number | null>(null)
   const state = useCourseState(course.id)
+  const raw = useRaw()
 
   const pendingTasks = useMemo(
-    () => tasksOf(course.id).filter((t) => !t.entregadaDemo && !state.entregas[t.id]).length,
-    [course.id, state.entregas],
+    () => tasksOf(raw).filter((t) => !state.entregas[t.id]).length,
+    [raw, state.entregas],
   )
   const unread = useMemo(
-    () => announcementsOf(course.id, course.docente).filter((a) => a.nuevo && !state.leidos.includes(a.id)).length,
-    [course.id, course.docente, state.leidos],
+    () => announcementsOf(raw).filter((a) => a.nuevo && !state.leidos.includes(a.id)).length,
+    [raw, state.leidos],
   )
 
   const tabs: { id: TabId; label: string; icon: string; badge?: number }[] = [
@@ -99,12 +126,11 @@ function CourseDetail({ course }: { course: Course }) {
 
       <div key={tab} className="animate-rise px-5 pt-4" role="tabpanel">
         {tab === 'silabo' && <SyllabusTab course={course} />}
-        {tab === 'contenido' && <ContentTab course={course} state={state} onOpenForum={openForum} />}
+        {tab === 'contenido' && <ContentTab state={state} onOpenForum={openForum} />}
         {tab === 'evaluaciones' && <EvaluationsTab course={course} />}
-        {tab === 'tareas' && <TasksTab course={course} state={state} />}
+        {tab === 'tareas' && <TasksTab state={state} />}
         {tab === 'foros' && (
           <ForumsTab
-            course={course}
             state={state}
             initialThread={forumWeek ? `${course.id}-f${forumWeek}` : null}
           />

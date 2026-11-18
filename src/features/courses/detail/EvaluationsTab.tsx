@@ -5,11 +5,14 @@ import Icon from '@/components/ui/Icon'
 import { dayCompact } from '@/lib/date'
 import type { Course } from '../coursesData'
 import { evaluationsOf } from './courseContent'
+import { useRaw } from './useCourseRaw'
+
 
 type Filter = 'todas' | 'calificadas' | 'pendientes'
 
-export default function EvaluationsTab({ course }: { course: Course }) {
-  const evals = useMemo(() => evaluationsOf(course.id), [course.id])
+export default function EvaluationsTab(_props: { course: Course }) {
+  const raw = useRaw()
+  const evals = useMemo(() => evaluationsOf(raw), [raw])
   const [filter, setFilter] = useState<Filter>('todas')
 
   const graded = evals.filter((e) => e.estado === 'calificada')
