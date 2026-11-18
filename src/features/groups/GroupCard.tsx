@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useShell } from '@/components/layout/ShellContext'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
 import { dayShort, parseISO } from '@/lib/date'
@@ -12,11 +13,14 @@ interface GroupCardProps {
 }
 
 export default function GroupCard({ group: g, role, showDetails }: GroupCardProps) {
+  const { detailPath } = useShell()
+  const selected = detailPath === `/grupos/${g.id}`
   const place = g.modalidad === 'Virtual' ? g.plataforma : g.lugar
   return (
     <Link
       to={`/grupos/${g.id}`}
-      className="pressable block rounded-card bg-card p-3.5 shadow-card"
+      className={`pressable block rounded-card bg-card p-3.5 shadow-card ${selected ? 'ring-2 ring-primary' : ''}`}
+      aria-current={selected ? 'page' : undefined}
       aria-label={`${g.curso}, ${g.tema}`}
     >
       <div className="flex items-center justify-between">

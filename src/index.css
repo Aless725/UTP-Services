@@ -244,3 +244,37 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ───────── Distribución para tableta y doble pantalla ───────── */
+
+/* Los avisos se centran en el panel izquierdo, donde está la barra inferior. */
+[data-layout='wide'] .toast-host {
+  right: auto;
+  width: 400px;
+}
+[data-layout='dual'] .toast-host {
+  right: calc(50% + 12px);
+}
+
+/*
+ * Equipos de doble pantalla reales (CSS Viewport Segments): cada panel ocupa
+ * exactamente una pantalla y la bisagra queda vacía.
+ */
+@media (horizontal-viewport-segments: 2) {
+  [data-layout='dual'] .dual-left {
+    flex: none;
+    width: env(viewport-segment-width 0 0);
+  }
+  [data-layout='dual'] .dual-hinge {
+    flex: none;
+    width: calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0));
+  }
+  [data-layout='dual'] .dual-right {
+    flex: none;
+    width: env(viewport-segment-width 1 0);
+  }
+  [data-layout='dual'] .toast-host {
+    right: auto;
+    width: env(viewport-segment-width 0 0);
+  }
+}

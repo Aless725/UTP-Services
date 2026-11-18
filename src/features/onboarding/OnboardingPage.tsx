@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
 import { markOnboardingSeen } from '@/lib/storage'
 import Illustration from './Illustrations'
@@ -7,6 +8,7 @@ import { slides } from './slides'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
+  const fromLogin = (useLocation().state as { from?: string } | null)?.from === 'login'
   const [index, setIndex] = useState(0)
   const touchX = useRef<number | null>(null)
   const [drag, setDrag] = useState(0)
@@ -53,7 +55,8 @@ export default function OnboardingPage() {
         if (e.key === 'ArrowLeft') prev()
       }}
     >
-      <header className="flex justify-end px-6 pt-5">
+      <header className="flex items-center justify-between px-5 pt-5">
+        {fromLogin ? <BackButton to="/login" label="Volver al inicio de sesión" /> : <span />}
         <button
           type="button"
           onClick={finish}

@@ -38,7 +38,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <AuthLayout>
+      <AuthLayout back={{ to: '/onboarding', state: { from: 'login' }, label: 'Ver introducción' }}>
         <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col">
           <AuthHeading title="Accede" subtitle="Ingresando tus datos de alumno" />
 

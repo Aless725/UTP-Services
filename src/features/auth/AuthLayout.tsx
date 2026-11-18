@@ -1,14 +1,28 @@
 import type { ReactNode } from 'react'
+import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
 import Logo from '@/components/ui/Logo'
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+interface AuthLayoutProps {
+  children: ReactNode
+  /** Botón circular de regreso en la esquina superior izquierda. */
+  back?: { to: string; label: string; state?: unknown }
+}
+
+export default function AuthLayout({ children, back }: AuthLayoutProps) {
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-surface px-6 pb-8 pt-24">
-      <div className="flex justify-center">
-        <Logo size="md" />
+    <div className="relative h-full bg-surface">
+      {back && (
+        <div className="absolute left-5 top-[max(env(safe-area-inset-top),20px)] z-10">
+          <BackButton to={back.to} state={back.state} label={back.label} />
+        </div>
+      )}
+      <div className="flex h-full flex-col overflow-y-auto px-6 pb-8 pt-24">
+        <div className="flex justify-center">
+          <Logo size="md" />
+        </div>
+        <div className="mt-16 flex flex-1 flex-col">{children}</div>
       </div>
-      <div className="mt-16 flex flex-1 flex-col">{children}</div>
     </div>
   )
 }

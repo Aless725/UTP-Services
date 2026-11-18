@@ -1,7 +1,14 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useRef } from 'react'
+import { Navigate, Route, Routes, useLocation, type Location } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
-import MobileFrame from '@/components/layout/MobileFrame'
+import AppShell from '@/components/layout/AppShell'
+import { DeviceProvider, useDevice } from '@/components/layout/DeviceContext'
+import DetailLayout from '@/components/layout/DetailLayout'
+import { BrandPane, EmptyDetail } from '@/components/layout/PaneFallbacks'
+import { ShellContext } from '@/components/layout/ShellContext'
+import TwoPane from '@/components/layout/TwoPane'
 import { ToastProvider } from '@/components/ui/Toast'
+import { companionFor, isAppPath, isDetailPath, masterFor, type MasterLocation } from '@/lib/routeSplit'
 import SplashPage from '@/features/onboarding/SplashPage'
 import OnboardingPage from '@/features/onboarding/OnboardingPage'
 import LoginPage from '@/features/auth/LoginPage'
@@ -22,40 +29,93 @@ import ComingSoonPage from '@/features/more/ComingSoonPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
 
+/** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
+const detailRoutes = (
+  <>
+    <Route path="/grupos/nuevo" element={<CreateGroupPage />} />
+    <Route path="/grupos/creado/:id" element={<GroupCreatedPage />} />
+    <Route path="/grupos/:id" element={<GroupDetailPage />} />
+    <Route path="/perfil/accesibilidad" element={<AccessibilityPage />} />
+    <Route path="/mas/:slug" element={<ComingSoonPage />} />
+  </>
+)
+
+function AppRoutes({ location }: { location?: Partial<Location> }) {
+  return (
+    <Routes location={location}>
+      <Route path="/" element={<SplashPage />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/recuperar" element={<ForgotPasswordPage />} />
+      <Route path="/recuperar/enviado" element={<EmailSentPage />} />
+      <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
+      <Route path="/contrasena-actualizada" element={<PasswordUpdatedPage />} />
+      <Route
+        element={
+          <RequireAuth>
+            <AppLayout />
+          </RequireAuth>
+        }
+      >
+        <Route path="/inicio" element={<HomePage />} />
+        <Route path="/calendario" element={<CalendarPage />} />
+        <Route path="/cursos" element={<CoursesPage />} />
+        <Route path="/pagos" element={<PaymentsPage />} />
+        <Route path="/grupos" element={<GroupsPage />} />
+        <Route path="/perfil" element={<ProfilePage />} />
+        {detailRoutes}
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+/** Decide si se muestra un panel o dos, y qué va en cada uno. */
+function Panes() {
+  const { mode } = useDevice()
+  const location = useLocation()
+  const lastMaster = useRef<MasterLocation | null>(null)
+  const { pathname, search } = location
+
+  const app = isAppPath(pathname)
+  const detail = isDetailPath(pathname)
+  if (app && !detail) lastMaster.current = { pathname, search }
+
+  // Un panel (celular) y pantalla de inicio (splash) a todo el ancho.
+  if (mode === 'phone' || pathname === '/') return <AppRoutes />
+
+  // Acceso y onboarding: formulario a la izquierda, marca a la derecha.
+  if (!app) return <TwoPane left={<AppRoutes />} right={<BrandPane />} />
+
+  const master = detail ? masterFor(pathname, lastMaster.current) : { pathname, search }
+  const detailPath = detail ? pathname : null
+  const companion = detailPath ? null : companionFor(master.pathname)
+
+  const right = detailPath ? (
+    <Routes location={{ pathname: detailPath }}>
+      <Route element={<DetailLayout />}>{detailRoutes}</Route>
+    </Routes>
+  ) : companion ? (
+    <DetailLayout id={companion}>{companion === 'calendario' ? <CalendarPage /> : <CoursesPage />}</DetailLayout>
+  ) : (
+    <EmptyDetail />
+  )
+
+  return (
+    <ShellContext.Provider value={{ detailPath }}>
+      <TwoPane left={<AppRoutes location={master} />} right={right} />
+    </ShellContext.Provider>
+  )
+}
+
 export default function App() {
   return (
-    <MobileFrame>
-      <ToastProvider>
-        <Routes>
-          <Route path="/" element={<SplashPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/recuperar" element={<ForgotPasswordPage />} />
-          <Route path="/recuperar/enviado" element={<EmailSentPage />} />
-          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
-          <Route path="/contrasena-actualizada" element={<PasswordUpdatedPage />} />
-          <Route
-            element={
-              <RequireAuth>
-                <AppLayout />
-              </RequireAuth>
-            }
-          >
-            <Route path="/inicio" element={<HomePage />} />
-            <Route path="/calendario" element={<CalendarPage />} />
-            <Route path="/cursos" element={<CoursesPage />} />
-            <Route path="/pagos" element={<PaymentsPage />} />
-            <Route path="/grupos" element={<GroupsPage />} />
-            <Route path="/grupos/nuevo" element={<CreateGroupPage />} />
-            <Route path="/grupos/creado/:id" element={<GroupCreatedPage />} />
-            <Route path="/grupos/:id" element={<GroupDetailPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
-            <Route path="/perfil/accesibilidad" element={<AccessibilityPage />} />
-            <Route path="/mas/:slug" element={<ComingSoonPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </ToastProvider>
-    </MobileFrame>
+    <DeviceProvider>
+      <AppShell>
+        <ToastProvider>
+          <Panes />
+        </ToastProvider>
+      </AppShell>
+    </DeviceProvider>
   )
 }
