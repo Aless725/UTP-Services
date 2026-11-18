@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import Icon from './Icon'
 
 interface ModalProps {
@@ -11,6 +11,8 @@ interface ModalProps {
   onAction?: () => void
   secondaryLabel?: string
   onSecondary?: () => void
+  actionIcon?: string
+  children?: ReactNode
 }
 
 /** Diálogo centrado sobre un fondo atenuado. Se renderiza dentro del marco móvil. */
@@ -23,6 +25,8 @@ export default function Modal({
   onAction,
   secondaryLabel,
   onSecondary,
+  actionIcon,
+  children,
 }: ModalProps) {
   const btn = useRef<HTMLButtonElement>(null)
 
@@ -44,13 +48,15 @@ export default function Modal({
         </div>
         <h2 className="mt-3 text-base font-bold text-ink">{title}</h2>
         {description && <p className="mt-2 text-xs leading-relaxed text-ink-muted">{description}</p>}
+        {children}
         {actionLabel && (
           <button
             ref={btn}
             type="button"
             onClick={onAction}
-            className="pressable mt-4 min-h-11 w-full rounded-full bg-primary text-sm font-semibold text-white active:bg-primary-dark"
+            className="pressable mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-white active:bg-primary-dark"
           >
+            {actionIcon && <Icon name={actionIcon} size={18} />}
             {actionLabel}
           </button>
         )}

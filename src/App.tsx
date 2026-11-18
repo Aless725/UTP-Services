@@ -14,6 +14,10 @@ import HomePage from '@/features/home/HomePage'
 import CalendarPage from '@/features/calendar/CalendarPage'
 import CoursesPage from '@/features/courses/CoursesPage'
 import PaymentsPage from '@/features/payments/PaymentsPage'
+import GroupsPage from '@/features/groups/GroupsPage'
+import CreateGroupPage from '@/features/groups/CreateGroupPage'
+import GroupCreatedPage from '@/features/groups/GroupCreatedPage'
+import GroupDetailPage from '@/features/groups/GroupDetailPage'
 import ComingSoonPage from '@/features/more/ComingSoonPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
@@ -41,6 +45,10 @@ export default function App() {
             <Route path="/calendario" element={<CalendarPage />} />
             <Route path="/cursos" element={<CoursesPage />} />
             <Route path="/pagos" element={<PaymentsPage />} />
+            <Route path="/grupos" element={<GroupsPage />} />
+            <Route path="/grupos/nuevo" element={<CreateGroupPage />} />
+            <Route path="/grupos/creado/:id" element={<GroupCreatedPage />} />
+            <Route path="/grupos/:id" element={<GroupDetailPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/perfil/accesibilidad" element={<AccessibilityPage />} />
             <Route path="/mas/:slug" element={<ComingSoonPage />} />

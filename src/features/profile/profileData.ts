@@ -125,3 +125,11 @@ export function resizeAvatar(file: File): Promise<string> {
     img.src = url
   })
 }
+
+/** Cuentas de demo con tratamiento femenino (para "organizadora", "incluida"). */
+const FEMENINO = new Set(['U22265137', 'U22693560'])
+
+/** Devuelve la palabra en femenino o masculino según la cuenta. */
+export function genero(codigo: string, f: string, m: string): string {
+  return FEMENINO.has(codigo) ? f : m
+}

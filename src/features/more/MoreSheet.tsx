@@ -15,7 +15,7 @@ export default function MoreSheet({ open, onClose }: { open: boolean; onClose: (
               type="button"
               onClick={() => {
                 onClose()
-                navigate(`/mas/${item.slug}`)
+                navigate(item.to ?? `/mas/${item.slug}`)
               }}
               className="pressable flex min-h-12 w-full items-center gap-3 rounded-xl py-1.5 text-left active:bg-surface"
             >

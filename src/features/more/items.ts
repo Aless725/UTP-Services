@@ -1,5 +1,7 @@
 export interface MoreItem {
   slug: string
+  /** Ruta propia si el flujo ya está construido. */
+  to?: string
   label: string
   icon: string
 }
@@ -11,7 +13,7 @@ export const moreItems: MoreItem[] = [
   { slug: 'biblioteca', label: 'Biblioteca', icon: 'menu_book' },
   { slug: 'reserva-de-equipos', label: 'Reserva de equipos', icon: 'event_available' },
   { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'folder_open' },
-  { slug: 'grupos', label: 'Grupos', icon: 'group' },
+  { slug: 'grupos', label: 'Grupos', icon: 'group', to: '/grupos' },
   { slug: 'espacios', label: 'Espacios', icon: 'location_on' },
   { slug: 'beneficios', label: 'Beneficios', icon: 'sell' },
 ]
