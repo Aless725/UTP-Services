@@ -46,13 +46,22 @@ export default function BottomSheet({ open, onClose, title, children, floating }
     return () => clearTimeout(t)
   }, [open, mounted])
 
+  // El cierre se lee desde una referencia: así un onClose nuevo en cada render (típico al escribir
+  // en un campo dentro de la hoja) no vuelve a enfocar el botón ni quita el teclado.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  // Foco inicial solo al abrir (cuando el contenido ya está montado).
+  useEffect(() => {
+    if (open && mounted) closeBtn.current?.focus()
+  }, [open, mounted])
+
   useEffect(() => {
     if (!open) return
-    closeBtn.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCloseRef.current()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open])
 
   // ── Arrastre: solo transform, sin re-render por cada movimiento ──
   const onDown = (e: ReactPointerEvent) => {
