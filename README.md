@@ -23,7 +23,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Grupos de estudio (explorar, crear, unirse, mis grupos) | Listo |
 | Animaciones y transiciones suaves | Listo |
 | Diseño adaptable: celular, tableta, plegable y doble pantalla | Listo |
-| Reserva de espacios | En diseño |
+| Reserva de espacios (salas, PCs y cubículos, con QR y reglas de negocio) | Listo |
 | Biblioteca y Trámites | Pendiente |
 | Backend real (Supabase), PWA y asistente por voz con IA | Pendiente |
 
@@ -35,6 +35,7 @@ Por ahora la autenticación y los datos son **simulados en el navegador** (local
 - **Tailwind CSS** con tokens de diseño en variables CSS (temas, daltonismo y alto contraste)
 - **React Router** y **TanStack Query**
 - **Google Material Symbols** (íconos) y tipografía **Inter**
+- **qrcode** para generar los códigos QR de las reservas
 
 ## Cómo ejecutarlo
 
@@ -83,6 +84,9 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Acceso:** onboarding de 3 pasos, inicio de sesión con estados de carga, éxito y error, y recuperación de contraseña. Se puede ir y volver entre el login y el onboarding.
 - **Pantallas principales:** agenda del día, calendario mensual con filtros, cursos matriculados con avance de malla y pagos con un pago simulado.
 - **Grupos de estudio:** explorar y filtrar grupos, crear uno propio (presencial o virtual), unirse con confirmación y manejo de error sin conexión, descargar el evento al calendario (`.ics`) y compartir la invitación.
+- **Reserva de espacios** (menú *Más de UTP+ → Espacios*): buscar y filtrar salas grupales, PCs de biblioteca y cubículos por fecha y sede; elegir horario según la disponibilidad; agregar integrantes por código de alumno; confirmar con las normas; recibir un código `RES-AAAA-NNNN` con **QR real**; y ver, cancelar o descargar al calendario desde *Mis reservas*.
+  - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
+  - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
 - **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
@@ -117,6 +121,7 @@ src/
 │  ├─ onboarding/  ├─ auth/        ├─ home/
 │  ├─ calendar/    ├─ courses/     ├─ payments/
 │  ├─ groups/      ├─ profile/     ├─ accessibility/
+│  ├─ reservations/  # reserva de espacios (reglas en rules.ts)
 │  └─ more/        # menú Más de UTP+
 ├─ hooks/  lib/  types/
 docs/               # enunciado del curso y plantillas de usabilidad
@@ -125,12 +130,11 @@ supabase/           # migraciones (backend en preparación)
 
 ## Próximos pasos
 
-1. Reserva de espacios de punta a punta.
-2. Biblioteca y Trámites.
-3. Backend en Supabase (autenticación, base de datos con RLS y tiempo real).
-4. PWA instalable.
-5. Asistente por voz con IA que ejecute tareas con confirmación del alumno.
-6. Despliegue, guion de demo y evidencia de pruebas de usabilidad.
+1. Biblioteca y Trámites.
+2. Backend en Supabase (autenticación, base de datos con RLS y tiempo real), llevando allí las reglas de reserva.
+3. PWA instalable.
+4. Asistente por voz con IA que ejecute tareas con confirmación del alumno.
+5. Despliegue, guion de demo y evidencia de pruebas de usabilidad.
 
 ## Documentación
 

@@ -30,6 +30,10 @@ import ReservationsHome from '@/features/reservations/ReservationsHome'
 import SpaceListPage from '@/features/reservations/SpaceListPage'
 import SpaceDetailPage from '@/features/reservations/SpaceDetailPage'
 import SchedulePage from '@/features/reservations/SchedulePage'
+import MembersPage from '@/features/reservations/MembersPage'
+import ConfirmPage from '@/features/reservations/ConfirmPage'
+import ConfirmedPage from '@/features/reservations/ConfirmedPage'
+import MyReservationsPage from '@/features/reservations/MyReservationsPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
 
@@ -42,6 +46,9 @@ const detailRoutes = (
     <Route path="/perfil/accesibilidad" element={<AccessibilityPage />} />
     <Route path="/reservas/espacio/:id" element={<SpaceDetailPage />} />
     <Route path="/reservas/espacio/:id/horario" element={<SchedulePage />} />
+    <Route path="/reservas/espacio/:id/integrantes" element={<MembersPage />} />
+    <Route path="/reservas/espacio/:id/confirmar" element={<ConfirmPage />} />
+    <Route path="/reservas/confirmada/:codigo" element={<ConfirmedPage />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -70,6 +77,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/grupos" element={<GroupsPage />} />
         <Route path="/reservas" element={<ReservationsHome />} />
         <Route path="/reservas/lista/:tipo" element={<SpaceListPage />} />
+        <Route path="/reservas/mis" element={<MyReservationsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
         {detailRoutes}
       </Route>
