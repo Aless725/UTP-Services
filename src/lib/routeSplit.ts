@@ -8,8 +8,13 @@ export interface MasterLocation {
   search: string
 }
 
-const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas)(\/|$)/
-const DETAIL_PATH = [/^\/grupos\/[^/]+/, /^\/perfil\/accesibilidad\/?$/, /^\/mas\/[^/]+\/?$/]
+const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas)(\/|$)/
+const DETAIL_PATH = [
+  /^\/grupos\/[^/]+/,
+  /^\/perfil\/accesibilidad\/?$/,
+  /^\/mas\/[^/]+\/?$/,
+  /^\/reservas\/(espacio|confirmada)\//,
+]
 
 /** ¿Es una pantalla de la app (con sesión), no del acceso ni del onboarding? */
 export const isAppPath = (p: string) => APP_PATH.test(p)
@@ -24,6 +29,11 @@ export function masterFor(detail: string, last: MasterLocation | null): MasterLo
     return { pathname: '/grupos', search: last?.pathname === '/grupos' ? last.search : '' }
   }
   if (/^\/perfil/.test(detail)) return { pathname: '/perfil', search: '' }
+  if (/^\/reservas/.test(detail)) {
+    // Los pasos se abren junto a la pantalla de reservas desde donde se empezó.
+    const keep = last && /^\/reservas/.test(last.pathname) && !isDetailPath(last.pathname)
+    return keep ? last : { pathname: '/reservas', search: '' }
+  }
   // Opciones de "Más de UTP+": se abren junto a la pantalla desde donde se invocó el menú.
   if (last && !isDetailPath(last.pathname) && isAppPath(last.pathname)) return last
   return { pathname: '/inicio', search: '' }

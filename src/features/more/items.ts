@@ -14,7 +14,7 @@ export const moreItems: MoreItem[] = [
   { slug: 'reserva-de-equipos', label: 'Reserva de equipos', icon: 'event_available' },
   { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'folder_open' },
   { slug: 'grupos', label: 'Grupos', icon: 'group', to: '/grupos' },
-  { slug: 'espacios', label: 'Espacios', icon: 'location_on' },
+  { slug: 'espacios', label: 'Espacios', icon: 'location_on', to: '/reservas' },
   { slug: 'beneficios', label: 'Beneficios', icon: 'sell' },
 ]
 

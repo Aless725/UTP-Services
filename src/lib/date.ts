@@ -61,3 +61,42 @@ export const dayFull = (d: Date) =>
 /** "Miércoles, 18 nov. 2026" (campo de formulario) */
 export const dayField = (d: Date) =>
   `${WEEKDAY_LONG[d.getDay()]}, ${d.getDate()} ${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}`
+
+const WD_ABBR = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** "dom" */
+export const weekdayAbbr = (d: Date) => WD_ABBR[d.getDay()]
+/** "Dom" */
+export const weekdayAbbrCap = (d: Date) => cap1(WD_ABBR[d.getDay()])
+/** "nov" */
+export const monthAbbr = (d: Date) => MONTH_SHORT[d.getMonth()].replace('.', '')
+/** "Noviembre 2026" */
+export const monthTitle = (d: Date) => cap1(MONTH_LONG[d.getMonth()]) + ' ' + d.getFullYear()
+
+/** Diferencia en días de calendario (b menos a). */
+export const diffDays = (a: Date, b: Date) =>
+  Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000)
+
+/** "Hoy, dom 15 nov", "Mañana, lun 16 nov" o "Mié 18 nov" */
+export function humanDay(d: Date, today: Date): string {
+  const base = weekdayAbbr(d) + ' ' + d.getDate() + ' ' + monthAbbr(d)
+  const n = diffDays(today, d)
+  if (n === 0) return 'Hoy, ' + base
+  if (n === 1) return 'Mañana, ' + base
+  return cap1(base)
+}
+
+/** "Lun 16 nov" */
+export const dayCompact = (d: Date) => cap1(weekdayAbbr(d) + ' ' + d.getDate() + ' ' + monthAbbr(d))
+
+/** "Lun 16 nov 2026" */
+export const dayCompactYear = (d: Date) => dayCompact(d) + ' ' + d.getFullYear()
+
+/** "Hoy", "Mañana" o "En 3 días" */
+export function relativeDay(d: Date, today: Date): string {
+  const n = diffDays(today, d)
+  if (n <= 0) return 'Hoy'
+  if (n === 1) return 'Mañana'
+  return 'En ' + n + ' días'
+}

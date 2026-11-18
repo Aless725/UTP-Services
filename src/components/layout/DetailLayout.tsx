@@ -6,7 +6,7 @@ export default function DetailLayout({ children, id }: { children?: ReactNode; i
   const { pathname } = useLocation()
   return (
     <div className="no-scrollbar h-full overflow-y-auto overscroll-contain pb-8">
-      <div key={id ?? pathname} className="animate-page-forward mx-auto w-full max-w-[560px]">
+      <div key={id ?? pathname} className="animate-page-forward mx-auto flex min-h-full w-full max-w-[560px] flex-col">
         {children ?? <Outlet />}
       </div>
     </div>

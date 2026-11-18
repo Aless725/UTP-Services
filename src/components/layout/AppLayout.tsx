@@ -46,7 +46,7 @@ export default function AppLayout() {
         ref={scroller}
         className="no-scrollbar h-full overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+110px)]"
       >
-        <div key={pathname} className={animation}>
+        <div key={pathname} className={`flex min-h-full flex-col ${animation}`}>
           <Outlet />
         </div>
       </div>
