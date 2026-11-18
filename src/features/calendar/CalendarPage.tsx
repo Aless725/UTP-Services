@@ -4,7 +4,7 @@ import PageHeader from '@/components/layout/PageHeader'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
-import { courses } from '@/features/courses/coursesData'
+import { useCourseList } from '@/features/courses/useCourses'
 import { addDays, longDay, monthYear, sameDay, startOfDay } from '@/lib/date'
 import { eventsFor, hasHighlights, kindLabel, type CalEvent, type EventKind } from './calendarData'
 
@@ -35,6 +35,7 @@ export default function CalendarPage() {
   const [filter, setFilter] = useState<'todo' | EventKind>('todo')
   const [dir, setDir] = useState<1 | -1>(1)
 
+  const courses = useCourseList()
   const grid = useMemo(() => buildGrid(month), [month])
   const events = useMemo(
     () => eventsFor(selected).filter((e) => filter === 'todo' || e.kind === filter),

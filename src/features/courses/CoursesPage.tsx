@@ -4,12 +4,14 @@ import PageHeader from '@/components/layout/PageHeader'
 import CountUp from '@/components/ui/CountUp'
 import Icon from '@/components/ui/Icon'
 import SegmentedControl from '@/components/ui/SegmentedControl'
-import { academicInfo, courses, cycle, progress } from './coursesData'
+import Skeleton from '@/components/ui/Skeleton'
+import { useCourses, type CoursesData } from './useCourses'
 
 type Tab = 'matriculados' | 'malla'
 
 export default function CoursesPage() {
   const [tab, setTab] = useState<Tab>('matriculados')
+  const { data, isLoading, isError, refetch } = useCourses()
 
   return (
     <>
@@ -26,13 +28,33 @@ export default function CoursesPage() {
         />
       </div>
       <div key={tab} className="animate-page-in">
-        {tab === 'matriculados' ? <Enrolled /> : <Curriculum />}
+        {isLoading ? (
+          <div role="status" aria-label="Cargando" className="mx-5 mt-4 space-y-3">
+            <Skeleton className="h-16 w-full rounded-card" />
+            <Skeleton className="h-11 w-full rounded-card" />
+            <Skeleton className="h-16 w-full rounded-card" />
+            <Skeleton className="h-16 w-full rounded-card" />
+          </div>
+        ) : isError || !data ? (
+          <div role="alert" className="mx-5 mt-4 rounded-card bg-card p-5 text-center shadow-card">
+            <Icon name="cloud_off" size={28} className="text-ink-faint" />
+            <p className="mt-1 text-sm font-medium text-ink">No pudimos cargar tus cursos</p>
+            <button type="button" onClick={() => refetch()} className="pressable mt-2 min-h-11 text-sm font-semibold text-primary">
+              Reintentar
+            </button>
+          </div>
+        ) : tab === 'matriculados' ? (
+          <Enrolled data={data} />
+        ) : (
+          <Curriculum data={data} />
+        )}
       </div>
     </>
   )
 }
 
-function Enrolled() {
+function Enrolled({ data }: { data: CoursesData }) {
+  const { courses, cycle } = data
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState(false)
 
@@ -135,7 +157,8 @@ function Enrolled() {
   )
 }
 
-function Curriculum() {
+function Curriculum({ data }: { data: CoursesData }) {
+  const { academicInfo, progress } = data
   return (
     <div className="mx-5 mt-5">
       <h2 className="text-sm font-bold text-ink">Información académica</h2>

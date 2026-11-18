@@ -6,7 +6,7 @@ import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { eventsFor, type CalEvent } from '@/features/calendar/calendarData'
-import { courses } from '@/features/courses/coursesData'
+import { useCourseList } from '@/features/courses/useCourses'
 import { addDays, sameDay, shortWeekday, startOfDay } from '@/lib/date'
 
 interface AgendaDay {
@@ -37,6 +37,7 @@ export default function HomePage() {
   const { session } = useAuth()
   const { show } = useToast()
   const agenda = useAgenda()
+  const courses = useCourseList()
   const today = startOfDay(new Date())
 
   return (

@@ -7,12 +7,11 @@ import Icon from '@/components/ui/Icon'
 import PlusIcon from '@/components/ui/PlusIcon'
 import { useAuth } from '@/features/auth/AuthContext'
 import { normalizeCodigo, validateCodigo } from '@/features/auth/validation'
-import { courses } from '@/features/courses/coursesData'
+import { useCourseList } from '@/features/courses/useCourses'
 import { useDraft } from './draftStore'
 import { SETTINGS } from './rules'
 import { STUDENTS, getSpace, initialsOf } from './spacesData'
 
-const MOTIVOS = courses.flatMap((c) => [`Proyecto · ${c.nombre}`, `Repaso · ${c.nombre}`])
 
 export default function MembersPage() {
   const { id } = useParams()
@@ -22,14 +21,19 @@ export default function MembersPage() {
   const codigo = session?.codigo ?? ''
   const { draft, patch } = useDraft()
   const [sheet, setSheet] = useState(false)
+  const courses = useCourseList()
+  const MOTIVOS = useMemo(() => courses.flatMap((c) => [`Proyecto · ${c.nombre}`, `Repaso · ${c.nombre}`]), [courses])
 
   // El organizador siempre es el primer integrante y hay un motivo por defecto.
   useEffect(() => {
     const members = draft.miembros.includes(codigo) ? draft.miembros : [codigo, ...draft.miembros]
-    if (members !== draft.miembros || !draft.motivo) {
-      patch({ miembros: members, motivo: draft.motivo || MOTIVOS[1] })
-    }
-  }, [codigo, draft.miembros, draft.motivo, patch])
+    if (members !== draft.miembros) patch({ miembros: members })
+  }, [codigo, draft.miembros, patch])
+
+  // Motivo por defecto en cuanto llegan los cursos del alumno.
+  useEffect(() => {
+    if (!draft.motivo && MOTIVOS.length) patch({ motivo: MOTIVOS[1] ?? MOTIVOS[0] })
+  }, [MOTIVOS, draft.motivo, patch])
 
   if (!space) return <Navigate to="/reservas" replace />
   if (space.tipo !== 'sala_grupal' || !draft.inicio) {
