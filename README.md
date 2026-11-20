@@ -28,7 +28,8 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Reserva de espacios (salas, PCs y cubículos, con QR y reglas de negocio) | Listo |
 | Biblioteca y Trámites | Pendiente |
 | Backend en Supabase: login, perfil, grupos, reservas, cursos y su contenido, con RLS y reglas en el servidor | Listo |
-| PWA y asistente por voz con IA | Pendiente |
+| Asistente de Soporte con IA (texto, Gemini): busca espacios, propone y confirma reservas, grupos y asistencias | Construido; pendiente de activar con la llave de Gemini |
+| Voz del asistente y PWA | Pendiente |
 
 La autenticación, el perfil, los grupos, las reservas y los cursos (incluido su contenido y el avance de cada alumno) usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
 
@@ -65,7 +66,7 @@ npm run typecheck   # revisa los tipos de TypeScript
 ### Backend (Supabase)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email*.
-2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0006` de `supabase/migrations/`, luego `supabase/seed.sql`, `supabase/seed_contenido.sql` y `supabase/seed_anuncios.sql` (espacios, grupos, cursos, contenido, anuncios y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
+2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0007` de `supabase/migrations/`, luego `supabase/seed.sql`, `supabase/seed_contenido.sql` y `supabase/seed_anuncios.sql` (espacios, grupos, cursos, contenido, anuncios y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
 3. Copia `.env.example` a `.env` y completa la URL del proyecto y la llave pública (*publishable* o *anon*):
 
 ```
@@ -95,6 +96,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
 - **Detalle del curso** (tocar un curso o una clase): sílabo (con descarga), contenido con información del curso, bibliografía y las 18 semanas (foro de consultas y materiales con avance), evaluaciones, tareas con entrega de archivo, foros donde se puede responder, notas con cálculo de lo que falta para aprobar, anuncios y datos de Zoom con la próxima sesión.
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
+- **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. Todo lo que hace el asistente también se puede hacer tocando.
 - **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
@@ -141,7 +143,7 @@ supabase/           # migraciones SQL (esquema, reglas, lecturas) y seed de demo
 1. Biblioteca y Trámites.
 2. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
 3. PWA instalable.
-4. Asistente por voz con IA que ejecute tareas con confirmación del alumno.
+4. Voz para el asistente (grabar, enviar a Gemini y leer la respuesta en voz alta).
 5. Despliegue, guion de demo y evidencia de pruebas de usabilidad.
 
 ## Documentación
