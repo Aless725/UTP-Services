@@ -25,6 +25,8 @@ import GroupsPage from '@/features/groups/GroupsPage'
 import CreateGroupPage from '@/features/groups/CreateGroupPage'
 import GroupCreatedPage from '@/features/groups/GroupCreatedPage'
 import GroupDetailPage from '@/features/groups/GroupDetailPage'
+import AnnouncementsPage from '@/features/announcements/AnnouncementsPage'
+import AnnouncementDetailPage from '@/features/announcements/AnnouncementDetailPage'
 import ComingSoonPage from '@/features/more/ComingSoonPage'
 import ReservationsHome from '@/features/reservations/ReservationsHome'
 import SpaceListPage from '@/features/reservations/SpaceListPage'
@@ -51,6 +53,8 @@ const detailRoutes = (
     <Route path="/reservas/espacio/:id/integrantes" element={<MembersPage />} />
     <Route path="/reservas/espacio/:id/confirmar" element={<ConfirmPage />} />
     <Route path="/reservas/confirmada/:codigo" element={<ConfirmedPage />} />
+    <Route path="/anuncios/:id" element={<AnnouncementDetailPage />} />
+    <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -77,6 +81,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/cursos" element={<CoursesPage />} />
         <Route path="/pagos" element={<PaymentsPage />} />
         <Route path="/grupos" element={<GroupsPage />} />
+        <Route path="/anuncios" element={<AnnouncementsPage />} />
         <Route path="/reservas" element={<ReservationsHome />} />
         <Route path="/reservas/lista/:tipo" element={<SpaceListPage />} />
         <Route path="/reservas/mis" element={<MyReservationsPage />} />
