@@ -146,7 +146,7 @@ export default function HomePage() {
             <span className="text-sm font-bold text-ink">Biblioteca</span>
           </Link>
           <Link
-            to="/mas/soporte"
+            to="/soporte"
             className="pressable flex min-h-14 items-center gap-2 rounded-card bg-card px-3.5 py-3 shadow-card"
           >
             <Icon name="headset_mic" size={20} className="text-success" />
