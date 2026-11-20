@@ -6,7 +6,10 @@ import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { eventsFor, type CalEvent } from '@/features/calendar/calendarData'
+import AnnouncementRow from '@/features/announcements/AnnouncementRow'
+import { useCampusAnnouncements } from '@/features/announcements/announcementsData'
 import { useCourseList } from '@/features/courses/useCourses'
+import Skeleton from '@/components/ui/Skeleton'
 import { addDays, sameDay, shortWeekday, startOfDay } from '@/lib/date'
 
 interface AgendaDay {
@@ -28,16 +31,18 @@ function useAgenda(): AgendaDay[] {
   }, [])
 }
 
-const ANUNCIOS = [
-  { icon: 'favorite', tone: 'bg-primary-soft text-primary', title: 'Campaña médica', sub: 'Lima Centro · 13 Nov' },
-  { icon: 'auto_stories', tone: 'bg-success-soft text-success', title: 'Hackatón de Lectura', sub: 'Biblioteca · Lima Centro · 26 Nov' },
-]
-
 export default function HomePage() {
   const { session } = useAuth()
   const { show } = useToast()
   const agenda = useAgenda()
   const courses = useCourseList()
+  const announcements = useCampusAnnouncements()
+  // Los dos próximos anuncios destacados (si no hay destacados, los más próximos).
+  const featured = useMemo(() => {
+    const all = announcements.data ?? []
+    const top = all.filter((x) => x.destacado)
+    return (top.length ? top : all).slice(0, 2)
+  }, [announcements.data])
   const today = startOfDay(new Date())
 
   return (
@@ -93,27 +98,39 @@ export default function HomePage() {
       </section>
 
       <section className="mt-6 px-5" aria-labelledby="anuncios">
-        <h2 id="anuncios" className="text-[0.9375rem] font-bold text-ink">
-          Anuncios
-        </h2>
-        <ul className="stagger mt-3 space-y-3">
-          {ANUNCIOS.map((a) => (
-            <li key={a.title}>
-              <Link
-                to="/mas/anuncios"
-                className="pressable flex min-h-14 items-center gap-3 rounded-card bg-card p-3 shadow-card"
-              >
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${a.tone}`}>
-                  <Icon name={a.icon} size={20} filled />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold text-ink">{a.title}</span>
-                  <span className="block truncate text-[0.6875rem] text-ink-muted">{a.sub}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center justify-between">
+          <h2 id="anuncios" className="text-[0.9375rem] font-bold text-ink">
+            Anuncios
+          </h2>
+          <Link to="/anuncios" className="flex min-h-11 items-center text-xs font-semibold text-primary">
+            Ver todos
+          </Link>
+        </div>
+        {announcements.isLoading ? (
+          <div role="status" aria-label="Cargando anuncios" className="space-y-3">
+            <Skeleton className="h-[4.25rem] w-full rounded-card" />
+            <Skeleton className="h-[4.25rem] w-full rounded-card" />
+          </div>
+        ) : announcements.isError ? (
+          <button
+            type="button"
+            onClick={() => announcements.refetch()}
+            className="pressable flex min-h-14 w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-card"
+          >
+            <Icon name="cloud_off" size={20} className="text-ink-faint" />
+            <span className="text-xs text-ink-muted">No pudimos cargar los anuncios. Toca para reintentar.</span>
+          </button>
+        ) : featured.length === 0 ? (
+          <p className="rounded-card bg-card p-3.5 text-xs text-ink-muted shadow-card">No hay anuncios por ahora.</p>
+        ) : (
+          <ul className="stagger space-y-3">
+            {featured.map((x) => (
+              <li key={x.id}>
+                <AnnouncementRow item={x} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="mt-6 px-5" aria-labelledby="recursos">

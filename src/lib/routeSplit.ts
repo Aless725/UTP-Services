@@ -8,10 +8,11 @@ export interface MasterLocation {
   search: string
 }
 
-const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas)(\/|$)/
+const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
+  /^\/anuncios\/[^/]+/,
   /^\/perfil\/accesibilidad\/?$/,
   /^\/mas\/[^/]+\/?$/,
   /^\/reservas\/(espacio|confirmada)\//,
@@ -29,6 +30,7 @@ export function masterFor(detail: string, last: MasterLocation | null): MasterLo
     // Conserva la pestaña (Explorar / Mis grupos) si la lista ya estaba abierta.
     return { pathname: '/grupos', search: last?.pathname === '/grupos' ? last.search : '' }
   }
+  if (/^\/anuncios/.test(detail)) return { pathname: '/anuncios', search: '' }
   if (/^\/perfil/.test(detail)) return { pathname: '/perfil', search: '' }
   if (/^\/cursos/.test(detail)) return { pathname: '/cursos', search: '' }
   if (/^\/reservas/.test(detail)) {
