@@ -19,7 +19,7 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
   const { pathname } = useLocation()
   // En "Mi Perfil" la pestaña activa es Inicio, desde donde se accede.
   const activeOf = (to: string, isActive: boolean) =>
-    isActive || (to === '/inicio' && ['/perfil', '/grupos', '/mas', '/reservas'].some((p) => pathname.startsWith(p)))
+    isActive || (to === '/inicio' && ['/perfil', '/grupos', '/mas', '/reservas', '/anuncios'].some((p) => pathname.startsWith(p)))
   return (
     <nav
       aria-label="Navegación principal"
