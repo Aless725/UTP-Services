@@ -23,7 +23,7 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
   return (
     <nav
       aria-label="Navegación principal"
-      className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-20 flex h-[68px] items-center rounded-[26px] glass px-2 shadow-float"
+      className="absolute inset-x-3 bottom-[var(--nav-bottom)] z-20 flex h-[68px] items-center rounded-[26px] glass px-2 shadow-float"
     >
       {tabs.map((t) => (
         <NavLink

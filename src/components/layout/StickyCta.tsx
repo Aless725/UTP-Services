@@ -2,9 +2,9 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useShell } from './ShellContext'
 
 /** Alto reservado para la barra inferior flotante (68 px + margen). */
-const NAV_ROOM = 'calc(env(safe-area-inset-bottom) + 92px)'
+const NAV_ROOM = 'calc(var(--nav-bottom) + 80px)'
 /** Relleno inferior del contenedor con scroll (ver AppLayout). */
-const SCROLL_PAD = 'calc(env(safe-area-inset-bottom) + 110px)'
+const SCROLL_PAD = 'calc(var(--nav-bottom) + 98px)'
 
 /**
  * Barra de acciones fija al pie del contenido.

@@ -69,7 +69,7 @@ export default function AppLayout() {
     <div className="relative h-full">
       <div
         ref={scroller}
-        className={`no-scrollbar h-full overflow-y-auto overscroll-contain ${chat ? 'pb-[calc(env(safe-area-inset-bottom)+160px)]' : 'pb-[calc(env(safe-area-inset-bottom)+110px)]'}`}
+        className={`no-scrollbar h-full overflow-y-auto overscroll-contain ${chat ? 'pb-[calc(var(--nav-bottom)+150px)]' : 'pb-[calc(var(--nav-bottom)+98px)]'}`}
       >
         <div key={pathname} className={`flex min-h-full flex-col ${animation}`}>
           <DockContext.Provider value={chat ? dockEl : null}>
@@ -83,7 +83,7 @@ export default function AppLayout() {
           key="dock-chat"
           ref={setDockEl}
           style={keyboard ? { transform: `translate3d(0, -${keyboard}px, 0)` } : undefined}
-          className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+24px)] z-20 animate-rise"
+          className="absolute inset-x-3 bottom-[calc(var(--nav-bottom)+8px)] z-20 animate-rise"
         />
       ) : (
         <BottomNav moreOpen={moreOpen} onToggleMore={() => setMoreOpen((o) => !o)} />
