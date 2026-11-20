@@ -105,9 +105,13 @@
   html {
     font-size: calc(16px * var(--font-scale));
     -webkit-text-size-adjust: 100%;
+    /* iPhone pinta la barra de estado con este fondo: debe ser el de la app, no uno oscuro. */
+    background-color: rgb(var(--c-surface));
+    /* Distancia de las barras flotantes al borde inferior: más pegadas al borde en iPhone con barra de inicio. */
+    --nav-bottom: max(calc(env(safe-area-inset-bottom) * 0.5 + 8px), 12px);
   }
   body {
-    @apply bg-neutral-900 font-sans text-ink antialiased;
+    @apply bg-surface font-sans text-ink antialiased;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
   }

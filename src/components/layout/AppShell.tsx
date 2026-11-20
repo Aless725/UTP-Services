@@ -24,7 +24,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`flex min-h-dvh items-center justify-center bg-neutral-900 ${framed ? 'px-6 pb-6 pt-16' : ''}`}
+      className={`flex min-h-dvh items-center justify-center ${framed ? 'bg-neutral-900 px-6 pb-6 pt-16' : 'bg-surface'}`}
     >
       {framed && <DeviceSwitcher />}
       <main className={`relative overflow-hidden bg-surface ${size}`}>{children}</main>
