@@ -14,8 +14,10 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 3 | `supabase/migrations/0003_lecturas.sql` | Lecturas que usa la app (mis reservas, ocupación, vista de grupos) |
 | 4 | `supabase/migrations/0004_cursos.sql` | Ciclo, cursos, matrícula y avance de malla |
 | 5 | `supabase/migrations/0005_contenido_cursos.sql` | Contenido de los cursos y estado del alumno |
-| 6 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 7 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios, notas y entregas |
+| 6 | `supabase/migrations/0006_anuncios_campus.sql` | Anuncios del campus y asistencia a las actividades |
+| 7 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 8 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 9 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -57,6 +59,14 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `penalties` | Penalidades por cancelar con menos de 1 hora de anticipación. |
 | `groups`, `group_members` | Grupos de estudio y sus integrantes. |
 
+**Anuncios del campus**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `campus_announcements` | Campañas, eventos y actividades (salud, cultura, académico, deporte, empleabilidad) con fecha, lugar y cupos opcionales. |
+| `announcement_rsvps` | Quién confirmó asistencia. Cada alumno solo ve la suya. |
+| `campus_announcements_view` | Vista con el total de asistentes y si el alumno ya confirmó, sin exponer nombres. |
+
 **Contenido de los cursos**
 
 | Tabla | Para qué sirve |
@@ -86,6 +96,7 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `ocupacion(fecha)` y `ocupacion_rango(desde, hasta)` | Franjas ocupadas por cualquiera, sin datos personales. |
 | `unirse_grupo(id)` | Une al alumno validando los cupos. |
 | `publicar_comentario(foro, texto, respuesta_a)` | Publica un comentario o respuesta (2 a 1000 caracteres). |
+| `asistir_anuncio(id, asistir)` | Confirma o cancela la asistencia a una actividad validando que no haya terminado y que queden cupos. |
 
 Los errores de regla se devuelven con `errcode = 'P0001'` y un `hint` (`penalty`, `conflict`, `members`, `full`…) que la app traduce a mensajes claros.
 
@@ -99,4 +110,5 @@ Se leen de la tabla `settings` y se aplican en el servidor: mínimo 3 integrante
 - El **calendario** y los **pagos** siguen con datos locales.
 - La **recuperación de contraseña** es simulada: los correos de demostración no existen.
 - Que un foro esté cerrado se valida en la pantalla, no en el servidor.
+- Las fechas de los anuncios del campus se renuevan al volver a ejecutar `seed_anuncios.sql`.
 - La ocupación "de otros alumnos" que se ve en los horarios es ruido determinista de la demo; el servidor solo bloquea conflictos reales.

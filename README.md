@@ -22,6 +22,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Mi Perfil y Accesibilidad (texto, daltonismo, contraste, movimiento, modo oscuro) | Listo |
 | Grupos de estudio (explorar, crear, unirse, mis grupos) | Listo |
 | Detalle del curso (sílabo, contenido, evaluaciones, tareas, foros, notas, anuncios y Zoom) | Listo |
+| Anuncios del campus (campañas y actividades, con confirmación de asistencia) | Listo |
 | Animaciones y transiciones suaves | Listo |
 | Diseño adaptable: celular, tableta, plegable y doble pantalla | Listo |
 | Reserva de espacios (salas, PCs y cubículos, con QR y reglas de negocio) | Listo |
@@ -64,7 +65,7 @@ npm run typecheck   # revisa los tipos de TypeScript
 ### Backend (Supabase)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email*.
-2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0005` de `supabase/migrations/`, luego `supabase/seed.sql` y `supabase/seed_contenido.sql` (espacios, grupos, cursos, contenido y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
+2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0006` de `supabase/migrations/`, luego `supabase/seed.sql`, `supabase/seed_contenido.sql` y `supabase/seed_anuncios.sql` (espacios, grupos, cursos, contenido, anuncios y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
 3. Copia `.env.example` a `.env` y completa la URL del proyecto y la llave pública (*publishable* o *anon*):
 
 ```
@@ -93,6 +94,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
   - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
 - **Detalle del curso** (tocar un curso o una clase): sílabo (con descarga), contenido con información del curso, bibliografía y las 18 semanas (foro de consultas y materiales con avance), evaluaciones, tareas con entrega de archivo, foros donde se puede responder, notas con cálculo de lo que falta para aprobar, anuncios y datos de Zoom con la próxima sesión.
+- **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
 - **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
