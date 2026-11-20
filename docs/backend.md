@@ -114,7 +114,7 @@ El asistente de **Soporte** usa Gemini desde una función de Supabase (`supabase
 **Dónde va la llave de Gemini:** como *secreto* de la función, nunca en `.env` ni en el repositorio.
 
 1. Crea la llave en [Google AI Studio](https://aistudio.google.com).
-2. En Supabase: *Edge Functions → Secrets* y agrega `GEMINI_API_KEY`. Opcional: `GEMINI_MODEL` (por defecto `gemini-flash-latest`) para fijar un modelo Flash concreto.
+2. En Supabase: *Edge Functions → Secrets* y agrega `GEMINI_API_KEY`. Opcional: `GEMINI_MODEL` (por defecto `gemini-3.5-flash-lite`, el más barato y con más cupo gratuito: 15 solicitudes por minuto y 500 por día). Si lo defines, cámbialo o bórralo cuando quieras volver al valor por defecto.
 3. Ejecuta `0007_agent_logs.sql` en el SQL Editor.
 4. Despliega la función (necesitas un token personal de *Account → Access Tokens*):
 
@@ -128,7 +128,10 @@ npx supabase functions deploy agent --project-ref <ref-del-proyecto> --use-api
 | `buscar_espacios` | Lectura | Espacios con horarios libres para una fecha, aplicando las reglas (sábados, ventana de 14 días, horas pasadas). |
 | `mis_reservas` | Lectura | Reservas próximas del alumno. |
 | `listar_anuncios`, `buscar_grupos` | Lectura | Actividades del campus y grupos de estudio con cupos. |
+| `mis_cursos`, `mis_notas`, `tareas_pendientes`, `proximas_evaluaciones` | Lectura | Vida de estudiante: cursos del ciclo, notas con lo que falta para aprobar (11), tareas sin entregar por vencimiento y próximas evaluaciones. |
 | `proponer_reserva`, `proponer_cancelacion`, `proponer_asistencia`, `proponer_unirse_grupo` | Propuesta | Validan y devuelven una acción para que el alumno la confirme; no ejecutan nada. |
+
+**Voz:** el navegador graba con el micrófono (hasta 30 s) y convierte el audio a WAV mono de 16 kHz. La función lo transcribe con el mismo modelo, muestra al alumno lo que entendió y sigue el flujo normal. La respuesta se lee en voz alta con la síntesis de voz del navegador (se puede silenciar). El micrófono exige HTTPS o localhost. Cada mensaje cuenta como 2 solicitudes al modelo (3 si es de voz) para el cupo gratuito.
 
 **Seguridad:** las consultas usan el JWT del alumno (nunca `service_role`), así RLS limita lo que el modelo ve. La función valida el tamaño de la entrada, limita a 12 consultas por minuto por alumno, corta el razonamiento a 6 pasos y registra cada consulta en `agent_logs`.
 

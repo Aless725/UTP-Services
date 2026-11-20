@@ -30,9 +30,17 @@ export type Proposal =
 export interface AssistantReply {
   reply: string
   proposal: Proposal | null
+  /** Lo que se entendió de la voz del alumno (solo en mensajes de voz). */
+  transcript?: string | null
 }
 
-export type AssistantErrorCode = 'rate' | 'quota' | 'not_configured' | 'not_deployed' | 'offline' | 'unavailable'
+/** Audio grabado: WAV en base64. */
+export interface VoiceClip {
+  mimeType: 'audio/wav'
+  data: string
+}
+
+export type AssistantErrorCode = 'rate' | 'quota' | 'not_configured' | 'not_deployed' | 'offline' | 'no_speech' | 'unavailable'
 
 export class AssistantError extends Error {
   constructor(public code: AssistantErrorCode) {
@@ -41,10 +49,10 @@ export class AssistantError extends Error {
 }
 
 /** Pregunta al asistente (función "agent" de Supabase). */
-export async function askAssistant(messages: ChatMsg[]): Promise<AssistantReply> {
+export async function askAssistant(messages: ChatMsg[], audio?: VoiceClip): Promise<AssistantReply> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new AssistantError('offline')
 
-  const { data, error } = await supabase.functions.invoke('agent', { body: { messages } })
+  const { data, error } = await supabase.functions.invoke('agent', { body: audio ? { messages, audio } : { messages } })
   if (!error) return data as AssistantReply
 
   if (error instanceof FunctionsFetchError) throw new AssistantError('offline')
@@ -57,6 +65,7 @@ export async function askAssistant(messages: ChatMsg[]): Promise<AssistantReply>
       /* respuesta sin cuerpo */
     }
     if (res.status === 404) throw new AssistantError('not_deployed')
+    if (res.status === 422 || code === 'no_speech') throw new AssistantError('no_speech')
     if (res.status === 503 || code === 'not_configured') throw new AssistantError('not_configured')
     if (code === 'rate_limited') throw new AssistantError('rate')
     if (res.status === 429 || code === 'quota') throw new AssistantError('quota')
@@ -69,6 +78,8 @@ export function assistantErrorText(code: AssistantErrorCode): string {
   switch (code) {
     case 'offline':
       return 'Parece que no hay conexión. Revisa tu internet e inténtalo de nuevo.'
+    case 'no_speech':
+      return 'No te escuché bien. Acércate al micrófono e inténtalo de nuevo, o escribe tu mensaje.'
     case 'rate':
       return 'Estás escribiendo muy rápido. Espera unos segundos y vuelve a intentarlo.'
     case 'quota':
