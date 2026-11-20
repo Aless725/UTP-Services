@@ -17,7 +17,7 @@ import {
 } from './assistantApi'
 import ProposalCard, { type ProposalState } from './ProposalCard'
 import { MAX_RECORDING_MS, MIN_RECORDING_MS, MicError, VoiceRecorder, micErrorText, voiceSupported } from './voice/recorder'
-import { readVoicePref, saveVoicePref, speak, speechSupported, stopSpeaking, unlockSpeech } from './voice/speech'
+import { hasVoicePref, readVoicePref, saveVoicePref, speak, speechSupported, stopSpeaking, unlockSpeech } from './voice/speech'
 
 interface Msg {
   id: string
@@ -162,6 +162,11 @@ export default function SupportPage() {
     if (thinking || mode !== 'idle') return
     stopSpeaking()
     unlockSpeech() // dentro del toque, para que iPhone permita hablar después
+    // Al usar la voz por primera vez, las respuestas también se dicen en voz alta (se puede silenciar).
+    if (!hasVoicePref()) {
+      setSpeakOn(true)
+      saveVoicePref(true)
+    }
     const rec = new VoiceRecorder((level) => {
       bars.current.forEach((b, i) => {
         if (b) b.style.transform = `scaleY(${Math.max(0.15, Math.min(1, level * (0.55 + ((i * 37) % 5) / 8)))})`

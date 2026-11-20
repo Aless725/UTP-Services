@@ -6,9 +6,19 @@ const KEY = 'utp.asistente.voz'
 
 export const speechSupported = () => typeof window !== 'undefined' && 'speechSynthesis' in window
 
+/** Las respuestas en voz alta empiezan desactivadas; se activan solas la primera vez que el alumno usa la voz. */
 export function readVoicePref(): boolean {
   try {
-    return localStorage.getItem(KEY) !== 'off'
+    return localStorage.getItem(KEY) === 'on'
+  } catch {
+    return false
+  }
+}
+
+/** ¿El alumno ya eligió (o se activó sola por usar la voz)? Si ya eligió, se respeta su decisión. */
+export function hasVoicePref(): boolean {
+  try {
+    return localStorage.getItem(KEY) !== null
   } catch {
     return true
   }
