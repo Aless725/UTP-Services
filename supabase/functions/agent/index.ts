@@ -64,17 +64,29 @@ Deno.serve(async (req) => {
 
   const db = makeDb(supabase)
 
+  // Para un asistente conversacional importa más la rapidez que el razonamiento largo: se desactiva el
+  // "pensamiento" del modelo. Si el modelo elegido no admite ese ajuste (error 400), se reintenta sin él.
+  let fast = true
   const callModel = async (body: Record<string, unknown>): Promise<GeminiResponse> => {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const payload = fast
+        ? { ...body, generationConfig: { ...(body.generationConfig as object), thinkingConfig: { thinkingBudget: 0 } } }
+        : body
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
+        // Mejor un error claro a los 25 s que dejar al alumno esperando sin respuesta.
+        signal: AbortSignal.timeout(25_000),
       })
       if (res.ok) return await res.json()
+      if (res.status === 400 && fast) {
+        fast = false
+        continue
+      }
       // Un reintento ante saturación momentánea del modelo.
-      if (res.status === 503 && attempt === 0) {
+      if (res.status === 503 && attempt < 2) {
         await new Promise((r) => setTimeout(r, 700))
         continue
       }
