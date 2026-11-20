@@ -45,6 +45,40 @@ export interface Db {
   myReservations(): Promise<ReservationRow[]>
   announcements(): Promise<AnnouncementRow[]>
   groups(): Promise<GroupRow[]>
+  /** Cursos matriculados y ciclo actual. */
+  courses(): Promise<{ courses: CourseRow[]; term: TermRow | null }>
+  evaluations(courseIds: string[]): Promise<EvaluationRow[]>
+  /** Notas del alumno por evaluación. */
+  grades(): Promise<{ evaluation_id: string; nota: number }[]>
+  tasks(courseIds: string[]): Promise<TaskRow[]>
+  /** Ids de las tareas que el alumno ya entregó. */
+  submissions(): Promise<{ task_id: string }[]>
+}
+
+export interface CourseRow {
+  id: string
+  nombre: string
+  docente: string
+  creditos: number
+  modalidad: string
+}
+export interface TermRow {
+  nombre: string
+  semana_actual: number
+  semanas_total: number
+}
+export interface EvaluationRow {
+  id: string
+  course_id: string
+  nombre: string
+  semana: number
+  peso: number
+}
+export interface TaskRow {
+  id: string
+  course_id: string
+  titulo: string
+  semana: number
 }
 
 export interface SpaceRow {
@@ -197,6 +231,27 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'object', properties: { curso: str('Parte del nombre del curso (opcional).') } },
   },
   {
+    name: 'mis_cursos',
+    description: 'Lista los cursos que el alumno lleva este ciclo, con docente, créditos y modalidad.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'mis_notas',
+    description:
+      'Notas del alumno por curso: evaluaciones calificadas, nota acumulada, qué falta y cuánto necesita en lo que falta para aprobar (11).',
+    parameters: { type: 'object', properties: { curso: str('Nombre o sigla del curso (opcional; sin él, todos).') } },
+  },
+  {
+    name: 'tareas_pendientes',
+    description: 'Tareas aún sin entregar, con su fecha de vencimiento, de la más urgente a la más lejana.',
+    parameters: { type: 'object', properties: { curso: str('Nombre o sigla del curso (opcional).') } },
+  },
+  {
+    name: 'proximas_evaluaciones',
+    description: 'Próximas evaluaciones (prácticas, parciales, finales) con su fecha y peso.',
+    parameters: { type: 'object', properties: { curso: str('Nombre o sigla del curso (opcional).') } },
+  },
+  {
     name: 'proponer_reserva',
     description:
       'Prepara una reserva para que el alumno la confirme. NO la crea. Solo llámala cuando ya tengas espacio, fecha, hora y (en salas) integrantes.',
@@ -286,6 +341,19 @@ function dayProblem(space: SpaceRow, fecha: string, ctx: Ctx, cfg: Record<string
   if (n > (cfg.bookingWindowDays ?? 14)) return `Solo se puede reservar hasta ${cfg.bookingWindowDays ?? 14} días por adelantado.`
   if (space.tipo === 'sala_grupal' && dowOf(fecha) === 6) return 'Las salas grupales no se habilitan los sábados.'
   return null
+}
+
+/** Elige cursos por sigla (ihm), nombre o iniciales; sin criterio devuelve todos. */
+function pickCourses(courses: CourseRow[], q: unknown): CourseRow[] {
+  if (typeof q !== 'string' || !q.trim()) return courses
+  const n = norm(q).trim()
+  const initials = (name: string) =>
+    norm(name)
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+      .map((w) => w[0])
+      .join('')
+  return courses.filter((c) => c.id === n || norm(c.nombre).includes(n) || initials(c.nombre) === n || n.includes(c.id))
 }
 
 async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): Promise<unknown> {
@@ -386,6 +454,80 @@ async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): 
           ya_es_miembro: g.es_miembro,
         }))
       return { grupos: list }
+    }
+
+    case 'mis_cursos': {
+      const { courses, term } = await db.courses()
+      return {
+        ciclo: term ? `${term.nombre}, semana ${term.semana_actual} de ${term.semanas_total}` : null,
+        cursos: courses.map((c) => ({ sigla: c.id, nombre: c.nombre, docente: c.docente, creditos: c.creditos, modalidad: c.modalidad })),
+      }
+    }
+
+    case 'mis_notas':
+    case 'tareas_pendientes':
+    case 'proximas_evaluaciones': {
+      const { courses, term } = await db.courses()
+      if (!term || !courses.length) return { error: 'El alumno no tiene cursos matriculados este ciclo.' }
+      const picked = pickCourses(courses, args.curso)
+      if (!picked.length) {
+        return { error: `No encontré ese curso. Sus cursos son: ${courses.map((c) => c.nombre).join(', ')}.` }
+      }
+      const ids = picked.map((c) => c.id)
+      const nameOf = (id: string) => courses.find((c) => c.id === id)?.nombre ?? id
+      const weekStart = (n: number) => addDays(ctx.today.fecha, -((ctx.today.dow + 6) % 7) + (n - term.semana_actual) * 7)
+
+      if (name === 'tareas_pendientes') {
+        const [tasks, subs] = await Promise.all([db.tasks(ids), db.submissions()])
+        const done = new Set(subs.map((x) => x.task_id))
+        const list = tasks
+          .filter((t) => !done.has(t.id))
+          .map((t) => ({ t, vence: addDays(weekStart(t.semana), 6) }))
+          .sort((a, b) => a.vence.localeCompare(b.vence))
+          .slice(0, 10)
+          .map(({ t, vence }) => ({
+            curso: nameOf(t.course_id),
+            tarea: t.titulo,
+            vence,
+            dia: DAYS[dowOf(vence)],
+            estado: vence < ctx.today.fecha ? 'vencida' : diffDays(ctx.today.fecha, vence) <= 2 ? 'por vencer' : 'pendiente',
+          }))
+        return list.length ? { pendientes: list } : { pendientes: [], nota: 'No tiene tareas pendientes.' }
+      }
+
+      const [evals, grades] = await Promise.all([db.evaluations(ids), db.grades()])
+      const nota = new Map(grades.map((g) => [g.evaluation_id, g.nota]))
+
+      if (name === 'proximas_evaluaciones') {
+        const list = evals
+          .filter((e) => e.semana >= term.semana_actual && !nota.has(e.id))
+          .map((e) => ({ e, fecha: addDays(weekStart(e.semana), 3) }))
+          .sort((a, b) => a.fecha.localeCompare(b.fecha))
+          .slice(0, 8)
+          .map(({ e, fecha }) => ({ curso: nameOf(e.course_id), evaluacion: e.nombre, fecha, dia: DAYS[dowOf(fecha)], peso: `${e.peso}%` }))
+        return list.length ? { evaluaciones: list } : { evaluaciones: [], nota: 'No hay evaluaciones próximas.' }
+      }
+
+      // mis_notas
+      return {
+        notas: picked.map((c) => {
+          const mine = evals.filter((e) => e.course_id === c.id)
+          const graded = mine.filter((e) => nota.has(e.id))
+          const acumulado = graded.reduce((sum, e) => sum + (nota.get(e.id) as number) * (e.peso / 100), 0)
+          const restante = 100 - graded.reduce((sum, e) => sum + e.peso, 0)
+          const pasar = 11
+          const necesario = restante > 0 ? (pasar - acumulado) / (restante / 100) : null
+          return {
+            curso: c.nombre,
+            calificadas: graded.map((e) => ({ evaluacion: e.nombre, nota: nota.get(e.id), peso: `${e.peso}%` })),
+            acumulado: Number(acumulado.toFixed(2)),
+            peso_pendiente: `${restante}%`,
+            promedio_necesario_en_lo_que_falta: necesario === null ? null : Number(Math.max(0, necesario).toFixed(1)),
+            ya_aprobado: acumulado >= pasar,
+            imposible_aprobar: necesario === null ? acumulado < pasar : necesario > 20,
+          }
+        }),
+      }
     }
 
     case 'proponer_reserva': {
@@ -519,7 +661,8 @@ export function systemPrompt(me: { codigo: string; nombre: string; sede: string 
     '- Para reservar: busca con buscar_espacios, elige la mejor opción (prioriza la sede habitual) y llama a proponer_reserva. Para cancelar, unirse a un grupo o asistir a una actividad usa su herramienta proponer_*.',
     '- Las herramientas proponer_* NO ejecutan nada: la app muestra una tarjeta y el alumno confirma. Después de proponer, di en una frase qué propones y pide que confirme con el botón. Nunca digas que ya está hecho.',
     '- Si una herramienta devuelve error, explícalo en palabras simples y ofrece una alternativa (por ejemplo, otros horarios libres).',
-    '- Si piden algo fuera de reservas, grupos, actividades del campus o ayuda de la app, di amablemente qué sí puedes hacer.',
+    '- También ayudas con la vida de estudiante: cursos que lleva, notas y cuánto necesita para aprobar, tareas pendientes y próximas evaluaciones (herramientas mis_cursos, mis_notas, tareas_pendientes y proximas_evaluaciones). Da cifras reales de las herramientas, con pocas palabras, y menciona primero lo más urgente.',
+    '- Si piden algo fuera de reservas, grupos, actividades del campus, cursos o ayuda de la app, di amablemente qué sí puedes hacer.',
     '',
     'Reglas de la universidad:',
     `- Salas grupales: mínimo ${cfg.minMembers ?? 3} personas (incluido el alumno), cerradas los sábados. PCs y cubículos: 1 persona.`,
@@ -583,4 +726,47 @@ export async function runAgent(messages: ChatMessage[], deps: AgentDeps): Promis
   }
 
   throw new AgentError('too_many_steps', 'El asistente dio demasiadas vueltas.')
+}
+
+// ───────────────────────── Voz: transcripción ─────────────────────────
+
+export interface AudioInput {
+  mimeType: string
+  /** Audio en base64. */
+  data: string
+}
+
+export const AUDIO_MIME = ['audio/wav', 'audio/mp3', 'audio/aac', 'audio/ogg', 'audio/flac']
+/** Tope del audio en base64 (unos 60 s de voz en WAV de 16 kHz mono). */
+export const MAX_AUDIO_B64 = 2_600_000
+
+const NO_SPEECH = '[SIN_VOZ]'
+
+/**
+ * Convierte la voz del alumno en texto con el mismo modelo. Devuelve null si no se entiende nada.
+ * Se hace en un paso aparte para mostrar al alumno lo que se entendió y guardarlo en el historial.
+ */
+export async function transcribeAudio(
+  audio: AudioInput,
+  callModel: AgentDeps['callModel'],
+): Promise<string | null> {
+  const res = await callModel({
+    systemInstruction: {
+      parts: [
+        {
+          text:
+            'Transcribes audio en español peruano de un alumno universitario que le habla a un asistente de reservas. ' +
+            'Responde SOLO con lo que dice la persona, sin comillas, sin comentarios y sin traducir. ' +
+            'Escribe las horas y fechas como se dicen ("a las tres de la tarde", "el viernes"). ' +
+            `Si no hay voz clara o no se entiende, responde exactamente: ${NO_SPEECH}`,
+        },
+      ],
+    },
+    contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.mimeType, data: audio.data } }, { text: 'Transcribe el audio.' }] }],
+    generationConfig: { temperature: 0, maxOutputTokens: 300 },
+  })
+  if (res.promptFeedback?.blockReason) throw new AgentError('model_blocked', res.promptFeedback.blockReason)
+  const text = (res.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('').trim()
+  if (!text || text.includes(NO_SPEECH)) return null
+  return text.slice(0, 600)
 }
