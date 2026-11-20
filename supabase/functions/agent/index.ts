@@ -1,14 +1,25 @@
 // Función de Supabase "agent": asistente UTP+ con Gemini.
 // Secretos (Dashboard → Edge Functions → Secrets):
 //   GEMINI_API_KEY   (obligatorio)  llave de Google AI Studio
-//   GEMINI_MODEL     (opcional)     modelo de Gemini; por defecto "gemini-flash-latest"
+//   GEMINI_MODEL     (opcional)     modelo de Gemini; por defecto "gemini-3.5-flash-lite"
+//                                   (nivel gratuito: 15 solicitudes por minuto y 500 por día)
 // SUPABASE_URL y SUPABASE_ANON_KEY los inyecta Supabase solos.
 //
 // Seguridad: la llave de Gemini vive solo aquí. Las consultas se hacen con el JWT del alumno
 // (nunca con service_role), así que RLS limita lo que el modelo puede ver.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { AgentError, runAgent, type ChatMessage, type Db, type GeminiResponse } from './core.ts'
+import {
+  AUDIO_MIME,
+  AgentError,
+  MAX_AUDIO_B64,
+  runAgent,
+  transcribeAudio,
+  type AudioInput,
+  type ChatMessage,
+  type Db,
+  type GeminiResponse,
+} from './core.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +29,9 @@ const CORS = {
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
+
+// Se conserva entre solicitudes mientras la instancia siga viva.
+let thinkingSupported = true
 
 const MAX_MESSAGE = 600
 const MAX_PER_MINUTE = 12
@@ -38,21 +52,30 @@ Deno.serve(async (req) => {
 
   const apiKey = Deno.env.get('GEMINI_API_KEY')
   if (!apiKey) return json({ error: 'not_configured' }, 503)
-  const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-flash-latest'
+  const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite'
 
-  // Entrada validada: solo roles conocidos y textos acotados.
+  // Entrada validada: solo roles conocidos, textos acotados y, si hay voz, un audio WAV de tamaño razonable.
   let messages: ChatMessage[]
+  let audio: AudioInput | null = null
   try {
     const body = await req.json()
-    if (!Array.isArray(body.messages) || body.messages.length === 0) throw new Error('messages')
-    messages = body.messages
+    const history = Array.isArray(body.messages) ? body.messages : []
+    messages = history
       .filter((m: ChatMessage) => (m?.role === 'user' || m?.role === 'assistant') && typeof m.text === 'string' && m.text.trim())
       .map((m: ChatMessage) => ({ role: m.role, text: m.text.trim().slice(0, MAX_MESSAGE) }))
-    if (!messages.length || messages[messages.length - 1].role !== 'user') throw new Error('last')
+    if (body.audio) {
+      const { mimeType, data } = body.audio
+      if (typeof mimeType !== 'string' || typeof data !== 'string' || !AUDIO_MIME.includes(mimeType) || data.length > MAX_AUDIO_B64 || data.length < 100) {
+        throw new Error('audio')
+      }
+      audio = { mimeType, data }
+    } else if (!messages.length || messages[messages.length - 1].role !== 'user') {
+      throw new Error('last')
+    }
   } catch {
     return json({ error: 'bad_request' }, 400)
   }
-  const lastUser = messages[messages.length - 1].text
+  let lastUser = audio ? '(mensaje de voz)' : messages[messages.length - 1].text
 
   // Límite de uso por alumno (se apoya en el registro de conversaciones).
   const since = new Date(Date.now() - 60_000).toISOString()
@@ -60,21 +83,32 @@ Deno.serve(async (req) => {
   if ((count ?? 0) >= MAX_PER_MINUTE) return json({ error: 'rate_limited' }, 429)
 
   const log = (extra: Record<string, unknown>) =>
-    supabase.from('agent_logs').insert({ mensaje: lastUser, latencia_ms: Date.now() - started, ...extra }).then(() => undefined)
+    supabase.from('agent_logs').insert({ mensaje: lastUser, canal: audio ? 'voz' : 'texto', latencia_ms: Date.now() - started, ...extra }).then(() => undefined)
 
   const db = makeDb(supabase)
 
   const callModel = async (body: Record<string, unknown>): Promise<GeminiResponse> => {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // Razonamiento corto: para un asistente importa más la rapidez. Si el modelo no admite el ajuste (400),
+      // se recuerda y no se vuelve a enviar, para no gastar solicitudes del nivel gratuito.
+      const payload = thinkingSupported
+        ? { ...body, generationConfig: { ...(body.generationConfig as object), thinkingConfig: { thinkingLevel: 'low' } } }
+        : body
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
+        // Mejor un error claro a los 25 s que dejar al alumno esperando sin respuesta.
+        signal: AbortSignal.timeout(25_000),
       })
       if (res.ok) return await res.json()
+      if (res.status === 400 && thinkingSupported) {
+        thinkingSupported = false
+        continue
+      }
       // Un reintento ante saturación momentánea del modelo.
-      if (res.status === 503 && attempt === 0) {
+      if (res.status === 503 && attempt < 2) {
         await new Promise((r) => setTimeout(r, 700))
         continue
       }
@@ -85,9 +119,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    let transcript: string | null = null
+    if (audio) {
+      transcript = await transcribeAudio(audio, callModel)
+      if (!transcript) {
+        await log({ error: 'no_speech' })
+        return json({ error: 'no_speech' }, 422)
+      }
+      lastUser = transcript
+      messages.push({ role: 'user', text: transcript })
+    }
     const result = await runAgent(messages, { db, callModel })
     await log({ respuesta: result.reply, herramientas: result.tools, propuesta: result.proposal?.kind ?? null })
-    return json({ reply: result.reply, proposal: result.proposal })
+    return json({ reply: result.reply, proposal: result.proposal, transcript })
   } catch (e) {
     const status = (e as { status?: number }).status
     const code =
@@ -146,6 +190,29 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
           .order('hora_inicio'),
       ) as (Record<string, unknown> & { hora_inicio: string })[]
       return rows.map((r) => ({ ...r, inicio: r.hora_inicio.slice(0, 5) })) as never
+    },
+    async courses() {
+      const rows = must(await sb.from('enrollments').select('orden, courses(*), terms(*)').order('orden')) as unknown as {
+        courses: unknown
+        terms: unknown
+      }[]
+      const one = (x: unknown) => (Array.isArray(x) ? x[0] : x) ?? null
+      return {
+        courses: rows.map((r) => one(r.courses)).filter(Boolean) as never,
+        term: one(rows[0]?.terms) as never,
+      }
+    },
+    async evaluations(ids) {
+      return must(await sb.from('course_evaluations').select('id, course_id, nombre, semana, peso').in('course_id', ids))
+    },
+    async grades() {
+      return must(await sb.from('evaluation_grades').select('evaluation_id, nota'))
+    },
+    async tasks(ids) {
+      return must(await sb.from('course_tasks').select('id, course_id, titulo, semana').in('course_id', ids))
+    },
+    async submissions() {
+      return must(await sb.from('task_submissions').select('task_id'))
     },
     async groups() {
       const rows = must(

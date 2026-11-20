@@ -29,7 +29,8 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Biblioteca y Trámites | Pendiente |
 | Backend en Supabase: login, perfil, grupos, reservas, cursos y su contenido, con RLS y reglas en el servidor | Listo |
 | Asistente de Soporte con IA (texto, Gemini): busca espacios, propone y confirma reservas, grupos y asistencias | Construido; pendiente de activar con la llave de Gemini |
-| Voz del asistente y PWA | Pendiente |
+| Voz del asistente (grabar, transcribir, responder en voz alta) | Construido; pendiente de probar con la función desplegada |
+| PWA | Pendiente |
 
 La autenticación, el perfil, los grupos, las reservas y los cursos (incluido su contenido y el avance de cada alumno) usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
 
@@ -143,7 +144,7 @@ supabase/           # migraciones SQL (esquema, reglas, lecturas) y seed de demo
 1. Biblioteca y Trámites.
 2. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
 3. PWA instalable.
-4. Voz para el asistente (grabar, enviar a Gemini y leer la respuesta en voz alta).
+4. Optimizar la voz (por ejemplo, la API Live de Gemini para conversar en tiempo real).
 5. Despliegue, guion de demo y evidencia de pruebas de usabilidad.
 
 ## Documentación
