@@ -15,9 +15,10 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 4 | `supabase/migrations/0004_cursos.sql` | Ciclo, cursos, matrícula y avance de malla |
 | 5 | `supabase/migrations/0005_contenido_cursos.sql` | Contenido de los cursos y estado del alumno |
 | 6 | `supabase/migrations/0006_anuncios_campus.sql` | Anuncios del campus y asistencia a las actividades |
-| 7 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 8 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 9 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 7 | `supabase/migrations/0007_agent_logs.sql` | Registro de conversaciones del asistente |
+| 8 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 9 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 10 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -67,6 +68,12 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `announcement_rsvps` | Quién confirmó asistencia. Cada alumno solo ve la suya. |
 | `campus_announcements_view` | Vista con el total de asistentes y si el alumno ya confirmó, sin exponer nombres. |
 
+**Asistente**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `agent_logs` | Mensaje, respuesta, herramientas usadas, latencia y errores de cada consulta al asistente. Sirve de evidencia y para limitar el uso por alumno. |
+
 **Contenido de los cursos**
 
 | Tabla | Para qué sirve |
@@ -99,6 +106,31 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `asistir_anuncio(id, asistir)` | Confirma o cancela la asistencia a una actividad validando que no haya terminado y que queden cupos. |
 
 Los errores de regla se devuelven con `errcode = 'P0001'` y un `hint` (`penalty`, `conflict`, `members`, `full`…) que la app traduce a mensajes claros.
+
+## Asistente UTP+ (función `agent`)
+
+El asistente de **Soporte** usa Gemini desde una función de Supabase (`supabase/functions/agent/`). El modelo solo **lee** datos y **propone** acciones: la app muestra una tarjeta con *Confirmar / Cambiar* y, al confirmar, llama a las mismas funciones validadas de siempre (`crear_reserva`, `cancelar_reserva`, `unirse_grupo`, `asistir_anuncio`). El modelo nunca escribe en la base.
+
+**Dónde va la llave de Gemini:** como *secreto* de la función, nunca en `.env` ni en el repositorio.
+
+1. Crea la llave en [Google AI Studio](https://aistudio.google.com).
+2. En Supabase: *Edge Functions → Secrets* y agrega `GEMINI_API_KEY`. Opcional: `GEMINI_MODEL` (por defecto `gemini-flash-latest`) para fijar un modelo Flash concreto.
+3. Ejecuta `0007_agent_logs.sql` en el SQL Editor.
+4. Despliega la función (necesitas un token personal de *Account → Access Tokens*):
+
+```bash
+npx supabase login
+npx supabase functions deploy agent --project-ref <ref-del-proyecto> --use-api
+```
+
+| Herramienta | Tipo | Qué hace |
+|---|---|---|
+| `buscar_espacios` | Lectura | Espacios con horarios libres para una fecha, aplicando las reglas (sábados, ventana de 14 días, horas pasadas). |
+| `mis_reservas` | Lectura | Reservas próximas del alumno. |
+| `listar_anuncios`, `buscar_grupos` | Lectura | Actividades del campus y grupos de estudio con cupos. |
+| `proponer_reserva`, `proponer_cancelacion`, `proponer_asistencia`, `proponer_unirse_grupo` | Propuesta | Validan y devuelven una acción para que el alumno la confirme; no ejecutan nada. |
+
+**Seguridad:** las consultas usan el JWT del alumno (nunca `service_role`), así RLS limita lo que el modelo ve. La función valida el tamaño de la entrada, limita a 12 consultas por minuto por alumno, corta el razonamiento a 6 pasos y registra cada consulta en `agent_logs`.
 
 ## Reglas de negocio vigentes
 

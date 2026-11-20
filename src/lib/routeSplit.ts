@@ -8,7 +8,7 @@ export interface MasterLocation {
   search: string
 }
 
-const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios)(\/|$)/
+const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
