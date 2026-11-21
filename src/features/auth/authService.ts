@@ -24,14 +24,42 @@ export class AuthError extends Error {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /** Lee el perfil del alumno autenticado (las políticas RLS solo devuelven el suyo). */
+const SESSION_KEY = 'utp.sesion'
+
+/** Última sesión conocida, para abrir la app sin conexión. */
+function cachedSession(): Session | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
+    return v && typeof v.codigo === 'string' ? { codigo: v.codigo, nombre: String(v.nombre ?? '') } : null
+  } catch {
+    return null
+  }
+}
+
+export function forgetSession(): void {
+  try {
+    localStorage.removeItem(SESSION_KEY)
+  } catch {
+    /* noop */
+  }
+}
+
 export async function fetchSession(): Promise<Session | null> {
   const { data, error } = await supabase.from('profiles').select('codigo, nombre').maybeSingle()
   if (error || !data) return null
-  return { codigo: data.codigo, nombre: data.nombre }
+  const s = { codigo: data.codigo, nombre: data.nombre }
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(s))
+  } catch {
+    /* noop */
+  }
+  return s
 }
 
 /** Recupera la sesión guardada por Supabase al abrir la app. */
 export async function restoreSession(): Promise<Session | null> {
+  // Sin conexión no se puede renovar la sesión: se usa la última conocida y se sigue con lo guardado.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return cachedSession()
   const { data } = await supabase.auth.getSession()
   return data.session ? fetchSession() : null
 }
@@ -48,6 +76,7 @@ export async function signIn(usuario: string, password: string): Promise<Session
 }
 
 export async function signOut(): Promise<void> {
+  forgetSession()
   await supabase.auth.signOut()
 }
 

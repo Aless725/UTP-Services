@@ -108,9 +108,9 @@ export default function BottomSheet({ open, onClose, title, children, floating }
         aria-label={title}
         className={`absolute z-10 bg-card shadow-float ${
           floating
-            ? 'inset-x-3 bottom-[calc(var(--nav-bottom)+84px)] rounded-[22px]'
+            ? 'bottom-[var(--dock-sheet)] left-[calc(var(--rail)+0.75rem)] right-3 rounded-[22px]'
             : 'inset-x-0 bottom-0 rounded-t-[28px] pb-[calc(env(safe-area-inset-bottom)+20px)]'
-        } ${leaving ? 'animate-sheet-down' : 'animate-sheet-up'}`}
+        } max-h-[calc(100%-0.75rem)] overflow-y-auto overscroll-contain ${leaving ? 'animate-sheet-down' : 'animate-sheet-up'}`}
       >
         <header
           onPointerDown={onDown}

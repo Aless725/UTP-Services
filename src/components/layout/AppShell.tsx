@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useDevice } from './DeviceContext'
 import DeviceSwitcher from './DeviceSwitcher'
+import OfflineBanner from './OfflineBanner'
 
 const FRAME = 'ring-8 ring-neutral-800'
 const MAX_H = 'max-h-[calc(100dvh-5.5rem)]'
@@ -15,7 +16,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { mode, framed } = useDevice()
 
   const size = !framed
-    ? 'h-dvh w-full'
+    ? 'h-dvh w-full pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]'
     : mode === 'phone'
       ? `h-[852px] ${MAX_H} w-[393px] rounded-[48px] ${FRAME}`
       : mode === 'dual'
@@ -27,7 +28,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
       className={`flex min-h-dvh items-center justify-center ${framed ? 'bg-neutral-900 px-6 pb-6 pt-16' : 'bg-surface'}`}
     >
       {framed && <DeviceSwitcher />}
-      <main className={`relative overflow-hidden bg-surface ${size}`}>{children}</main>
+      <main className={`relative overflow-hidden bg-surface ${size}`}>
+        <OfflineBanner />
+        {children}
+      </main>
     </div>
   )
 }

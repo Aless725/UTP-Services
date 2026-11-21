@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useDevice } from './DeviceContext'
 import { useShell } from './ShellContext'
 
 /** Alto reservado para la barra inferior flotante (68 px + margen). */
-const NAV_ROOM = 'calc(var(--nav-bottom) + 80px)'
+const NAV_ROOM = 'var(--dock-room)'
 /** Relleno inferior del contenedor con scroll (ver AppLayout). */
-const SCROLL_PAD = 'calc(var(--nav-bottom) + 98px)'
+const SCROLL_PAD = 'var(--dock-pad)'
 
 /**
  * Barra de acciones fija al pie del contenido.
@@ -14,7 +15,9 @@ const SCROLL_PAD = 'calc(var(--nav-bottom) + 98px)'
  */
 export default function StickyCta({ children }: { children: ReactNode }) {
   const { detailPath } = useShell()
-  const style: CSSProperties = detailPath
+  const { landscape } = useDevice()
+  // En horizontal no hay barra abajo: se pega al borde como en el panel derecho.
+  const style: CSSProperties = detailPath || landscape
     ? { bottom: '-2rem', marginBottom: '-2rem', paddingBottom: '2.5rem' }
     : { bottom: `calc(-1 * ${SCROLL_PAD})`, marginBottom: `calc(-1 * ${NAV_ROOM})`, paddingBottom: NAV_ROOM }
   return (

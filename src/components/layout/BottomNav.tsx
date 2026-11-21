@@ -1,13 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import PlusIcon from '@/components/ui/PlusIcon'
-
-const tabs = [
-  { to: '/inicio', label: 'Inicio', icon: 'home' },
-  { to: '/calendario', label: 'Calendario', icon: 'calendar_month' },
-  { to: '/cursos', label: 'Cursos', icon: 'menu_book' },
-  { to: '/pagos', label: 'Pagos', icon: 'credit_card' },
-]
+import { activeOf as isActiveTab, tabs } from './navTabs'
 
 interface BottomNavProps {
   moreOpen: boolean
@@ -18,8 +12,7 @@ interface BottomNavProps {
 export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
   const { pathname } = useLocation()
   // En "Mi Perfil" la pestaña activa es Inicio, desde donde se accede.
-  const activeOf = (to: string, isActive: boolean) =>
-    isActive || (to === '/inicio' && ['/perfil', '/grupos', '/mas', '/reservas', '/anuncios', '/soporte', '/notificaciones', '/correo', '/tramites', '/beneficios'].some((p) => pathname.startsWith(p)))
+  const activeOf = (to: string, isActive: boolean) => isActiveTab(to, isActive, pathname)
   return (
     <nav
       aria-label="Navegación principal"

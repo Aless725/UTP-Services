@@ -8,7 +8,7 @@ export default function MoreSheet({ open, onClose }: { open: boolean; onClose: (
 
   return (
     <BottomSheet open={open} onClose={onClose} title="Más de UTP+" floating>
-      <ul className="pb-2">
+      <ul className="pb-2 short:grid short:grid-cols-2 short:gap-x-4">
         {moreItems.map((item, i) => (
           <li key={item.slug} className="animate-rise" style={{ animationDelay: `${60 + i * 25}ms` }}>
             <button

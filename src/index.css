@@ -109,6 +109,21 @@
     background-color: rgb(var(--c-surface));
     /* Distancia de las barras flotantes al borde inferior: más pegadas al borde en iPhone con barra de inicio. */
     --nav-bottom: max(calc(env(safe-area-inset-bottom) * 0.5 + 8px), 12px);
+    /* Espacio que ocupa la navegación: abajo (celular vertical) o a la izquierda (horizontal). */
+    --rail: 0px;
+    --dock-pad: calc(var(--nav-bottom) + 98px);
+    --dock-room: calc(var(--nav-bottom) + 80px);
+    --dock-sheet: calc(var(--nav-bottom) + 84px);
+    --dock-toast: calc(var(--nav-bottom) + 92px);
+    --dock-chat: calc(var(--nav-bottom) + 150px);
+  }
+  html[data-orient='landscape'] {
+    --rail: 4.75rem;
+    --dock-pad: 2rem;
+    --dock-room: 2rem;
+    --dock-sheet: 0.75rem;
+    --dock-toast: 1rem;
+    --dock-chat: 5rem;
   }
   body {
     @apply bg-surface font-sans text-ink antialiased;
@@ -264,6 +279,25 @@
  * Equipos de doble pantalla reales (CSS Viewport Segments): cada panel ocupa
  * exactamente una pantalla y la bisagra queda vacía.
  */
+/* Bisagra horizontal: pantallas una sobre otra. */
+@media (vertical-viewport-segments: 2) {
+  [data-layout='dual'] .dual-top {
+    flex: none;
+    height: env(viewport-segment-height 0 0);
+  }
+  [data-layout='dual'] .dual-hinge-h {
+    flex: none;
+    height: calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0));
+  }
+  [data-layout='dual'] .dual-bottom {
+    flex: none;
+    height: env(viewport-segment-height 0 1);
+  }
+  [data-layout='dual'] .toast-host {
+    right: 0;
+  }
+}
+
 @media (horizontal-viewport-segments: 2) {
   [data-layout='dual'] .dual-left {
     flex: none;
