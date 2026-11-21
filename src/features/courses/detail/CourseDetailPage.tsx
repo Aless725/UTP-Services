@@ -19,16 +19,16 @@ import { announcementsOf } from './courseContent'
 import { CourseRawContext, useCourseRaw, useRaw } from './useCourseRaw'
 import { useCourseState } from './useCourseState'
 
-/** Secciones siempre a la vista. */
+/** Tres secciones siempre a la vista: caben bien en cualquier pantalla. */
 const MAIN: { value: SectionId; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
-  { value: 'contenido', label: 'Contenido' },
   { value: 'notas', label: 'Notas' },
   { value: 'tareas', label: 'Tareas' },
 ]
 
 /** Secciones que viven detrás del botón "Más". */
 const MORE: { value: SectionId; label: string; icon: string }[] = [
+  { value: 'contenido', label: 'Contenido', icon: 'folder_open' },
   { value: 'foros', label: 'Foros', icon: 'forum' },
   { value: 'anuncios', label: 'Anuncios', icon: 'campaign' },
   { value: 'zoom', label: 'Zoom', icon: 'videocam' },
