@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import DarkHeader from '@/components/layout/DarkHeader'
 import Icon from '@/components/ui/Icon'
@@ -13,34 +13,11 @@ export default function ProfilePage() {
   const { show } = useToast()
   const { settings, update } = useAccessibility()
   const codigo = session?.codigo ?? ''
-  const { data, avatar, save, setAvatar } = useProfile(codigo)
+  const { data, avatar, setAvatar } = useProfile(codigo)
 
-  const [editing, setEditing] = useState(false)
-  const [nombre, setNombre] = useState(data.nombreCompleto)
-  const [dni, setDni] = useState(data.dni)
-  const [error, setError] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const dark = settings.theme === 'oscuro'
-
-  const startEdit = () => {
-    setNombre(data.nombreCompleto)
-    setDni(data.dni)
-    setError(null)
-    setEditing(true)
-  }
-
-  const saveEdit = async () => {
-    if (nombre.trim().split(/\s+/).length < 2) return setError('Ingresa tu nombre completo.')
-    if (!/^\d{8}$/.test(dni)) return setError('El DNI debe tener 8 dígitos.')
-    try {
-      await save({ nombreCompleto: nombre.trim(), dni })
-      setEditing(false)
-      show('Datos actualizados', 'check_circle')
-    } catch {
-      setError('No pudimos guardar tus datos. Revisa tu conexión e inténtalo de nuevo.')
-    }
-  }
 
   const copy = async () => {
     try {
@@ -123,44 +100,15 @@ export default function ProfilePage() {
               <Icon name="person" size={16} className="text-primary" />
               DATOS PERSONALES
             </h2>
-            {editing ? (
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="pressable min-h-9 rounded-full px-3 text-[0.6875rem] font-semibold text-ink-muted"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={saveEdit}
-                  className="pressable min-h-9 rounded-full bg-primary px-3.5 text-[0.6875rem] font-semibold text-white"
-                >
-                  Guardar
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={startEdit}
-                className="pressable min-h-9 rounded-full bg-primary px-3.5 text-[0.6875rem] font-semibold text-white"
-              >
-                Editar
-              </button>
-            )}
+            <span className="flex items-center gap-1 rounded-full bg-fill/5 px-2.5 py-1 text-[0.625rem] font-semibold text-ink-muted">
+              <Icon name="lock" size={12} />
+              Institucional
+            </span>
           </div>
 
           <dl className="divide-y divide-fill/5 border-t border-fill/5">
-            <Field label="Nombre completo" editing={editing} value={data.nombreCompleto} trailing="chevron">
-              <input
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                aria-label="Nombre completo"
-                className="w-full rounded-md bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:ring-2 focus:ring-primary"
-              />
-            </Field>
-            <Field label="Correo institucional" value={emailOf(codigo)} trailing="chevron" />
+            <Field label="Nombre completo" value={data.nombreCompleto} />
+            <Field label="Correo institucional" value={emailOf(codigo)} />
             <Field
               label="Código universitario"
               value={codigo}
@@ -174,23 +122,20 @@ export default function ProfilePage() {
                 </button>
               }
             />
-            <Field label="DNI" editing={editing} value={data.dni} trailing="chevron">
-              <input
-                value={dni}
-                onChange={(e) => setDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                inputMode="numeric"
-                aria-label="DNI"
-                className="w-full rounded-md bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:ring-2 focus:ring-primary"
-              />
-            </Field>
+            <Field label="DNI" value={data.dni} />
             <Field label="Modalidad" value={data.modalidad} />
             <Field label="Campus" value={data.campus} trailing="pin" />
           </dl>
-          {error && (
-            <p role="alert" className="border-t border-fill/5 px-3.5 py-2 text-xs text-primary">
-              {error}
-            </p>
-          )}
+          <p className="flex items-start gap-2 border-t border-fill/5 px-3.5 py-2.5 text-[0.6875rem] leading-snug text-ink-muted">
+            <Icon name="info" size={14} className="mt-px shrink-0" />
+            <span>
+              Estos datos vienen de la universidad y no se pueden cambiar desde la app. Si hay un error, solicita su corrección en{' '}
+              <Link to="/mas/tramites" className="font-semibold text-primary">
+                Trámites
+              </Link>
+              .
+            </span>
+          </p>
         </section>
 
         <Link
@@ -220,31 +165,20 @@ export default function ProfilePage() {
 function Field({
   label,
   value,
-  editing,
   trailing,
-  children,
 }: {
   label: string
   value: string
-  editing?: boolean
-  trailing?: 'chevron' | 'pin' | ReactNode
-  children?: ReactNode
+  trailing?: 'pin' | ReactNode
 }) {
-  const trail =
-    trailing === 'chevron' ? (
-      <Icon name="chevron_right" size={18} className="text-ink-faint" />
-    ) : trailing === 'pin' ? (
-      <Icon name="location_on" size={16} className="text-ink-faint" />
-    ) : (
-      trailing
-    )
+  const trail = trailing === 'pin' ? <Icon name="location_on" size={16} className="text-ink-faint" /> : trailing
   return (
     <div className="flex min-h-12 items-center gap-2 px-3.5 py-2">
       <div className="min-w-0 flex-1">
         <dt className="text-[0.625rem] text-ink-muted">{label}</dt>
-        <dd className="text-sm font-medium text-ink">{editing && children ? children : value}</dd>
+        <dd className="text-sm font-medium text-ink">{value}</dd>
       </div>
-      {!editing && trail}
+      {trail}
     </div>
   )
 }
