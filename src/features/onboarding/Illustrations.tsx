@@ -6,7 +6,7 @@ const Bar = ({ w, dark }: { w: string; dark?: boolean }) => (
 )
 
 const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative h-[182px] w-[156px] rounded-[20px] bg-card p-3.5 shadow-card">{children}</div>
+  <div className="relative h-[206px] w-[156px] rounded-[20px] bg-card p-3.5 shadow-card">{children}</div>
 )
 
 const Chip = ({ tone, icon }: { tone: string; icon: string }) => (
@@ -28,7 +28,7 @@ function Academica() {
         <Icon name="schedule" size={14} />
         <div className="h-4 flex-1 rounded-full bg-fill/5" />
       </div>
-      <div className="absolute -right-12 top-[108px] flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-float">
+      <div className="absolute -right-10 top-[112px] flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-float">
         <Icon name="check_circle" size={20} className="text-success" />
         <div className="leading-tight">
           <p className="text-[0.5rem] text-ink-muted">Matrícula</p>
@@ -47,7 +47,7 @@ function Reservas() {
         <Bar w="w-24" dark />
         <Bar w="w-16" />
       </div>
-      <div className="absolute -left-12 top-[92px] flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-float">
+      <div className="absolute -left-10 top-[98px] flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-float">
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-primary">
           <Icon name="location_on" size={16} />
         </div>
@@ -83,7 +83,7 @@ function Comunidad() {
         <Bar w="w-20" />
         <Bar w="w-14" />
       </div>
-      <div className="absolute right-3.5 top-[104px] flex h-8 w-8 items-center justify-center rounded-full bg-card text-primary shadow-float">
+      <div className="absolute right-3.5 top-[108px] flex h-8 w-8 items-center justify-center rounded-full bg-card text-primary shadow-float">
         <Icon name="chat_bubble" size={15} />
       </div>
       <div className="absolute bottom-3.5 left-3.5 right-3.5 flex items-center gap-2 rounded-xl bg-card p-2 shadow-card">

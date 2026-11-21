@@ -51,6 +51,7 @@ import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
 import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
 import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
 import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
+import HistorialPage from '@/features/payments/HistorialPage'
 import MisCuponesPage from '@/features/beneficios/MisCuponesPage'
 import ReferirPage from '@/features/beneficios/ReferirPage'
 import TriviaPage from '@/features/beneficios/TriviaPage'
@@ -83,6 +84,8 @@ const detailRoutes = (
     <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
     <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
     <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
+    <Route path="/pagos/historial" element={<HistorialPage />} />
+    <Route path="/mas/historial" element={<Navigate to="/pagos/historial" replace />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
