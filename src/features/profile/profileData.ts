@@ -52,7 +52,7 @@ export function displayName(full: string): string {
 
 export const emailOf = codigoToEmail
 
-/** Perfil del alumno: se lee y edita en Supabase (nombre y DNI); la foto queda en el dispositivo. */
+/** Perfil del alumno: datos institucionales de solo lectura (Supabase); la foto queda en el dispositivo. */
 export function useProfile(codigo: string) {
   const [data, setData] = useState<ProfileData>(() => BASE[codigo] ?? FALLBACK)
   const [avatar, setAvatarState] = useState<string | null>(() => {
@@ -88,22 +88,6 @@ export function useProfile(codigo: string) {
     }
   }, [codigo])
 
-  const save = useCallback(
-    async (patch: Pick<ProfileData, 'nombreCompleto' | 'dni'>) => {
-      const previous = data
-      setData((d) => ({ ...d, ...patch }))
-      const { error } = await supabase
-        .from('profiles')
-        .update({ nombre_completo: patch.nombreCompleto, dni: patch.dni })
-        .eq('codigo', codigo)
-      if (error) {
-        setData(previous)
-        throw error
-      }
-    },
-    [codigo, data],
-  )
-
   const setAvatar = useCallback(
     (url: string) => {
       setAvatarState(url)
@@ -116,7 +100,7 @@ export function useProfile(codigo: string) {
     [codigo],
   )
 
-  return { data, avatar, save, setAvatar }
+  return { data, avatar, setAvatar }
 }
 
 /** Reduce la imagen a 192×192 (recorte centrado) y devuelve un data URL JPEG. */
