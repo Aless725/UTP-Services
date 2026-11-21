@@ -6,6 +6,8 @@ const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
+    // Celular en horizontal: poca altura.
+    screens: { short: { raw: '(orientation: landscape) and (max-height: 500px)' } },
     extend: {
       colors: {
         primary: {

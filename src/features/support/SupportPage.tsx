@@ -365,7 +365,7 @@ export default function SupportPage() {
         </div>
       )}
       {/* Al desplazarse al final se deja el espacio de la barra inferior. */}
-      <div ref={end} aria-hidden="true" className="h-px scroll-mb-[calc(var(--nav-bottom)+150px)]" />
+      <div ref={end} aria-hidden="true" className="h-px scroll-mb-[var(--dock-chat)]" />
 
       {dock &&
         createPortal(

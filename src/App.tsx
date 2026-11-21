@@ -134,7 +134,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
 
 /** Decide si se muestra un panel o dos, y qué va en cada uno. */
 function Panes() {
-  const { mode } = useDevice()
+  const { mode, landscape, stacked } = useDevice()
   const location = useLocation()
   const lastMaster = useRef<MasterLocation | null>(null)
   const { pathname, search } = location
@@ -145,6 +145,9 @@ function Panes() {
 
   // Un panel (celular) y pantalla de inicio (splash) a todo el ancho.
   if (mode === 'phone' || pathname === '/') return <AppRoutes />
+
+  // Celular en horizontal: el acceso y el onboarding ocupan toda la pantalla (sin panel de marca).
+  if (!app && landscape && !stacked) return <AppRoutes />
 
   // Acceso y onboarding: formulario a la izquierda, marca a la derecha.
   if (!app) return <TwoPane left={<AppRoutes />} right={<BrandPane />} />
