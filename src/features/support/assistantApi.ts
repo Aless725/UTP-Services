@@ -4,6 +4,7 @@ import { cancelReservation, createReservation } from '@/features/reservations/re
 import { ReservationError } from '@/features/reservations/rules'
 import { JoinError, joinGroup } from '@/features/groups/groupsStore'
 import { AttendanceError } from '@/features/announcements/announcementsData'
+import { BENEFICIOS, crearCupon } from '@/features/beneficios/beneficiosData'
 
 export interface ChatMsg {
   role: 'user' | 'assistant'
@@ -26,6 +27,8 @@ export type Proposal =
   | { kind: 'cancelar'; reservaId: string; codigo: string; penalizacion: boolean; resumen: string }
   | { kind: 'asistencia'; anuncioId: string; titulo: string; resumen: string }
   | { kind: 'unirse_grupo'; grupoId: string; titulo: string; resumen: string }
+  | { kind: 'cupon'; beneficioId: string; empresa: string; resumen: string }
+  | { kind: 'cancelar_tramite'; codigo: string; resumen: string }
 
 export interface AssistantReply {
   reply: string
@@ -134,6 +137,20 @@ export async function executeProposal(p: Proposal, attend: (id: string, asistir:
       case 'unirse_grupo':
         await joinGroup(p.grupoId)
         return { text: `Listo, ya eres parte del grupo.`, link: { to: `/grupos/${p.grupoId}`, label: 'Ver grupo' } }
+      case 'cupon': {
+        const b = BENEFICIOS.find((x) => x.id === p.beneficioId)
+        if (!b) throw new Error('Ese beneficio ya no está disponible.')
+        const { cupon, nuevo } = crearCupon(b)
+        return {
+          text: nuevo ? `Listo, generé tu cupón de ${b.empresa}: ${cupon.codigo}.` : `Ya tenías tu cupón de ${b.empresa}: ${cupon.codigo}.`,
+          link: { to: `/beneficios/${b.id}/cupon`, label: 'Ver cupón y QR' },
+        }
+      }
+      case 'cancelar_tramite': {
+        const { error } = await supabase.rpc('cancelar_tramite', { p_codigo: p.codigo })
+        if (error) throw new Error(error.message.includes('ya no se puede') ? 'Esa solicitud ya no se puede cancelar.' : 'No pude cancelar la solicitud.')
+        return { text: `Listo, cancelé la solicitud ${p.codigo}.`, link: { to: `/tramites/solicitud/${p.codigo}`, label: 'Ver solicitud' } }
+      }
     }
   } catch (e) {
     if (e instanceof ReservationError) throw new Error(e.message)
