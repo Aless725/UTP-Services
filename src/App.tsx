@@ -47,6 +47,15 @@ import TramiteDetailPage from '@/features/tramites/TramiteDetailPage'
 import SolicitarTramitePage from '@/features/tramites/SolicitarTramitePage'
 import SolicitudPage from '@/features/tramites/SolicitudPage'
 import SeguimientoPage from '@/features/tramites/SeguimientoPage'
+import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
+import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
+import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
+import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
+import MisCuponesPage from '@/features/beneficios/MisCuponesPage'
+import ReferirPage from '@/features/beneficios/ReferirPage'
+import TriviaPage from '@/features/beneficios/TriviaPage'
+import OpinaPage from '@/features/beneficios/OpinaPage'
+import PonteAlDiaPage from '@/features/beneficios/PonteAlDiaPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
@@ -66,6 +75,14 @@ const detailRoutes = (
     <Route path="/tramites/solicitud/:codigo" element={<SolicitudPage />} />
     <Route path="/tramites/:id" element={<TramiteDetailPage />} />
     <Route path="/tramites/:id/solicitar" element={<SolicitarTramitePage />} />
+    <Route path="/beneficios/catalogo" element={<CatalogoBeneficiosPage />} />
+    <Route path="/beneficios/cupones" element={<MisCuponesPage />} />
+    <Route path="/beneficios/referir" element={<ReferirPage />} />
+    <Route path="/beneficios/trivia" element={<TriviaPage />} />
+    <Route path="/beneficios/opina" element={<OpinaPage />} />
+    <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
+    <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
+    <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
@@ -104,6 +121,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/reservas/mis" element={<MyReservationsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/tramites" element={<TramitesPage />} />
+        <Route path="/beneficios" element={<BeneficiosPage />} />
         {detailRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
