@@ -1,155 +1,180 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import FlowHeader from '@/components/layout/FlowHeader'
+import { useShell } from '@/components/layout/ShellContext'
+import Badge from '@/components/ui/Badge'
+import Icon from '@/components/ui/Icon'
+import SegmentedControl from '@/components/ui/SegmentedControl'
+import Skeleton from '@/components/ui/Skeleton'
+import { CATEGORIAS, precio, useSolicitudes, useTramiteTipos, type Categoria, type TramiteTipo } from './tramitesData'
 
-type FiltroCategoria = 'Todos' | 'Estudiante' | 'Digital'
-
-interface TramiteItem {
-  id: string
-  titulo: string
-  descripcion: string
-  tags: Exclude<FiltroCategoria, 'Todos'>[]
-  ruta?: string
-}
-
-const CATEGORIAS: TramiteItem[] = [
-  {
-    id: 'certificado-estudios',
-    titulo: 'Certificado de Estudios',
-    descripcion: 'Documento oficial de tu trayectoria académica',
-    tags: ['Estudiante', 'Digital'],
-    ruta: '/tramites/certificado',
-  },
-  {
-    id: 'constancia-matricula',
-    titulo: 'Constancia de Matrícula',
-    descripcion: 'Comprobante de inscripción vigente',
-    tags: ['Estudiante', 'Digital'],
-  },
-  {
-    id: 'carne-universitario',
-    titulo: 'Carné Universitario',
-    descripcion: 'Identificación oficial para estudiantes',
-    tags: ['Estudiante'],
-  },
-  {
-    id: 'mesa-ayuda',
-    titulo: 'Mesa de Ayuda',
-    descripcion: 'Soporte y orientación para trámites',
-    tags: ['Estudiante', 'Digital'],
-    ruta: '/soporte',
-  },
-]
-
-const FILTROS: FiltroCategoria[] = ['Todos', 'Estudiante', 'Digital']
+const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 export default function TramitesPage() {
-  const navigate = useNavigate()
-  const [busqueda, setBusqueda] = useState('')
-  const [filtroActivo, setFiltroActivo] = useState<FiltroCategoria>('Todos')
+  const tipos = useTramiteTipos()
+  const solicitudes = useSolicitudes()
+  const { detailPath } = useShell()
+  const [categoria, setCategoria] = useState<Categoria>('autogestionable')
+  const [query, setQuery] = useState('')
 
-  const categoriasFiltradas = CATEGORIAS.filter((item) => {
-    const coincideFiltro =
-      filtroActivo === 'Todos' || item.tags.includes(filtroActivo)
-    const texto = busqueda.trim().toLowerCase()
-    const coincideTexto =
-      !texto ||
-      item.titulo.toLowerCase().includes(texto) ||
-      item.descripcion.toLowerCase().includes(texto)
+  const all = useMemo(() => tipos.data ?? [], [tipos.data])
+  const q = norm(query.trim())
+  // Al buscar se mira en las dos categorías; si no, solo en la elegida.
+  const list = useMemo(
+    () => (q ? all.filter((t) => norm(t.titulo).includes(q) || norm(t.descripcion).includes(q)) : all.filter((t) => t.categoria === categoria)),
+    [all, q, categoria],
+  )
 
-    return coincideFiltro && coincideTexto
-  })
+  const activos = useMemo(
+    () => new Set((solicitudes.data ?? []).filter((s) => s.estado === 'en_revision').map((s) => s.tipoId)),
+    [solicitudes.data],
+  )
+  const enRevision = activos.size
+  const total = solicitudes.data?.length ?? 0
 
   return (
-    <div className="min-h-full bg-[#F8F9FA] px-5 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900">Tramites UTP</h1>
+    <div className="flex flex-1 flex-col pb-4">
+      <FlowHeader
+        title="Trámites"
+        back="/inicio"
+        backLabel="Volver al inicio"
+        subtitle="Solicita documentos y consulta el estado de tus solicitudes."
+      />
 
-      <div className="relative mt-4">
-        <svg
-          className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+      <div className="mt-4 px-5">
+        <Link
+          to="/tramites/seguimiento"
+          className="pressable flex min-h-16 items-center gap-3 rounded-card bg-card px-3.5 py-3 shadow-card"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <Icon name="pending_actions" size={20} filled />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-ink">Mis solicitudes</span>
+            <span className="block text-[0.6875rem] text-ink-muted">
+              {solicitudes.isLoading
+                ? 'Cargando…'
+                : total === 0
+                  ? 'Aún no tienes solicitudes'
+                  : `${total} ${total === 1 ? 'solicitud' : 'solicitudes'}${enRevision ? ` · ${enRevision} en revisión` : ''}`}
+            </span>
+          </span>
+          <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />
+        </Link>
+      </div>
+
+      <div className="mt-4 space-y-3 px-5">
+        <label className="flex min-h-11 items-center gap-2 rounded-card bg-card px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
+          <Icon name="search" size={18} className="text-ink-muted" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="¿Qué trámite necesitas?"
+            aria-label="Buscar trámite"
+            className="h-11 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-ink-muted"
           />
-        </svg>
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="¿Qué necesitas?"
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-sm text-gray-800 placeholder-gray-400 shadow-2xs focus:border-gray-900 focus:outline-none"
-        />
-      </div>
-
-      <div className="mt-3.5 flex items-center gap-2">
-        {FILTROS.map((filtro) => {
-          const activo = filtroActivo === filtro
-          return (
-            <button
-              key={filtro}
-              type="button"
-              onClick={() => setFiltroActivo(filtro)}
-              className={`rounded-full px-3.5 py-1 text-xs font-medium transition-colors ${
-                activo
-                  ? 'bg-[#18181B] text-white'
-                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {filtro}
-            </button>
-          )
-        })}
-      </div>
-
-      <h2 className="mt-6 text-sm font-bold text-gray-900">Categorías</h2>
-
-      <div className="mt-3 space-y-2.5">
-        {categoriasFiltradas.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-center text-xs text-gray-500">
-            No encontramos trámites que coincidan con tu búsqueda.
-          </p>
-        ) : (
-          categoriasFiltradas.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                if (item.ruta) navigate(item.ruta)
-              }}
-              className="flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-2xs transition hover:border-gray-200 hover:shadow-sm active:scale-[0.99]"
-            >
-              <div>
-                <h3 className="text-sm font-bold text-gray-900">{item.titulo}</h3>
-                <p className="mt-0.5 text-xs text-gray-500">{item.descripcion}</p>
-              </div>
-              <span className="ml-3 text-base text-gray-400">›</span>
-            </button>
-          ))
+        </label>
+        {!q && (
+          <SegmentedControl<Categoria>
+            label="Categorías de trámites"
+            value={categoria}
+            onChange={setCategoria}
+            options={[
+              { value: 'autogestionable', label: CATEGORIAS.autogestionable.corto },
+              { value: 'sae', label: CATEGORIAS.sae.corto },
+            ]}
+          />
         )}
       </div>
 
-      <h2 className="mt-6 text-sm font-bold text-gray-900">Mis solicitudes</h2>
+      <section aria-labelledby="catalogo" className="mt-5 px-5">
+        <h2 id="catalogo" className="mb-2 px-1 text-sm font-bold text-ink">
+          {q ? `Resultados (${list.length})` : CATEGORIAS[categoria].label}
+        </h2>
 
-      <button
-        type="button"
-        onClick={() => navigate('/tramites/seguimiento')}
-        className="mt-3 flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-2xs transition hover:border-gray-200 hover:shadow-sm active:scale-[0.99]"
+        {tipos.isLoading ? (
+          <div role="status" aria-label="Cargando" className="space-y-px overflow-hidden rounded-card">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-none" />
+            ))}
+          </div>
+        ) : tipos.isError ? (
+          <div role="alert" className="rounded-card bg-card p-5 text-center shadow-card">
+            <Icon name="cloud_off" size={28} className="text-ink-faint" />
+            <p className="mt-1 text-sm font-medium text-ink">No pudimos cargar los trámites</p>
+            <button type="button" onClick={() => tipos.refetch()} className="pressable mt-2 min-h-11 text-sm font-semibold text-primary">
+              Reintentar
+            </button>
+          </div>
+        ) : list.length === 0 ? (
+          <div className="flex flex-col items-center rounded-card bg-card px-6 py-10 text-center shadow-card">
+            <Icon name="search_off" size={32} className="text-ink-faint" />
+            <p className="mt-2 text-sm font-medium text-ink">No encontramos trámites con «{query.trim()}»</p>
+            <p className="mt-0.5 text-xs text-ink-muted">Prueba con otra palabra o pregúntale al asistente.</p>
+          </div>
+        ) : (
+          <ul key={q ? 'busqueda' : categoria} className="stagger divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+            {list.map((t) => (
+              <TramiteRow
+                key={t.id}
+                t={t}
+                activo={activos.has(t.id)}
+                seleccionado={detailPath === `/tramites/${t.id}`}
+                mostrarCategoria={!!q}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Link
+        to="/soporte"
+        className="pressable mx-5 mt-5 flex min-h-14 items-center gap-3 rounded-card bg-card px-3.5 shadow-card"
       >
-        <div>
-          <h3 className="text-sm font-bold text-gray-900">
-            Seguimiento de Solicitudes
-          </h3>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Consulta el estado de tus trámites.
-          </p>
-        </div>
-        <span className="ml-3 text-base text-gray-400">›</span>
-      </button>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
+          <Icon name="auto_awesome" size={18} filled />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-ink">¿No encuentras tu trámite?</span>
+          <span className="block text-[0.6875rem] text-ink-muted">Pregúntale al asistente</span>
+        </span>
+        <Icon name="chevron_right" size={18} className="shrink-0 text-ink-faint" />
+      </Link>
     </div>
+  )
+}
+
+function TramiteRow({
+  t,
+  activo,
+  seleccionado,
+  mostrarCategoria,
+}: {
+  t: TramiteTipo
+  activo: boolean
+  seleccionado: boolean
+  mostrarCategoria: boolean
+}) {
+  return (
+    <li>
+      <Link
+        to={`/tramites/${t.id}`}
+        aria-current={seleccionado ? 'page' : undefined}
+        className={`pressable flex min-h-16 items-center gap-3 px-3.5 py-3 ${seleccionado ? 'bg-primary-soft' : ''}`}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <Icon name={t.icono} size={20} filled />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold leading-snug text-ink">{t.titulo}</span>
+          <span className="mt-0.5 block text-[0.6875rem] text-ink-muted">
+            {mostrarCategoria && `${CATEGORIAS[t.categoria].corto} · `}
+            {precio(t.costo)} · {t.plazo}
+          </span>
+        </span>
+        {activo ? <Badge tone="neutral">En revisión</Badge> : <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />}
+      </Link>
+    </li>
   )
 }
