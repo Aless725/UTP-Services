@@ -15,7 +15,7 @@ export default function CoursesPage() {
 
   return (
     <>
-      <PageHeader title="Cursos" eyebrow={tab === 'malla' ? 'Cada paso cuenta' : undefined} />
+      <PageHeader title="Cursos" />
       <div className="mx-5 mt-4">
         <SegmentedControl<Tab>
           label="Secciones de cursos"
