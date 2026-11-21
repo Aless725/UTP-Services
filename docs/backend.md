@@ -22,6 +22,7 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 11 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
 | 12 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
 | 13 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
+| 14 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
