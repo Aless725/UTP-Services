@@ -130,6 +130,12 @@
     margin: 0;
     -webkit-tap-highlight-color: transparent;
   }
+  /* iPad grande (13"): un poco más de tamaño para que no se vea pequeño. */
+  @media (min-width: 1000px) {
+    html[data-layout='wide'] {
+      font-size: calc(16px * var(--font-scale) * 1.1);
+    }
+  }
   button,
   a {
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;

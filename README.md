@@ -28,7 +28,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Trámites: 26 trámites autogestionables y SAE, solicitud, seguimiento y cancelación | Listo |
 | Asistente de Soporte con IA por **texto y voz** (Gemini): consulta espacios, cursos, notas y tareas, y propone reservas, grupos y asistencias con confirmación | Listo |
 | Backend en Supabase con RLS y reglas en el servidor | Listo |
-| App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, tableta, plegable y doble pantalla) | Listo |
+| App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, iPad, plegables y doble pantalla) | Listo |
 | Biblioteca | Pendiente |
 | Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
 | Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
@@ -118,15 +118,20 @@ Se abre desde **Mi Perfil → Accesibilidad** y se aplica en toda la app:
 
 ## Diseño adaptable
 
-| Formato | Comportamiento |
-|---|---|
-| Celular (menos de 640 px) | Un panel a pantalla completa. |
-| Celular en horizontal | Sin marco, con la navegación en una barra vertical a la izquierda y, si el ancho alcanza, lista y detalle en dos paneles. |
-| Tableta o plegable abierto | Dos paneles: lista a la izquierda y detalle a la derecha. |
-| Doble pantalla | Dos paneles alineados a cada pantalla, con la bisagra vacía (CSS Viewport Segments). |
-| Escritorio | Vista previa dentro de un marco, con un selector de **Celular / Doble pantalla / Tableta**. |
+La app se adapta sola al dispositivo y a su orientación. Formatos compatibles:
 
-Las animaciones usan solo `transform` y `opacity`, con una misma curva en toda la app.
+| Formato | Medidas de referencia (CSS px) | Comportamiento |
+|---|---|---|
+| **Celular vertical** (iPhone, Android) | 320 a 639 de ancho; probado en 393×852 (iPhone 15 Pro) | Un panel a pantalla completa, con la barra de navegación flotante abajo. |
+| **Celular horizontal** | por ejemplo 852×393 | Sin marco. La navegación pasa a una barra vertical a la izquierda; con 760 px o más de ancho, lista y detalle en dos paneles. |
+| **iPad 10.9"** (A16) | 820×1180 vertical y 1180×820 horizontal | Pantalla completa con dos paneles (lista y detalle). |
+| **iPad 13"** | 1032×1376 vertical y 1376×1032 horizontal | Igual, con paneles más anchos y texto un 10 % más grande. |
+| **Tableta o plegable abierto** | 640 px o más de ancho | Dos paneles: lista a la izquierda y detalle a la derecha. |
+| **Plegable o doble pantalla con bisagra vertical** (por ejemplo Galaxy Z Fold desplegado en vertical) | 744×860 | Dos paneles alineados a cada pantalla, con la bisagra vacía (CSS Viewport Segments). |
+| **Plegable o doble pantalla con bisagra horizontal** (Z Fold girado) | 860×744 | Pantallas una sobre otra, alineadas a cada segmento, con la navegación en barra vertical. |
+| **Escritorio** (pantalla grande con mouse) | 1024 px o más | Vista previa dentro de un marco, con un selector de **Celular / Doble pantalla / Tableta**. |
+
+Un iPad (táctil) nunca se trata como escritorio: usa la app a pantalla completa. Las animaciones usan solo `transform` y `opacity`, con una misma curva en toda la app. Sin internet, la app abre con lo último que consultaste y muestra un aviso de **sin conexión**.
 
 ## Estructura del proyecto
 
