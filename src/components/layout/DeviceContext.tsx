@@ -66,7 +66,8 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const [pref, setPrefState] = useState<DevicePref>(readPref)
   const realDual = useMedia('(horizontal-viewport-segments: 2)')
   const realStacked = useMedia('(vertical-viewport-segments: 2)')
-  const isDesktop = useMedia(`(min-width: ${DESKTOP_MIN}px)`)
+  // Escritorio = pantalla grande con mouse. Un iPad (táctil) con 1180 o 1376 px de ancho NO es escritorio: usa la app a pantalla completa.
+  const isDesktop = useMedia(`(min-width: ${DESKTOP_MIN}px) and (hover: hover) and (pointer: fine)`)
   const isCompact = useMedia(`(max-width: ${COMPACT_MAX - 0.02}px)`)
   const landscape = useMedia(LANDSCAPE_QUERY)
   const landscapeTwoPanes = useMedia(`(min-width: ${LANDSCAPE_TWO_PANES_MIN}px)`)
