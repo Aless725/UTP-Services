@@ -45,6 +45,10 @@ import CertificadoPage from '@/features/tramites/CertificadoPage'
 import SolicitarCertificadoPage from '@/features/tramites/SolicitarCertificadoPage'
 import SolicitudEnviadaPage from '@/features/tramites/SolicitudEnviadaPage'
 import SeguimientoPage from '@/features/tramites/SeguimientoPage'
+import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
+import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
+import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
+import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
@@ -64,6 +68,9 @@ const detailRoutes = (
     <Route path="/tramites/certificado/solicitar" element={<SolicitarCertificadoPage />} />
     <Route path="/tramites/certificado/enviada" element={<SolicitudEnviadaPage />} />
     <Route path="/tramites/seguimiento" element={<SeguimientoPage />} />
+    <Route path="/beneficios/catalogo" element={<CatalogoBeneficiosPage />} />
+    <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
+    <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
@@ -99,6 +106,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/reservas/mis" element={<MyReservationsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/tramites" element={<TramitesPage />} />
+        <Route path="/beneficios" element={<BeneficiosPage />} />
         {detailRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

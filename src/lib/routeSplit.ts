@@ -8,7 +8,7 @@ export interface MasterLocation {
   search: string
 }
 
-const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|tramites)(\/|$)/
+const APP_PATH = /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|tramites|beneficios)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
@@ -17,6 +17,7 @@ const DETAIL_PATH = [
   /^\/mas\/[^/]+\/?$/,
   /^\/reservas\/(espacio|confirmada)\//,
   /^\/tramites\/[^/]+/,
+  /^\/beneficios\/[^/]+/,
 ]
 
 /** ¿Es una pantalla de la app (con sesión), no del acceso ni del onboarding? */
