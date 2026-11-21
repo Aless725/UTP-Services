@@ -96,7 +96,7 @@ export default function ContentTab({ state, onOpenForum }: ContentTabProps) {
         </div>
       </section>
 
-      <h2 className="px-1 pt-1 text-sm font-bold text-ink">Contenido</h2>
+      <h2 className="px-1 pt-1 text-sm font-bold text-ink">Semanas</h2>
       <ul className="space-y-3">
         {weeks.map((w) => {
           const isOpen = open.has(w.n)
