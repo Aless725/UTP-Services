@@ -131,7 +131,7 @@ select * from (
 update public.profiles set plan_codigo = 'SIST26P2A' where plan_codigo = '';
 
 insert into public.terms (id, nombre, estado, semana_actual, semanas_total, inicio, fin)
-values ('2026-2', 'Ciclo 2026-2', 'En curso', 13, 18, '2026-08-17', '2026-12-19')
+values ('2026-2', 'Ciclo 2026-2', 'En curso', 16, 18, '2026-08-17', '2026-12-19')
 on conflict (id) do update set
   nombre = excluded.nombre, estado = excluded.estado, semana_actual = excluded.semana_actual,
   semanas_total = excluded.semanas_total, inicio = excluded.inicio, fin = excluded.fin;

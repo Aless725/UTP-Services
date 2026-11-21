@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
 import PlusIcon from '@/components/ui/PlusIcon'
@@ -18,7 +18,9 @@ export default function CreateGroupPage() {
   const navigate = useNavigate()
   const today = startOfDay(new Date())
 
-  const [curso, setCurso] = useState('Taller de programación')
+  const [params] = useSearchParams()
+  const preselected = params.get('curso')
+  const [curso, setCurso] = useState(preselected && GROUP_COURSES.includes(preselected) ? preselected : 'Taller de programación')
   const [tema, setTema] = useState('')
   const [modalidad, setModalidad] = useState<Modalidad>('Presencial')
   const [lugar, setLugar] = useState<string>(SALAS[1])

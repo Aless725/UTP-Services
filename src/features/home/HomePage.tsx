@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import ProfileButton from '@/components/layout/ProfileButton'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
-import { useToast } from '@/components/ui/Toast'
+import NotificationBell from '@/features/notifications/NotificationBell'
 import { useAuth } from '@/features/auth/AuthContext'
 import { eventsFor, type CalEvent } from '@/features/calendar/calendarData'
 import AnnouncementRow from '@/features/announcements/AnnouncementRow'
@@ -33,7 +33,6 @@ function useAgenda(): AgendaDay[] {
 
 export default function HomePage() {
   const { session } = useAuth()
-  const { show } = useToast()
   const agenda = useAgenda()
   const courses = useCourseList()
   const announcements = useCampusAnnouncements()
@@ -52,14 +51,16 @@ export default function HomePage() {
           <ProfileButton />
           <span className="text-xs font-semibold text-ink">{session?.codigo}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => show('No tienes mensajes nuevos', 'mail')}
-          aria-label="Mensajes"
-          className="pressable flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-card"
-        >
-          <Icon name="mail" size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/correo"
+            aria-label="Correo"
+            className="pressable flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-card"
+          >
+            <Icon name="mail" size={20} />
+          </Link>
+          <NotificationBell />
+        </div>
       </header>
 
       <h1 className="animate-rise mt-4 px-5 text-title text-ink">Hola, {session?.nombre}</h1>

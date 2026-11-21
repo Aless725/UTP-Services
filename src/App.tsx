@@ -29,6 +29,8 @@ import AnnouncementsPage from '@/features/announcements/AnnouncementsPage'
 import AnnouncementDetailPage from '@/features/announcements/AnnouncementDetailPage'
 import ComingSoonPage from '@/features/more/ComingSoonPage'
 import SupportPage from '@/features/support/SupportPage'
+import NotificationsPage from '@/features/notifications/NotificationsPage'
+import MailPage from '@/features/mail/MailPage'
 import ReservationsHome from '@/features/reservations/ReservationsHome'
 import SpaceListPage from '@/features/reservations/SpaceListPage'
 import SpaceDetailPage from '@/features/reservations/SpaceDetailPage'
@@ -41,14 +43,19 @@ import CourseDetailPage from '@/features/courses/detail/CourseDetailPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
 import TramitesPage from '@/features/tramites/TramitesPage'
-import CertificadoPage from '@/features/tramites/CertificadoPage'
-import SolicitarCertificadoPage from '@/features/tramites/SolicitarCertificadoPage'
-import SolicitudEnviadaPage from '@/features/tramites/SolicitudEnviadaPage'
+import TramiteDetailPage from '@/features/tramites/TramiteDetailPage'
+import SolicitarTramitePage from '@/features/tramites/SolicitarTramitePage'
+import SolicitudPage from '@/features/tramites/SolicitudPage'
 import SeguimientoPage from '@/features/tramites/SeguimientoPage'
 import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
 import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
 import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
 import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
+import MisCuponesPage from '@/features/beneficios/MisCuponesPage'
+import ReferirPage from '@/features/beneficios/ReferirPage'
+import TriviaPage from '@/features/beneficios/TriviaPage'
+import OpinaPage from '@/features/beneficios/OpinaPage'
+import PonteAlDiaPage from '@/features/beneficios/PonteAlDiaPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
@@ -64,15 +71,21 @@ const detailRoutes = (
     <Route path="/reservas/espacio/:id/confirmar" element={<ConfirmPage />} />
     <Route path="/reservas/confirmada/:codigo" element={<ConfirmedPage />} />
     <Route path="/anuncios/:id" element={<AnnouncementDetailPage />} />
-    <Route path="/tramites/certificado" element={<CertificadoPage />} />
-    <Route path="/tramites/certificado/solicitar" element={<SolicitarCertificadoPage />} />
-    <Route path="/tramites/certificado/enviada" element={<SolicitudEnviadaPage />} />
     <Route path="/tramites/seguimiento" element={<SeguimientoPage />} />
+    <Route path="/tramites/solicitud/:codigo" element={<SolicitudPage />} />
+    <Route path="/tramites/:id" element={<TramiteDetailPage />} />
+    <Route path="/tramites/:id/solicitar" element={<SolicitarTramitePage />} />
     <Route path="/beneficios/catalogo" element={<CatalogoBeneficiosPage />} />
+    <Route path="/beneficios/cupones" element={<MisCuponesPage />} />
+    <Route path="/beneficios/referir" element={<ReferirPage />} />
+    <Route path="/beneficios/trivia" element={<TriviaPage />} />
+    <Route path="/beneficios/opina" element={<OpinaPage />} />
+    <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
     <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
     <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
+    <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -101,6 +114,8 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/grupos" element={<GroupsPage />} />
         <Route path="/anuncios" element={<AnnouncementsPage />} />
         <Route path="/soporte" element={<SupportPage />} />
+        <Route path="/notificaciones" element={<NotificationsPage />} />
+        <Route path="/correo" element={<MailPage />} />
         <Route path="/reservas" element={<ReservationsHome />} />
         <Route path="/reservas/lista/:tipo" element={<SpaceListPage />} />
         <Route path="/reservas/mis" element={<MyReservationsPage />} />

@@ -1,23 +1,39 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import FlowHeader from '@/components/layout/FlowHeader'
+import BottomSheet from '@/components/ui/BottomSheet'
 import Icon from '@/components/ui/Icon'
 import PageLoading from '@/components/ui/PageLoading'
+import SegmentedControl from '@/components/ui/SegmentedControl'
 import type { Course } from '../coursesData'
 import { useCourses } from '../useCourses'
 import AnnouncementsTab from './AnnouncementsTab'
 import ContentTab from './ContentTab'
-import EvaluationsTab from './EvaluationsTab'
 import ForumsTab from './ForumsTab'
-import GradesTab from './GradesTab'
+import NotesTab from './NotesTab'
+import SummaryTab, { type SectionId } from './SummaryTab'
 import SyllabusTab from './SyllabusTab'
 import TasksTab from './TasksTab'
 import ZoomTab from './ZoomTab'
-import { announcementsOf, tasksOf } from './courseContent'
-import { useCourseState } from './useCourseState'
+import { announcementsOf } from './courseContent'
 import { CourseRawContext, useCourseRaw, useRaw } from './useCourseRaw'
+import { useCourseState } from './useCourseState'
 
-type TabId = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'foros' | 'notas' | 'anuncios' | 'zoom'
+/** Tres secciones siempre a la vista: caben bien en cualquier pantalla. */
+const MAIN: { value: SectionId; label: string }[] = [
+  { value: 'resumen', label: 'Resumen' },
+  { value: 'notas', label: 'Notas' },
+  { value: 'tareas', label: 'Tareas' },
+]
+
+/** Secciones que viven detrás del botón "Más". */
+const MORE: { value: SectionId; label: string; icon: string }[] = [
+  { value: 'contenido', label: 'Contenido', icon: 'folder_open' },
+  { value: 'foros', label: 'Foros', icon: 'forum' },
+  { value: 'anuncios', label: 'Anuncios', icon: 'campaign' },
+  { value: 'zoom', label: 'Zoom', icon: 'videocam' },
+  { value: 'silabo', label: 'Sílabo', icon: 'description' },
+]
 
 export default function CourseDetailPage() {
   const { id } = useParams()
@@ -51,31 +67,23 @@ export default function CourseDetailPage() {
 }
 
 function CourseDetail({ course }: { course: Course }) {
-  const [tab, setTab] = useState<TabId>('contenido')
+  const [tab, setTab] = useState<SectionId>('resumen')
+  const [moreOpen, setMoreOpen] = useState(false)
   const [forumWeek, setForumWeek] = useState<number | null>(null)
   const state = useCourseState(course.id)
   const raw = useRaw()
 
-  const pendingTasks = useMemo(
-    () => tasksOf(raw).filter((t) => !state.entregas[t.id]).length,
-    [raw, state.entregas],
-  )
   const unread = useMemo(
     () => announcementsOf(raw).filter((a) => a.nuevo && !state.leidos.includes(a.id)).length,
     [raw, state.leidos],
   )
 
-  const tabs: { id: TabId; label: string; icon: string; badge?: number }[] = [
-    { id: 'silabo', label: 'Sílabo', icon: 'description' },
-    { id: 'contenido', label: 'Contenido', icon: 'folder_open' },
-    { id: 'evaluaciones', label: 'Evaluaciones', icon: 'fact_check' },
-    { id: 'tareas', label: 'Tareas', icon: 'assignment', badge: pendingTasks },
-    { id: 'foros', label: 'Foros', icon: 'forum' },
-    { id: 'notas', label: 'Notas', icon: 'grade' },
-    { id: 'anuncios', label: 'Anuncios', icon: 'campaign', badge: unread },
-    { id: 'zoom', label: 'Zoom', icon: 'videocam' },
-  ]
+  const inMore = MORE.find((m) => m.value === tab)
 
+  const go = (section: SectionId) => {
+    setForumWeek(null)
+    setTab(section)
+  }
   const openForum = (week: number) => {
     setForumWeek(week)
     setTab('foros')
@@ -87,58 +95,72 @@ function CourseDetail({ course }: { course: Course }) {
         title={course.nombre}
         back="/cursos"
         backLabel="Volver a cursos"
-        subtitle={`${course.docente} · ${course.creditos} créditos · ${course.modalidad}`}
+        subtitle={`${course.docente} · ${course.creditos} créditos`}
       />
 
-      {/* Las 8 secciones visibles a la vez: sin deslizar. */}
-      <div role="tablist" aria-label="Secciones del curso" className="mt-4 grid grid-cols-4 gap-2 px-5">
-        {tabs.map((t) => {
-          const on = tab === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              aria-label={t.badge ? `${t.label}, ${t.badge} pendientes` : t.label}
-              onClick={() => {
-                setForumWeek(null)
-                setTab(t.id)
-              }}
-              className={`pressable relative flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 transition-colors duration-200 ${
-                on ? 'bg-ink text-surface' : 'bg-card text-ink-muted shadow-card'
-              }`}
-            >
-              <Icon name={t.icon} size={22} filled={on} />
-              <span className="max-w-full truncate text-[0.625rem] font-semibold leading-none">{t.label}</span>
-              {!!t.badge && (
-                <span
-                  aria-hidden="true"
-                  className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.5625rem] font-bold leading-none text-white"
-                >
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          )
-        })}
+      <div className="mt-4 flex items-center gap-2 px-5">
+        <div className="min-w-0 flex-1">
+          <SegmentedControl<SectionId>
+            label="Secciones del curso"
+            value={inMore ? '' : tab}
+            onChange={go}
+            options={MAIN}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          aria-label={unread ? `Más secciones, ${unread} anuncios nuevos` : 'Más secciones'}
+          aria-haspopup="dialog"
+          className={`pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${
+            inMore ? 'bg-ink text-surface' : 'bg-card text-ink shadow-card'
+          }`}
+        >
+          <Icon name="more_horiz" size={22} />
+          {unread > 0 && !inMore && (
+            <span aria-hidden="true" className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-surface" />
+          )}
+        </button>
       </div>
 
-      <div key={tab} className="animate-rise px-5 pt-4" role="tabpanel">
-        {tab === 'silabo' && <SyllabusTab course={course} />}
+      {inMore && <h2 className="px-5 pt-4 text-lg font-bold text-ink">{inMore.label}</h2>}
+
+      <div key={tab} className={`animate-rise px-5 ${inMore ? 'pt-3' : 'pt-4'}`} role="tabpanel">
+        {tab === 'resumen' && <SummaryTab course={course} state={state} go={go} />}
         {tab === 'contenido' && <ContentTab state={state} onOpenForum={openForum} />}
-        {tab === 'evaluaciones' && <EvaluationsTab course={course} />}
+        {tab === 'notas' && <NotesTab />}
         {tab === 'tareas' && <TasksTab state={state} />}
-        {tab === 'foros' && (
-          <ForumsTab
-            state={state}
-            initialThread={forumWeek ? `${course.id}-f${forumWeek}` : null}
-          />
-        )}
-        {tab === 'notas' && <GradesTab course={course} />}
+        {tab === 'foros' && <ForumsTab state={state} initialThread={forumWeek ? `${course.id}-f${forumWeek}` : null} />}
         {tab === 'anuncios' && <AnnouncementsTab course={course} state={state} />}
         {tab === 'zoom' && <ZoomTab course={course} />}
+        {tab === 'silabo' && <SyllabusTab course={course} />}
       </div>
+
+      <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Más secciones">
+        <ul className="divide-y divide-fill/5 overflow-hidden rounded-card bg-surface">
+          {MORE.map((m) => (
+            <li key={m.value}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false)
+                  go(m.value)
+                }}
+                className="pressable flex min-h-14 w-full items-center gap-3 px-3.5 text-left"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-card text-primary shadow-card">
+                  <Icon name={m.icon} size={18} filled />
+                </span>
+                <span className="flex-1 text-sm font-semibold text-ink">{m.label}</span>
+                {m.value === 'anuncios' && unread > 0 && (
+                  <span className="rounded-full bg-primary px-2 py-0.5 text-[0.625rem] font-bold text-white">{unread} nuevos</span>
+                )}
+                <Icon name="chevron_right" size={18} className="text-ink-faint" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </BottomSheet>
     </div>
   )
 }
