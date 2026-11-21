@@ -1,154 +1,99 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  BENEFICIOS,
-  CATEGORIAS_BENEFICIOS,
-  type CategoriaBeneficio,
-} from './beneficiosData'
+import { Link, useSearchParams } from 'react-router-dom'
+import FlowHeader from '@/components/layout/FlowHeader'
+import { useShell } from '@/components/layout/ShellContext'
+import Chip from '@/components/ui/Chip'
+import Icon from '@/components/ui/Icon'
+import Foto from './Foto'
+import { BENEFICIOS, CATEGORIAS, CATEGORIA_IDS, buscar, useCupones, type CategoriaId } from './beneficiosData'
 
 export default function CatalogoBeneficiosPage() {
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [params, setParams] = useSearchParams()
+  const { detailPath } = useShell()
+  const { de } = useCupones()
+  const q = params.get('q') ?? ''
+  const raw = params.get('categoria')
+  const categoria = (CATEGORIA_IDS as string[]).includes(raw ?? '') ? (raw as CategoriaId) : null
 
-  const categoriaParam =
-    (searchParams.get('categoria') as CategoriaBeneficio) || 'Todos'
-  const queryParam = searchParams.get('q') || ''
-
-  const [busqueda, setBusqueda] = useState(queryParam)
-  const [categoriaActiva, setCategoriaActiva] =
-    useState<CategoriaBeneficio>(categoriaParam)
-
-  useEffect(() => {
-    setCategoriaActiva(categoriaParam)
-    setBusqueda(queryParam)
-  }, [categoriaParam, queryParam])
-
-  const actualizarFiltros = (cat: CategoriaBeneficio, q: string) => {
-    setCategoriaActiva(cat)
-    setBusqueda(q)
-    const params = new URLSearchParams()
-    if (cat !== 'Todos') params.set('categoria', cat)
-    if (q.trim()) params.set('q', q.trim())
-    setSearchParams(params, { replace: true })
+  const cambiar = (c: CategoriaId | null, texto = q) => {
+    const p = new URLSearchParams()
+    if (c) p.set('categoria', c)
+    if (texto) p.set('q', texto)
+    setParams(p, { replace: true })
   }
 
-  const beneficiosFiltrados = BENEFICIOS.filter((item) => {
-    const coincideCategoria =
-      categoriaActiva === 'Todos' || item.categoria === categoriaActiva
-    const texto = busqueda.trim().toLowerCase()
-    const coincideTexto =
-      !texto ||
-      item.empresa.toLowerCase().includes(texto) ||
-      item.tituloDescuento.toLowerCase().includes(texto) ||
-      item.categoria.toLowerCase().includes(texto)
-
-    return coincideCategoria && coincideTexto
-  })
+  const lista = buscar(categoria ? BENEFICIOS.filter((b) => b.categoria === categoria) : BENEFICIOS, q)
 
   return (
-    <div className="min-h-full bg-[#F8F9FA] px-5 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900">
-        Catálogo de beneficios
-      </h1>
+    <div className="flex flex-1 flex-col pb-4">
+      <FlowHeader
+        title="Catálogo"
+        back="/beneficios"
+        backLabel="Volver a Beneficios+"
+        subtitle={categoria ? CATEGORIAS[categoria].label : 'Todos los convenios'}
+      />
 
-      <button
-        type="button"
-        onClick={() => navigate('/beneficios')}
-        className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
-      >
-        <span>←</span> Beneficios UTP
-      </button>
-
-      {/* Buscador */}
-      <div className="relative mt-4">
-        <svg
-          className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+      <div className="mt-4 px-5">
+        <label className="flex min-h-11 items-center gap-2 rounded-card bg-card px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
+          <Icon name="search" size={18} className="text-ink-muted" />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => cambiar(categoria, e.target.value)}
+            placeholder="Busca una marca o descuento"
+            aria-label="Buscar beneficios"
+            className="h-11 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-ink-muted"
           />
-        </svg>
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(e) => actualizarFiltros(categoriaActiva, e.target.value)}
-          placeholder="Buscar beneficios o empresas"
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-xs text-gray-800 placeholder-gray-400 shadow-2xs focus:border-[#B9001F] focus:outline-none"
-        />
+        </label>
       </div>
 
-      {/* Filtros horizontales */}
-      <div className="mt-3.5 flex gap-2 overflow-x-auto pb-1">
-        {CATEGORIAS_BENEFICIOS.map((cat) => {
-          const activa = categoriaActiva === cat
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => actualizarFiltros(cat, busqueda)}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                activa
-                  ? 'bg-[#B9001F] text-white'
-                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {cat}
-            </button>
-          )
-        })}
+      <div role="tablist" aria-label="Categorías" className="mt-3 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+        <Chip active={!categoria} onClick={() => cambiar(null)}>
+          Todos
+        </Chip>
+        {CATEGORIA_IDS.map((id) => (
+          <Chip key={id} active={categoria === id} onClick={() => cambiar(id)}>
+            {CATEGORIAS[id].corto}
+          </Chip>
+        ))}
       </div>
 
-      <h2 className="mt-5 text-sm font-bold text-gray-900">
-        Beneficios disponibles
-      </h2>
-
-      <div className="mt-3 space-y-3">
-        {beneficiosFiltrados.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-5 text-center">
-            <p className="text-xs text-gray-500">
-              No encontramos beneficios con ese filtro.
-            </p>
-            <button
-              type="button"
-              onClick={() => actualizarFiltros('Todos', '')}
-              className="mt-2 text-xs font-semibold text-[#B9001F] hover:underline"
-            >
-              Ver todos los beneficios
-            </button>
+      <section aria-label="Beneficios" className="mt-4 px-5">
+        {lista.length === 0 ? (
+          <div className="flex flex-col items-center rounded-card bg-card px-6 py-10 text-center shadow-card">
+            <Icon name="search_off" size={32} className="text-ink-faint" />
+            <p className="mt-2 text-sm font-medium text-ink">No encontramos beneficios{q ? ` con «${q}»` : ''}</p>
+            <p className="mt-0.5 text-xs text-ink-muted">Prueba con otra palabra o categoría.</p>
           </div>
         ) : (
-          beneficiosFiltrados.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => navigate(`/beneficios/${item.id}`)}
-              className="block w-full overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-2xs transition hover:border-gray-200 hover:shadow-sm active:scale-[0.99]"
-            >
-              <div className="h-28 w-full overflow-hidden bg-gray-900">
-                <img
-                  src={item.imagen}
-                  alt={item.empresa}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="p-3.5">
-                <h3 className="text-sm font-bold text-gray-900">
-                  {item.empresa}
-                </h3>
-                <p className="mt-0.5 text-xs font-semibold text-[#B9001F]">
-                  {item.tituloDescuento}
-                </p>
-              </div>
-            </button>
-          ))
+          <ul key={`${categoria}-${q}`} className="stagger divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+            {lista.map((b) => (
+              <li key={b.id}>
+                <Link
+                  to={`/beneficios/${b.id}`}
+                  aria-current={detailPath === `/beneficios/${b.id}` ? 'page' : undefined}
+                  className={`pressable flex min-h-[4.5rem] items-center gap-3 px-3.5 py-3 ${
+                    detailPath === `/beneficios/${b.id}` ? 'bg-primary-soft' : ''
+                  }`}
+                >
+                  <Foto src={b.imagen} icon={b.icono} alt="" className="h-12 w-12 shrink-0 rounded-xl" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-ink">{b.empresa}</span>
+                    <span className="block text-xs font-semibold text-primary">{b.descuento}</span>
+                    <span className="block text-[0.6875rem] text-ink-muted">
+                      {CATEGORIAS[b.categoria].corto} · {b.modalidad}
+                    </span>
+                  </span>
+                  {de(b.id) ? (
+                    <Icon name="check_circle" size={20} filled className="shrink-0 text-success" label="Cupón generado" />
+                  ) : (
+                    <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </section>
     </div>
   )
 }

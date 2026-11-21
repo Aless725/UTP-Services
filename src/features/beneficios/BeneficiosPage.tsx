@@ -1,166 +1,153 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  BENEFICIOS,
-  CATEGORIAS_BENEFICIOS,
-  type CategoriaBeneficio,
-} from './beneficiosData'
+import { Link, useNavigate } from 'react-router-dom'
+import FlowHeader from '@/components/layout/FlowHeader'
+import Badge from '@/components/ui/Badge'
+import Icon from '@/components/ui/Icon'
+import Foto from './Foto'
+import { BENEFICIOS, CATEGORIAS, CATEGORIA_IDS, PREMIO_REFERIDO, beneficiosDe, useCupones } from './beneficiosData'
+
+interface Seccion {
+  to?: string
+  icon: string
+  titulo: string
+  detalle: string
+}
+
+const SECCIONES: Seccion[] = [
+  { icon: 'person_add', titulo: 'Refiere y gana', detalle: `Gana S/ ${PREMIO_REFERIDO} por cada alumno que traigas`, to: '/beneficios/referir' },
+  { icon: 'quiz', titulo: 'Trivia', detalle: '5 preguntas sobre la UTP y la vida universitaria', to: '/beneficios/trivia' },
+  { icon: 'forum', titulo: 'Opina', detalle: 'Cuéntanos cómo mejorar tu experiencia', to: '/beneficios/opina' },
+  { icon: 'newspaper', titulo: 'Ponte al día', detalle: 'Noticias y consejos para tu ciclo', to: '/beneficios/ponte-al-dia' },
+  { icon: 'trending_up', titulo: 'Actualízate', detalle: 'Charlas y novedades de tu carrera' },
+  { icon: 'workspace_premium', titulo: 'Capacítate', detalle: 'Cursos y certificaciones con descuento' },
+]
 
 export default function BeneficiosPage() {
   const navigate = useNavigate()
-  const [busqueda, setBusqueda] = useState('')
-  const [categoriaActiva, setCategoriaActiva] =
-    useState<CategoriaBeneficio>('Todos')
+  const { cupones } = useCupones()
+  const [q, setQ] = useState('')
+  const destacados = BENEFICIOS.filter((b) => b.destacado)
 
-  const destacado = BENEFICIOS.find((b) => b.destacado) ?? BENEFICIOS[0]
-  const paraTi = BENEFICIOS.find((b) => b.paraTi) ?? BENEFICIOS[1]
-
-  const irAlCatalogo = (
-    categoria: CategoriaBeneficio = categoriaActiva,
-    texto: string = busqueda
-  ) => {
-    const params = new URLSearchParams()
-    if (categoria && categoria !== 'Todos') params.set('categoria', categoria)
-    if (texto.trim()) params.set('q', texto.trim())
-    const query = params.toString()
-    navigate(`/beneficios/catalogo${query ? `?${query}` : ''}`)
-  }
-
-  const manejarSubmitBusqueda = (e: FormEvent) => {
+  const buscar = (e: FormEvent) => {
     e.preventDefault()
-    irAlCatalogo('Todos', busqueda)
+    if (q.trim()) navigate(`/beneficios/catalogo?q=${encodeURIComponent(q.trim())}`)
   }
 
   return (
-    <div className="min-h-full bg-[#F8F9FA] px-5 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900">Beneficios UTP</h1>
+    <div className="flex flex-1 flex-col pb-4">
+      <FlowHeader
+        title="Beneficios+"
+        back="/inicio"
+        backLabel="Volver al inicio"
+        subtitle="Descuentos y experiencias por ser parte de la UTP."
+      />
 
-      <button
-        type="button"
-        onClick={() => navigate('/mas')}
-        className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
-      >
-        <span>←</span> UTP+
-      </button>
-
-      {/* Buscador conectado al Catálogo */}
-      <form onSubmit={manejarSubmitBusqueda} className="relative mt-4">
-        <svg
-          className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+      <form onSubmit={buscar} className="mt-4 px-5">
+        <label className="flex min-h-11 items-center gap-2 rounded-card bg-card px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
+          <Icon name="search" size={18} className="text-ink-muted" />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Busca una marca o descuento"
+            aria-label="Buscar beneficios"
+            className="h-11 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-ink-muted"
           />
-        </svg>
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar beneficios o empresas"
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-10 pl-10 text-xs text-gray-800 placeholder-gray-400 shadow-2xs focus:border-[#B9001F] focus:outline-none"
-        />
-        {busqueda.trim() && (
-          <button
-            type="submit"
-            className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-lg bg-[#B9001F] px-2 py-1 text-[10px] font-semibold text-white"
-          >
-            Ir
-          </button>
-        )}
+        </label>
       </form>
 
-      {/* Beneficios destacados */}
-      <h2 className="mt-5 text-sm font-bold text-gray-900">
-        Beneficios destacados
-      </h2>
+      <section aria-labelledby="destacados" className="mt-5">
+        <h2 id="destacados" className="mb-2 px-6 text-sm font-bold text-ink">
+          Destacados
+        </h2>
+        <ul className="flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+          {destacados.map((b) => (
+            <li key={b.id} className="w-[78%] max-w-72 shrink-0 snap-start">
+              <Link to={`/beneficios/${b.id}`} className="pressable block overflow-hidden rounded-card bg-card shadow-card">
+                <Foto src={b.imagen} icon={b.icono} alt={b.empresa} className="h-28 w-full" />
+                <span className="block px-3.5 py-3">
+                  <span className="block text-sm font-bold text-ink">{b.empresa}</span>
+                  <span className="block text-xs font-semibold text-primary">{b.descuento}</span>
+                  <span className="mt-0.5 block text-[0.6875rem] text-ink-muted">{CATEGORIAS[b.categoria].label}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <button
-        type="button"
-        onClick={() => navigate(`/beneficios/${destacado.id}`)}
-        className="mt-3 block w-full overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-2xs transition hover:shadow-sm active:scale-[0.99]"
-      >
-        <div className="h-32 w-full overflow-hidden bg-gray-900">
-          <img
-            src={destacado.imagen}
-            alt={destacado.empresa}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="p-3.5">
-          <h3 className="text-sm font-bold text-gray-900">
-            {destacado.empresa}
-          </h3>
-          <p className="mt-0.5 text-xs font-semibold text-[#B9001F]">
-            {destacado.tituloDescuento}
-          </p>
-        </div>
-      </button>
-
-      {/* Categorías (cada chip abre el catálogo filtrado) */}
-      <h2 className="mt-5 text-sm font-bold text-gray-900">Categorías</h2>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {CATEGORIAS_BENEFICIOS.map((cat) => {
-          const activa = categoriaActiva === cat
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => {
-                setCategoriaActiva(cat)
-                irAlCatalogo(cat, busqueda)
-              }}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                activa
-                  ? 'bg-[#B9001F] text-white'
-                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {cat}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Para ti + Ver todos -> */}
-      <div className="mt-5 flex items-center justify-between">
-        <h2 className="text-sm font-bold text-gray-900">Para ti</h2>
-        <button
-          type="button"
-          onClick={() => irAlCatalogo('Todos', '')}
-          className="text-xs font-semibold text-[#B9001F] hover:underline"
+      <section aria-labelledby="categorias" className="mt-5 px-5">
+        <h2 id="categorias" className="mb-2 px-1 text-sm font-bold text-ink">
+          Categorías
+        </h2>
+        <ul className="stagger divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+          {CATEGORIA_IDS.map((id) => (
+            <li key={id}>
+              <Link to={`/beneficios/catalogo?categoria=${id}`} className="pressable flex min-h-14 items-center gap-3 px-3.5 py-2.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <Icon name={CATEGORIAS[id].icon} size={20} filled />
+                </span>
+                <span className="min-w-0 flex-1 text-sm font-bold text-ink">{CATEGORIAS[id].label}</span>
+                <span className="text-xs text-ink-muted">{beneficiosDe(id).length}</span>
+                <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link
+          to="/beneficios/cupones"
+          className="pressable mt-3 flex min-h-14 items-center gap-3 rounded-card bg-card px-3.5 shadow-card"
         >
-          Ver todos →
-        </button>
-      </div>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
+            <Icon name="sell" size={18} filled />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-ink">Mis cupones</span>
+            <span className="block text-[0.6875rem] text-ink-muted">
+              {cupones.length === 0 ? 'Aún no generas ninguno' : `${cupones.length} ${cupones.length === 1 ? 'cupón' : 'cupones'} generados`}
+            </span>
+          </span>
+          <Icon name="chevron_right" size={18} className="shrink-0 text-ink-faint" />
+        </Link>
+      </section>
 
-      <button
-        type="button"
-        onClick={() => navigate(`/beneficios/${paraTi.id}`)}
-        className="mt-3 block w-full rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-2xs transition hover:border-gray-200 hover:shadow-sm active:scale-[0.99]"
-      >
-        <h3 className="text-sm font-bold text-gray-900">{paraTi.empresa}</h3>
-        <p className="mt-0.5 text-xs font-semibold text-[#B9001F]">
-          {paraTi.tituloDescuento}
+      <section aria-labelledby="mas" className="mt-5 px-5">
+        <h2 id="mas" className="mb-2 px-1 text-sm font-bold text-ink">
+          Más para ti
+        </h2>
+        <ul className="divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+          {SECCIONES.map((s) => {
+            const contenido = (
+              <>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <Icon name={s.icon} size={20} filled />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold text-ink">{s.titulo}</span>
+                  <span className="block text-[0.6875rem] leading-snug text-ink-muted">{s.detalle}</span>
+                </span>
+                {s.to ? <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" /> : <Badge tone="neutral">Pronto</Badge>}
+              </>
+            )
+            return (
+              <li key={s.titulo}>
+                {s.to ? (
+                  <Link to={s.to} className="pressable flex min-h-16 items-center gap-3 px-3.5 py-3">
+                    {contenido}
+                  </Link>
+                ) : (
+                  <div aria-disabled="true" className="flex min-h-16 items-center gap-3 px-3.5 py-3 opacity-70">
+                    {contenido}
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+        <p className="mt-3 px-1 text-[0.6875rem] leading-relaxed text-ink-faint">
+          Los beneficios son personales. Los convenios y descuentos son de demostración.
         </p>
-        <p className="mt-1 text-[11px] text-gray-400">
-          {paraTi.categoria} · {paraTi.modalidad}
-        </p>
-      </button>
-
-      {/* Aviso inferior rosado */}
-      <div className="mt-4 rounded-2xl bg-[#FCE8EC] px-4 py-3">
-        <p className="text-[11px] leading-relaxed text-[#7F1D1D]">
-          Los beneficios son personales. Consulta las condiciones de cada
-          convenio.
-        </p>
-      </div>
+      </section>
     </div>
   )
 }

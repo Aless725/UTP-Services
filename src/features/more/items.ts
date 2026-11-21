@@ -15,7 +15,7 @@ export const moreItems: MoreItem[] = [
   { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'folder_open' },
   { slug: 'grupos', label: 'Grupos', icon: 'group', to: '/grupos' },
   { slug: 'espacios', label: 'Espacios', icon: 'location_on', to: '/reservas' },
-  { slug: 'beneficios', label: 'Beneficios', icon: 'sell', to: '/beneficios'},
+  { slug: 'beneficios', label: 'Beneficios', icon: 'sell', to: '/beneficios' },
 ]
 
 export const extraSections: Record<string, string> = {

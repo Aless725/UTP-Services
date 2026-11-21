@@ -1,317 +1,150 @@
-import { useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { BENEFICIOS } from './beneficiosData'
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import FlowHeader from '@/components/layout/FlowHeader'
+import StickyCta from '@/components/layout/StickyCta'
+import Icon from '@/components/ui/Icon'
+import Modal from '@/components/ui/Modal'
+import Presence from '@/components/ui/Presence'
+import SegmentedControl from '@/components/ui/SegmentedControl'
+import Foto from './Foto'
+import { BENEFICIOS, CATEGORIAS, useCupones } from './beneficiosData'
 
-type TabDetalle = 'detalles' | 'usar' | 'locales'
+type Tab = 'detalle' | 'usar' | 'locales'
 
 export default function DetalleBeneficioPage() {
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { de, generar } = useCupones()
+  const [tab, setTab] = useState<Tab>('detalle')
+  const [confirmar, setConfirmar] = useState(false)
+  const [generando, setGenerando] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => () => clearTimeout(timer.current), [])
 
-  const tabInicial = (searchParams.get('tab') as TabDetalle) || 'detalles'
-  const [tab, setTab] = useState<TabDetalle>(tabInicial)
-  const [confirmando, setConfirmando] = useState(false)
-  const [procesando, setProcesando] = useState(false)
+  const b = BENEFICIOS.find((x) => x.id === id)
+  if (!b) return <Navigate to="/beneficios/catalogo" replace />
+  const cupon = de(b.id)
 
-  const beneficio =
-    BENEFICIOS.find((b) => b.id === id) ?? BENEFICIOS[0]
-
-  const tituloEncabezado =
-    tab === 'detalles'
-      ? 'Detalle del beneficio'
-      : tab === 'usar'
-        ? 'Usar descuento'
-        : 'Locales'
-
-  const textoVolver =
-    tab === 'detalles' ? 'Catálogo de beneficios' : 'Detalle del beneficio'
-
-  const manejarVolver = () => {
-    if (tab !== 'detalles') {
-      setTab('detalles')
-      return
-    }
-    navigate('/beneficios/catalogo')
-  }
-
-  const generarCodigoAleatorio = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    let sufijo = ''
-    for (let i = 0; i < 6; i++) {
-      sufijo += chars[Math.floor(Math.random() * chars.length)]
-    }
-    return `${beneficio.prefijoCodigo}-${sufijo}`
-  }
-
-  const confirmarGeneracion = () => {
-    setConfirmando(false)
-    setProcesando(true)
-
-    setTimeout(() => {
-      setProcesando(false)
-      const codigo =
-        beneficio.id === 'cineplanet'
-          ? 'UTP-CP-8K4M2P'
-          : generarCodigoAleatorio()
-
-      navigate(`/beneficios/${beneficio.id}/cupon`, {
-        state: { codigo },
-      })
-    }, 1500)
+  const crear = () => {
+    setConfirmar(false)
+    setGenerando(true)
+    timer.current = setTimeout(() => {
+      generar(b)
+      navigate(`/beneficios/${b.id}/cupon`, { replace: true })
+    }, 900)
   }
 
   return (
-    <div className="relative min-h-full bg-[#F8F9FA] px-5 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900">{tituloEncabezado}</h1>
+    <div className="flex flex-1 flex-col">
+      <FlowHeader title={b.empresa} back="/beneficios/catalogo" backLabel="Volver al catálogo" subtitle={CATEGORIAS[b.categoria].label} />
 
-      <button
-        type="button"
-        onClick={manejarVolver}
-        className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
-      >
-        <span>←</span> {textoVolver}
-      </button>
-
-      {/* Tarjeta superior del beneficio */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xs">
-        <div className="h-32 w-full overflow-hidden bg-gray-900">
-          <img
-            src={beneficio.imagen}
-            alt={beneficio.empresa}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="px-4 py-3 text-center">
-          <h2 className="text-sm font-bold text-gray-900">
-            {beneficio.empresa}
-          </h2>
-          <p className="mt-0.5 text-xs font-semibold text-[#B9001F]">
-            {beneficio.tituloDescuento}
-          </p>
-        </div>
-      </div>
-
-      {/* Pestañas tipo pastilla: Detalles | Usar descuento | Locales */}
-      <div className="mt-4 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setTab('detalles')}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-            tab === 'detalles'
-              ? 'bg-[#B9001F] text-white'
-              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          Detalles
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setTab('usar')}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-            tab === 'usar'
-              ? 'bg-[#B9001F] text-white'
-              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          Usar descuento
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setTab('locales')}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-            tab === 'locales'
-              ? 'bg-[#B9001F] text-white'
-              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          Locales
-        </button>
-      </div>
-
-      {/* Contenido de la pestaña Detalles */}
-      {tab === 'detalles' && (
-        <>
-          <p className="mt-4 text-xs leading-relaxed text-gray-600">
-            {beneficio.descripcion}
-          </p>
-
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xs">
-            <h3 className="text-xs font-bold text-gray-900">
-              Términos y condiciones
-            </h3>
-            <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-gray-600">
-              {beneficio.terminos.map((term, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
-                  <span>{term}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="mt-3 text-[11px] text-gray-400">
-            Vigente hasta el {beneficio.vigencia} · {beneficio.tipoCanje}
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setTab('usar')}
-            className="mt-5 w-full rounded-xl bg-[#B9001F] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9E001A] active:scale-[0.99]"
-          >
-            Usar descuento
-          </button>
-        </>
-      )}
-
-      {/* Contenido de la pestaña Usar descuento */}
-      {tab === 'usar' && (
-        <>
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xs">
-            <h3 className="text-xs font-bold text-gray-900">
-              ¿Cómo usar tu beneficio?
-            </h3>
-            <ol className="mt-2.5 space-y-2 text-xs leading-relaxed text-gray-600">
-              {beneficio.pasosUso.map((paso, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="font-bold text-gray-800">{idx + 1}.</span>
-                  <span>{paso}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="mt-3 rounded-2xl bg-[#FCE8EC] px-4 py-3">
-            <p className="text-[11px] leading-relaxed text-[#7F1D1D]">
-              El cupón es personal y de un solo uso. Generarlo no significa que
-              ya lo hayas canjeado.
+      <div className="mt-4 px-5">
+        <div className="overflow-hidden rounded-card bg-card shadow-card">
+          <Foto src={b.imagen} icon={b.icono} alt={b.empresa} className="h-36 w-full" />
+          <div className="px-4 py-3.5">
+            <p className="text-base font-bold text-primary">{b.descuento}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-muted">{b.descripcion}</p>
+            <p className="mt-2 flex items-center gap-1.5 text-[0.6875rem] text-ink-muted">
+              <Icon name="event" size={14} />
+              Vigente hasta el {b.vigencia}
+              <span aria-hidden="true">·</span>
+              {b.modalidad}
             </p>
           </div>
+        </div>
+      </div>
 
-          <p className="mt-3 text-[11px] text-gray-400">
-            Vigencia del convenio: {beneficio.vigencia}
-          </p>
+      <div className="mt-4 px-5">
+        <SegmentedControl<Tab>
+          label="Secciones del beneficio"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'detalle', label: 'Condiciones' },
+            { value: 'usar', label: 'Cómo usarlo' },
+            { value: 'locales', label: 'Dónde' },
+          ]}
+        />
+      </div>
 
-          <button
-            type="button"
-            onClick={() => setConfirmando(true)}
-            className="mt-5 w-full rounded-xl bg-[#B9001F] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9E001A] active:scale-[0.99]"
-          >
-            Generar Cupón
-          </button>
-        </>
-      )}
-
-      {/* Contenido de la pestaña Locales */}
-      {tab === 'locales' && (
-        <>
-          <h3 className="mt-4 text-xs font-bold text-gray-900">
-            Locales participantes
-          </h3>
-
-          <div className="mt-2.5 space-y-2.5">
-            {beneficio.locales.map((local, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-2xs"
-              >
-                <h4 className="text-xs font-bold text-gray-900">
-                  {local.sede}
-                </h4>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  {local.centroComercial}
-                </p>
-                <p className="mt-0.5 text-[11px] text-gray-400">
-                  {local.direccion}
-                </p>
-              </div>
+      <div key={tab} className="animate-fade-in mt-4 px-5 pb-6">
+        {tab === 'detalle' && (
+          <ul className="divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+            {b.terminos.map((t) => (
+              <li key={t} className="flex gap-3 px-3.5 py-3">
+                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-primary" />
+                <span className="text-xs leading-relaxed text-ink">{t}</span>
+              </li>
             ))}
-          </div>
+          </ul>
+        )}
+        {tab === 'usar' && (
+          <ol className="divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+            {b.pasos.map((p, i) => (
+              <li key={p} className="flex gap-3 px-3.5 py-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[0.6875rem] font-bold text-primary">
+                  {i + 1}
+                </span>
+                <span className="text-xs leading-relaxed text-ink">{p}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+        {tab === 'locales' && (
+          <ul className="divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+            {b.locales.map((l) => (
+              <li key={l.sede} className="flex gap-3 px-3.5 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <Icon name="location_on" size={18} filled />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-ink">{l.sede}</span>
+                  <span className="block text-xs text-ink-muted">{l.lugar}</span>
+                  <span className="block text-[0.6875rem] text-ink-faint">{l.direccion}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-          <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
-            Locales referenciales para este prototipo. Su participación debe
-            confirmarse con el convenio.
-          </p>
-
+      <StickyCta>
+        {cupon ? (
           <button
             type="button"
-            onClick={() => setTab('detalles')}
-            className="mt-5 w-full rounded-xl bg-[#B9001F] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9E001A] active:scale-[0.99]"
+            onClick={() => navigate(`/beneficios/${b.id}/cupon`)}
+            className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-white active:bg-primary-dark"
           >
-            Volver al beneficio
+            <Icon name="qr_code_2" size={18} />
+            Ver mi cupón
           </button>
-        </>
-      )}
+        ) : (
+          <button
+            type="button"
+            disabled={generando}
+            onClick={() => setConfirmar(true)}
+            className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-white active:bg-primary-dark disabled:opacity-60"
+          >
+            <Icon name="sell" size={18} />
+            Generar cupón
+          </button>
+        )}
+      </StickyCta>
 
-      {/* Pantalla 05: Modal de confirmación Generar Cupón */}
-      {confirmando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-6 backdrop-blur-[1px]">
-          <div className="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-xl">
-            <h3 className="text-base font-bold text-gray-900">
-              Generar Cupón
-            </h3>
-            <p className="mt-2 text-xs text-gray-500">
-              ¿Está seguro que desea generar el cupón?
-            </p>
-
-            <div className="mt-5 grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setConfirmando(false)}
-                className="rounded-xl border border-gray-200 bg-white py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={confirmarGeneracion}
-                className="rounded-xl bg-[#B9001F] py-2.5 text-xs font-semibold text-white hover:bg-[#9E001A]"
-              >
-                Acepto
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pantalla 06: Overlay Procesando cupón */}
-      {procesando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-6 backdrop-blur-[1px]">
-          <div className="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-xl">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FCE8EC]">
-              <svg
-                className="h-6 w-6 animate-spin text-[#B9001F]"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeDasharray="42 20"
-                />
-              </svg>
-            </div>
-
-            <h3 className="mt-4 text-sm font-bold text-gray-900">
-              Procesando cupón
-            </h3>
-            <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
-              Estamos generando tu cupón de {beneficio.empresa}.
-              <br />
-              Esto tomará unos segundos.
-            </p>
-            <p className="mt-2 text-[11px] font-semibold text-[#B9001F]">
-              Mantén esta pantalla abierta.
-            </p>
-          </div>
-        </div>
-      )}
+      <Presence show={confirmar}>
+        <Modal
+          icon="sell"
+          title="¿Generar tu cupón?"
+          description={`Obtendrás un código personal de ${b.empresa}. Solo puedes generar uno por beneficio.`}
+          actionLabel="Generar cupón"
+          onAction={crear}
+          secondaryLabel="Ahora no"
+          onSecondary={() => setConfirmar(false)}
+        />
+      </Presence>
+      <Presence show={generando}>
+        <Modal icon="progress_activity" spinning title="Generando tu cupón…" />
+      </Presence>
     </div>
   )
 }
