@@ -18,6 +18,7 @@ const DETAIL_PATH = [
   /^\/mas\/[^/]+\/?$/,
   /^\/reservas\/(espacio|confirmada)\//,
   /^\/tramites\/[^/]+/,
+  /^\/pagos\/[^/]+/,
   /^\/beneficios\/[^/]+/,
 ]
 
@@ -42,6 +43,7 @@ export function masterFor(detail: string, last: MasterLocation | null): MasterLo
     return keep ? last : { pathname: '/reservas', search: '' }
   }
   if (/^\/tramites/.test(detail)) return { pathname: '/tramites', search: '' }
+  if (/^\/pagos/.test(detail)) return { pathname: '/pagos', search: '' }
   if (/^\/beneficios/.test(detail)) return { pathname: '/beneficios', search: '' }
   // Opciones de "Más de UTP+": se abren junto a la pantalla desde donde se invocó el menú.
   if (last && !isDetailPath(last.pathname) && isAppPath(last.pathname)) return last
