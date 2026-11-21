@@ -140,6 +140,18 @@ docs/               # enunciado del curso y plantillas de usabilidad
 supabase/           # migraciones SQL (esquema, reglas, lecturas) y seed de demostración
 ```
 
+## Despliegue
+
+El frontend se publica en **Vercel** conectado a GitHub, con las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` cargadas en el proyecto. Para no gastar el cupo de despliegues del plan gratuito, solo se despliegan automáticamente estas ramas (regla `git.deploymentEnabled` de `vercel.json`):
+
+| Rama | Qué es |
+|---|---|
+| `main` | Producción. |
+| `integracion` | Pruebas: dirección fija con lo último antes de pasar a producción. |
+| `preview/*` | Solo cuando se quiere probar una rama aparte en el celular: basta nombrarla así (por ejemplo `preview/mi-prueba`). |
+
+El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subirlas. Flujo de trabajo: rama de la función → `integracion` → `main`.
+
 ## Próximos pasos
 
 1. Biblioteca y Trámites.
