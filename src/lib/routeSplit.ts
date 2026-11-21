@@ -9,7 +9,7 @@ export interface MasterLocation {
 }
 
 const APP_PATH =
-  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites)(\/|$)/
+  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
@@ -18,6 +18,7 @@ const DETAIL_PATH = [
   /^\/mas\/[^/]+\/?$/,
   /^\/reservas\/(espacio|confirmada)\//,
   /^\/tramites\/[^/]+/,
+  /^\/beneficios\/[^/]+/,
 ]
 
 /** ¿Es una pantalla de la app (con sesión), no del acceso ni del onboarding? */
@@ -41,6 +42,7 @@ export function masterFor(detail: string, last: MasterLocation | null): MasterLo
     return keep ? last : { pathname: '/reservas', search: '' }
   }
   if (/^\/tramites/.test(detail)) return { pathname: '/tramites', search: '' }
+  if (/^\/beneficios/.test(detail)) return { pathname: '/beneficios', search: '' }
   // Opciones de "Más de UTP+": se abren junto a la pantalla desde donde se invocó el menú.
   if (last && !isDetailPath(last.pathname) && isAppPath(last.pathname)) return last
   return { pathname: '/inicio', search: '' }
