@@ -99,7 +99,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
 - **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo o confirmar una actividad. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
 - **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. Todo lo que hace el asistente también se puede hacer tocando.
-- **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
+- **Perfil:** datos institucionales de solo lectura (nombre, correo, código, DNI, modalidad y campus), cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
 
