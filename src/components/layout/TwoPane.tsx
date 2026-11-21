@@ -24,7 +24,7 @@ export default function TwoPane({ left, right }: { left: ReactNode; right: React
     <div className="flex h-full">
       <section
         className={`relative h-full overflow-hidden bg-surface ${
-          dual ? 'dual-left min-w-0 flex-1' : 'w-[calc(400px+var(--rail))] shrink-0 border-r border-fill/10'
+          dual ? 'dual-left min-w-0 flex-1' : 'w-[calc(clamp(400px,34vw,480px)+var(--rail))] shrink-0 border-r border-fill/10'
         }`}
       >
         {left}
