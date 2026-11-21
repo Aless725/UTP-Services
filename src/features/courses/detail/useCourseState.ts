@@ -73,8 +73,8 @@ export function useCourseState(courseId: string) {
       mutate(
         (s) => ({ ...s, entregas: { ...s.entregas, [taskId]: { archivo, en: new Date().toISOString() } } }),
         () => supabase.from('task_submissions').insert({ course_id: courseId, task_id: taskId, archivo }),
-      ),
-    [mutate, courseId],
+      ).then(() => qc.invalidateQueries({ queryKey: ['cursos'] })),
+    [mutate, courseId, qc],
   )
 
   const markRead = useCallback(

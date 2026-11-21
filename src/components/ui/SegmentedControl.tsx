@@ -1,6 +1,7 @@
 interface SegmentedControlProps<T extends string> {
   options: { value: T; label: string }[]
-  value: T
+  /** Si no coincide con ninguna opción, no se marca ninguna (por ejemplo, cuando la sección activa está en "Más"). */
+  value: T | ''
   onChange: (v: T) => void
   label: string
 }
@@ -18,10 +19,12 @@ export default function SegmentedControl<T extends string>({
     <div role="tablist" aria-label={label} className="relative flex rounded-full bg-fill/[0.06] p-1">
       <span
         aria-hidden="true"
-        className="absolute inset-y-1 rounded-full bg-card shadow-card transition-transform duration-300 ease-smooth"
+        className={`absolute inset-y-1 rounded-full bg-card shadow-card transition-[transform,opacity] duration-300 ease-smooth ${
+          index < 0 ? 'opacity-0' : 'opacity-100'
+        }`}
         style={{
           width: `calc(${width}% - 4px)`,
-          transform: `translateX(${index * 100}%)`,
+          transform: `translateX(${Math.max(0, index) * 100}%)`,
         }}
       />
       {options.map((o) => (
