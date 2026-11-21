@@ -3,6 +3,8 @@
 //   GEMINI_API_KEY   (obligatorio)  llave de Google AI Studio
 //   GEMINI_MODEL     (opcional)     modelo de Gemini; por defecto "gemini-3.5-flash-lite"
 //                                   (nivel gratuito: 15 solicitudes por minuto y 500 por día)
+//   GEMINI_TTS_MODEL (opcional)     modelo de voz; por defecto "gemini-2.5-flash-preview-tts"
+//   GEMINI_TTS_VOICE (opcional)     voz de Gemini; por defecto "Kore"
 // SUPABASE_URL y SUPABASE_ANON_KEY los inyecta Supabase solos.
 //
 // Seguridad: la llave de Gemini vive solo aquí. Las consultas se hacen con el JWT del alumno
@@ -53,6 +55,10 @@ Deno.serve(async (req) => {
   const apiKey = Deno.env.get('GEMINI_API_KEY')
   if (!apiKey) return json({ error: 'not_configured' }, 503)
   const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite'
+
+  // Voz natural: convierte un texto en audio con Gemini (PCM de 16 bits a 24 kHz). Si falla, la app usa la voz del navegador.
+  const peek = await req.clone().json().catch(() => null)
+  if (peek?.speak === true) return speak(peek.text, apiKey)
 
   // Entrada validada: solo roles conocidos, textos acotados y, si hay voz, un audio WAV de tamaño razonable.
   let messages: ChatMessage[]
@@ -142,6 +148,47 @@ Deno.serve(async (req) => {
   }
 })
 
+// ───────────────────────── Voz natural (texto → audio) ─────────────────────────
+
+const MAX_SPEAK = 420
+
+async function speak(raw: unknown, apiKey: string): Promise<Response> {
+  const text = typeof raw === 'string' ? raw.trim().slice(0, MAX_SPEAK) : ''
+  if (!text) return json({ error: 'bad_request' }, 400)
+
+  const ttsModel = Deno.env.get('GEMINI_TTS_MODEL') ?? 'gemini-2.5-flash-preview-tts'
+  const voice = Deno.env.get('GEMINI_TTS_VOICE') ?? 'Kore'
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(ttsModel)}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Dilo en español peruano, con voz cálida, natural y cercana, a un ritmo tranquilo: ${text}` }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+        },
+      }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      console.error('tts error', res.status, detail.slice(0, 200))
+      return json({ error: res.status === 429 ? 'quota' : 'unavailable' }, res.status === 429 ? 429 : 502)
+    }
+    const data = await res.json()
+    const inline = data?.candidates?.[0]?.content?.parts?.find((p: { inlineData?: unknown }) => p.inlineData)?.inlineData as
+      | { data?: string; mimeType?: string }
+      | undefined
+    if (!inline?.data) return json({ error: 'unavailable' }, 502)
+    const rate = Number(/rate=(\d+)/.exec(inline.mimeType ?? '')?.[1] ?? 24000)
+    return json({ audio: inline.data, rate })
+  } catch (e) {
+    console.error('tts error', e instanceof Error ? e.message : e)
+    return json({ error: 'unavailable' }, 502)
+  }
+}
+
 // ───────────────────────── Acceso a datos con la sesión del alumno ─────────────────────────
 
 function makeDb(sb: ReturnType<typeof createClient>): Db {
@@ -213,6 +260,43 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
     },
     async submissions() {
       return must(await sb.from('task_submissions').select('task_id'))
+    },
+    async procedures() {
+      const rows = must(
+        await sb
+          .from('procedures')
+          .select('codigo, tipo_id, estado, created_at, procedure_types(titulo), procedure_events(nota, created_at)')
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ) as unknown as {
+        codigo: string
+        tipo_id: string
+        estado: string
+        created_at: string
+        procedure_types: { titulo: string } | { titulo: string }[] | null
+        procedure_events: { nota: string; created_at: string }[]
+      }[]
+      return rows.map((r) => {
+        const t = Array.isArray(r.procedure_types) ? r.procedure_types[0] : r.procedure_types
+        const last = [...(r.procedure_events ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+        return { codigo: r.codigo, tipo_id: r.tipo_id, titulo: t?.titulo ?? r.tipo_id, estado: r.estado, fecha: r.created_at, ultimo_evento: last?.nota ?? '' }
+      }) as never
+    },
+    async procedureTypes() {
+      return must(await sb.from('procedure_types').select('id, categoria, titulo, descripcion, costo, plazo, modalidad').order('orden'))
+    },
+    async courseInfo(courseId) {
+      const [d, a] = await Promise.all([
+        sb.from('course_details').select('zoom_sesiones, temas').eq('course_id', courseId).maybeSingle(),
+        sb.from('announcements').select('titulo, texto, hace_dias, semana, orden').eq('course_id', courseId).order('orden').limit(3),
+      ])
+      const det = must(d) as { zoom_sesiones: unknown; temas: string[] } | null
+      const ann = must(a) as { titulo: string; texto: string }[]
+      return {
+        sesiones: (Array.isArray(det?.zoom_sesiones) ? det!.zoom_sesiones : []) as never,
+        temas: det?.temas ?? [],
+        anuncios: ann ?? [],
+      }
     },
     async groups() {
       const rows = must(
