@@ -8,8 +8,12 @@ export interface MoreItem {
 
 /** Opciones del menú "Más de UTP+". */
 export const moreItems: MoreItem[] = [
-  { slug: 'tramites', label: 'Trámites', icon: 'description' },
-  { slug: 'talleres', label: 'Talleres', icon: 'event_note' },
+  {
+  slug: 'tramites',
+  label: 'Trámites',
+  icon: 'description',
+  to: '/tramites',
+  },
   { slug: 'biblioteca', label: 'Biblioteca', icon: 'menu_book' },
   { slug: 'reserva-de-equipos', label: 'Reserva de equipos', icon: 'event_available' },
   { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'folder_open' },

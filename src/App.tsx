@@ -40,6 +40,11 @@ import MyReservationsPage from '@/features/reservations/MyReservationsPage'
 import CourseDetailPage from '@/features/courses/detail/CourseDetailPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import AccessibilityPage from '@/features/accessibility/AccessibilityPage'
+import TramitesPage from '@/features/tramites/TramitesPage'
+import CertificadoPage from '@/features/tramites/CertificadoPage'
+import SolicitarCertificadoPage from '@/features/tramites/SolicitarCertificadoPage'
+import SolicitudEnviadaPage from '@/features/tramites/SolicitudEnviadaPage'
+import SeguimientoPage from '@/features/tramites/SeguimientoPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
@@ -55,6 +60,10 @@ const detailRoutes = (
     <Route path="/reservas/espacio/:id/confirmar" element={<ConfirmPage />} />
     <Route path="/reservas/confirmada/:codigo" element={<ConfirmedPage />} />
     <Route path="/anuncios/:id" element={<AnnouncementDetailPage />} />
+    <Route path="/tramites/certificado" element={<CertificadoPage />} />
+    <Route path="/tramites/certificado/solicitar" element={<SolicitarCertificadoPage />} />
+    <Route path="/tramites/certificado/enviada" element={<SolicitudEnviadaPage />} />
+    <Route path="/tramites/seguimiento" element={<SeguimientoPage />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
@@ -89,6 +98,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/reservas/lista/:tipo" element={<SpaceListPage />} />
         <Route path="/reservas/mis" element={<MyReservationsPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
+        <Route path="/tramites" element={<TramitesPage />} />
         {detailRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
