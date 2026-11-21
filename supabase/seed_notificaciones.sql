@@ -6,8 +6,8 @@ insert into public.notifications (user_id, tipo, titulo, cuerpo, ruta, clave, cr
 select p.id, v.tipo, v.titulo, v.cuerpo, v.ruta, v.clave, now() - v.hace
 from public.profiles p
 cross join (values
-  ('tarea',   'Tarea por vencer',          'Actividad 7 de Interacción Hombre Máquina vence este domingo.',              '/cursos/ihm',      'demo-tarea',   interval '35 minutes'),
-  ('nota',    'Nota publicada',            'Ya puedes ver tu nota de la Práctica calificada 1 en Interacción Hombre Máquina.', '/cursos/ihm',      'demo-nota',    interval '3 hours'),
+  ('tarea',   'Tarea por vencer',          'Actividad 9 de Interacción Hombre Máquina vence este domingo.',              '/cursos/ihm',      'demo-tarea',   interval '35 minutes'),
+  ('nota',    'Nota publicada',            'Ya puedes ver tu nota de la Práctica calificada 2 en Interacción Hombre Máquina.', '/cursos/ihm',      'demo-nota',    interval '3 hours'),
   ('anuncio', 'Nueva actividad en el campus', 'Hackatón de Lectura en la Biblioteca. Quedan pocos cupos.',               '/anuncios/hackaton-lectura', 'demo-anuncio', interval '1 day 2 hours'),
   ('sistema', 'Recordatorio de pago',      'Tu cuota de diciembre vence en 7 días.',                                      '/pagos',           'demo-pago',    interval '2 days'),
   ('sistema', 'Bienvenido a UTP+ Service', 'Aquí verás avisos de tus reservas, tareas, notas y actividades del campus.', '/inicio',          'demo-bienvenida', interval '4 days')
