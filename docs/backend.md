@@ -18,11 +18,13 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 7 | `supabase/migrations/0007_agent_logs.sql` | Registro de conversaciones del asistente |
 | 8 | `supabase/migrations/0008_notificaciones.sql` | Centro de notificaciones y avisos automáticos |
 | 9 | `supabase/migrations/0009_perfil_solo_lectura.sql` | El perfil pasa a ser de solo lectura (datos institucionales) |
-| 10 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 11 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 12 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
-| 13 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
-| 14 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
+| 10 | `supabase/migrations/0010_tramites.sql` | Catálogo de trámites, solicitudes de los alumnos y su historial |
+| 11 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 12 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 13 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 14 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
+| 15 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
+| 16 | `supabase/seed_tramites.sql` | 26 trámites (autogestionables y SAE) y solicitudes de ejemplo de las cuentas demo |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -72,6 +74,14 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `announcement_rsvps` | Quién confirmó asistencia. Cada alumno solo ve la suya. |
 | `campus_announcements_view` | Vista con el total de asistentes y si el alumno ya confirmó, sin exponer nombres. |
 
+**Trámites**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `procedure_types` | Catálogo de 26 trámites en dos categorías (autogestionables y SAE en línea), con costo, plazo, modalidad y los **campos de su formulario** (`campos`, en JSON). La pantalla de solicitud se arma sola a partir de ellos. |
+| `procedures` | Solicitudes de cada alumno (código `SOL-AAAA-NNNN`, estado y datos enviados). Solo se crean y cancelan con funciones. |
+| `procedure_events` | Historial de cada solicitud (recibida, en revisión, aprobada…). |
+
 **Notificaciones**
 
 | Tabla | Para qué sirve |
@@ -115,6 +125,8 @@ Se crean solas con disparadores cuando el alumno confirma o cancela una reserva,
 | `ocupacion(fecha)` y `ocupacion_rango(desde, hasta)` | Franjas ocupadas por cualquiera, sin datos personales. |
 | `unirse_grupo(id)` | Une al alumno validando los cupos. |
 | `publicar_comentario(foro, texto, respuesta_a)` | Publica un comentario o respuesta (2 a 1000 caracteres). |
+| `solicitar_tramite(tipo, datos)` | Valida cada campo del trámite (obligatorios, opciones permitidas, que el curso esté en tu matrícula, largos) y que no tengas ya una solicitud igual en revisión. Crea la solicitud, su primer evento y un aviso. |
+| `cancelar_tramite(codigo)` | Cancela una solicitud propia que siga en revisión. |
 | `asistir_anuncio(id, asistir)` | Confirma o cancela la asistencia a una actividad validando que no haya terminado y que queden cupos. |
 
 Los errores de regla se devuelven con `errcode = 'P0001'` y un `hint` (`penalty`, `conflict`, `members`, `full`…) que la app traduce a mensajes claros.
