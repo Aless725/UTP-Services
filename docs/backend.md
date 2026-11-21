@@ -17,10 +17,11 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 6 | `supabase/migrations/0006_anuncios_campus.sql` | Anuncios del campus y asistencia a las actividades |
 | 7 | `supabase/migrations/0007_agent_logs.sql` | Registro de conversaciones del asistente |
 | 8 | `supabase/migrations/0008_notificaciones.sql` | Centro de notificaciones y avisos automáticos |
-| 9 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 10 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 11 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
-| 12 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
+| 9 | `supabase/migrations/0009_perfil_solo_lectura.sql` | El perfil pasa a ser de solo lectura (datos institucionales) |
+| 10 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 11 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 12 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 13 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -98,7 +99,7 @@ Se crean solas con disparadores cuando el alumno confirma o cancela una reserva,
 
 - **RLS está activo en todas las tablas**, y el rol `anon` no tiene acceso a nada.
 - Los **catálogos** (espacios, cursos, contenido, foros) son de solo lectura para usuarios autenticados.
-- Los datos **del alumno** (perfil, reservas, penalidades, matrícula, notas, entregas) solo los ve su dueño. Del perfil solo se puede editar nombre y DNI.
+- Los datos **del alumno** (perfil, reservas, penalidades, matrícula, notas, entregas) solo los ve su dueño. El perfil es de solo lectura: son datos institucionales y ni siquiera el propio alumno puede modificarlos desde la app.
 - Las **reservas** no se insertan ni se modifican directamente: pasan por funciones que validan las reglas en el servidor.
 - Un alumno no puede escribirse su propia nota: la política de `task_submissions` exige `nota is null` al entregar.
 - Quien comenta en un foro no elige el autor: lo fija la función `publicar_comentario` desde el directorio de alumnos.
