@@ -3,22 +3,27 @@ import { Link } from 'react-router-dom'
 import PageHeader from '@/components/layout/PageHeader'
 import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
-import { useLocalStorageState } from '@/hooks/useLocalStorageState'
-import { money } from '@/lib/date'
+import { money, shortDate } from '@/lib/date'
+import CuotaSheet from './CuotaSheet'
 import PaySheet from './PaySheet'
-import { cuotas, PAGADAS_INICIAL, venceTexto, type Cuota } from './paymentsData'
+import { cuotas, usePagos, venceTexto, type Cuota } from './paymentsData'
+
+const fechaCorta = (iso?: string) => {
+  if (!iso) return 'hoy'
+  const [y, m, d] = iso.split('-').map(Number)
+  return shortDate(new Date(y, m - 1, d))
+}
 
 export default function PaymentsPage() {
   const { show } = useToast()
-  const [pagadas, setPagadas] = useLocalStorageState<string[]>('utp.demo.cuotasPagadas', PAGADAS_INICIAL)
+  const { pagada, detallePago, registrar, pendientes } = usePagos()
   const [paying, setPaying] = useState<Cuota | null>(null)
-
-  const pendientes = cuotas.filter((c) => !pagadas.includes(c.id))
+  const [detalle, setDetalle] = useState<Cuota | null>(null)
   const siguiente = pendientes[0]
   const total = pendientes.reduce((s, c) => s + c.monto, 0)
 
   const onPaid = (c: Cuota) => {
-    setPagadas((p) => (p.includes(c.id) ? p : [...p, c.id]))
+    registrar(c)
     show(`Cuota ${c.numero} pagada`, 'check_circle')
   }
 
@@ -62,36 +67,37 @@ export default function PaymentsPage() {
         </div>
         <ul className="stagger mt-3 divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
           {cuotas.map((c) => {
-            const pagada = pagadas.includes(c.id)
+            const paga = pagada(c)
             return (
               <li key={c.id}>
                 <button
                   type="button"
-                  disabled={pagada}
-                  onClick={() => setPaying(c)}
-                  className="pressable flex min-h-14 w-full items-center gap-3 px-3.5 py-3 text-left active:bg-surface disabled:active:scale-100"
+                  onClick={() => setDetalle(c)}
+                  aria-label={`Ver detalle de la cuota ${c.numero}, ${c.mes}`}
+                  className="pressable flex min-h-14 w-full items-center gap-3 px-3.5 py-3 text-left active:bg-surface"
                 >
                   <span
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                      pagada ? 'bg-success-soft text-success' : 'bg-primary-soft text-primary'
+                      paga ? 'bg-success-soft text-success' : 'bg-primary-soft text-primary'
                     }`}
                   >
-                    <Icon name={pagada ? 'check' : 'event'} size={18} />
+                    <Icon name={paga ? 'check' : 'event'} size={18} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-bold text-ink">
                       Cuota {c.numero} · {c.mes}
                     </span>
                     <span className="block text-[0.625rem] text-ink-muted">
-                      {pagada ? (c.detalleFijo ?? 'Pagada hoy') : venceTexto(c)}
+                      {paga ? `Pagada el ${fechaCorta(detallePago(c)?.fecha)}` : venceTexto(c)}
                     </span>
                   </span>
                   <span className="text-right">
                     <span className="block text-xs font-bold text-ink">{money(c.monto)}</span>
-                    <span className={`block text-[0.625rem] font-semibold ${pagada ? 'text-success' : 'text-primary'}`}>
-                      {pagada ? 'Pagado' : 'Pendiente'}
+                    <span className={`block text-[0.625rem] font-semibold ${paga ? 'text-success' : 'text-primary'}`}>
+                      {paga ? 'Pagado' : 'Pendiente'}
                     </span>
                   </span>
+                  <Icon name="chevron_right" size={18} className="shrink-0 text-ink-faint" />
                 </button>
               </li>
             )
@@ -99,7 +105,7 @@ export default function PaymentsPage() {
         </ul>
 
         <Link
-          to="/mas/historial"
+          to="/pagos/historial"
           className="pressable mt-4 flex min-h-14 items-center gap-3 rounded-card bg-card p-3.5 shadow-card"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">
@@ -107,12 +113,21 @@ export default function PaymentsPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-bold text-ink">Historial y constancias</span>
-            <span className="block text-[0.625rem] text-ink-muted">Consulta y descarga tus comprobantes</span>
+            <span className="block text-[0.625rem] text-ink-muted">Tus pagos, comprobantes y constancias</span>
           </span>
           <Icon name="chevron_right" size={20} className="text-ink-muted" />
         </Link>
       </section>
 
+      <CuotaSheet
+        cuota={detalle}
+        pago={detalle ? detallePago(detalle) : null}
+        onClose={() => setDetalle(null)}
+        onPay={(c) => {
+          setDetalle(null)
+          setPaying(c)
+        }}
+      />
       <PaySheet cuota={paying} onClose={() => setPaying(null)} onPaid={onPaid} />
     </>
   )
