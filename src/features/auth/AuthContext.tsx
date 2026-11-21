@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { resetGroups } from '@/features/groups/groupsStore'
 import { resetReservations } from '@/features/reservations/reservationsStore'
-import { fetchSession, restoreSession, signIn as doSignIn, signOut as doSignOut, type Session } from './authService'
+import { clearPersistedCache, startPersisting } from '@/lib/queryPersist'
+import { fetchSession, forgetSession, restoreSession, signIn as doSignIn, signOut as doSignOut, type Session } from './authService'
 
 interface AuthState {
   session: Session | null
@@ -24,7 +25,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetGroups()
     resetReservations()
     queryClient.clear()
+    clearPersistedCache()
+    forgetSession()
   }, [queryClient])
+
+  // Con sesión, se muestran y se guardan los últimos datos para poder verlos sin conexión.
+  const codigo = session?.codigo
+  useEffect(() => {
+    if (codigo) startPersisting(queryClient, codigo)
+  }, [codigo, queryClient])
 
   useEffect(() => {
     let alive = true
