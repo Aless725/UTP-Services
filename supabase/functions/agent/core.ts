@@ -28,6 +28,8 @@ export type Proposal =
   | { kind: 'cancelar'; reservaId: string; codigo: string; penalizacion: boolean; resumen: string }
   | { kind: 'asistencia'; anuncioId: string; titulo: string; resumen: string }
   | { kind: 'unirse_grupo'; grupoId: string; titulo: string; resumen: string }
+  | { kind: 'cupon'; beneficioId: string; empresa: string; resumen: string }
+  | { kind: 'cancelar_tramite'; codigo: string; resumen: string }
 
 export interface AgentResult {
   reply: string
@@ -53,6 +55,34 @@ export interface Db {
   tasks(courseIds: string[]): Promise<TaskRow[]>
   /** Ids de las tareas que el alumno ya entregó. */
   submissions(): Promise<{ task_id: string }[]>
+  /** Solicitudes de trámites del alumno, de la más reciente a la más antigua, con su último evento. */
+  procedures(): Promise<ProcedureRow[]>
+  procedureTypes(): Promise<ProcedureTypeRow[]>
+  /** Clases en vivo, temas y anuncios de un curso. */
+  courseInfo(courseId: string): Promise<CourseInfoRow>
+}
+
+export interface ProcedureRow {
+  codigo: string
+  tipo_id: string
+  titulo: string
+  estado: 'en_revision' | 'aprobado' | 'rechazado' | 'cancelada'
+  fecha: string
+  ultimo_evento: string
+}
+export interface ProcedureTypeRow {
+  id: string
+  categoria: 'autogestionable' | 'sae'
+  titulo: string
+  descripcion: string
+  costo: number
+  plazo: string
+  modalidad: string
+}
+export interface CourseInfoRow {
+  sesiones: { dow: number; inicio: string; fin: string; tipo: string }[]
+  temas: string[]
+  anuncios: { titulo: string; texto: string }[]
 }
 
 export interface CourseRow {
@@ -252,6 +282,46 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'object', properties: { curso: str('Nombre o sigla del curso (opcional).') } },
   },
   {
+    name: 'info_curso',
+    description:
+      'Datos de un curso: docente, créditos, modalidad, horario de las clases en vivo (Zoom), el tema de esta semana y los últimos anuncios del docente.',
+    parameters: { type: 'object', properties: { curso: str('Nombre o sigla del curso.') }, required: ['curso'] },
+  },
+  {
+    name: 'mis_tramites',
+    description: 'Solicitudes de trámites del alumno con su estado (en revisión, aprobado, rechazado o cancelada) y su último movimiento.',
+    parameters: {
+      type: 'object',
+      properties: { estado: str('Filtra por estado (opcional).', { enum: ['en_revision', 'aprobado', 'rechazado', 'cancelada'] }) },
+    },
+  },
+  {
+    name: 'buscar_tramites',
+    description: 'Busca en el catálogo de trámites (autogestionables y SAE en línea) y devuelve costo, plazo y modalidad.',
+    parameters: { type: 'object', properties: { consulta: str('Palabras del trámite, por ejemplo "constancia" o "retiro".') }, required: ['consulta'] },
+  },
+  {
+    name: 'buscar_beneficios',
+    description: 'Cupones y descuentos de Beneficios+ (convenios con marcas). Categorías: Prime, Gastronomía, Moda y estilo, Entretenimiento, Educación e idiomas.',
+    parameters: {
+      type: 'object',
+      properties: {
+        categoria: str('Categoría (opcional).', { enum: ['Prime', 'Gastronomía', 'Moda y estilo', 'Entretenimiento', 'Educación e idiomas'] }),
+        consulta: str('Marca o palabra clave (opcional).'),
+      },
+    },
+  },
+  {
+    name: 'proponer_cupon',
+    description: 'Propone generar el cupón de un beneficio. No lo genera: el alumno confirma con un botón.',
+    parameters: { type: 'object', properties: { beneficio_id: str('Id devuelto por buscar_beneficios.') }, required: ['beneficio_id'] },
+  },
+  {
+    name: 'proponer_cancelar_tramite',
+    description: 'Propone cancelar una solicitud de trámite que sigue en revisión. No la cancela: el alumno confirma con un botón.',
+    parameters: { type: 'object', properties: { codigo: str('Código de la solicitud, por ejemplo SOL-2026-0148.') }, required: ['codigo'] },
+  },
+  {
     name: 'proponer_reserva',
     description:
       'Prepara una reserva para que el alumno la confirme. NO la crea. Solo llámala cuando ya tengas espacio, fecha, hora y (en salas) integrantes.',
@@ -300,6 +370,25 @@ export const TOOL_DECLARATIONS = [
     },
   },
 ]
+
+/**
+ * Convenios de Beneficios+ (espejo reducido de src/features/beneficios/beneficiosData.ts: si cambias uno, cambia el otro).
+ * Los cupones se generan en la app, así que aquí solo se consulta el catálogo.
+ */
+export const BENEFICIOS = [
+  { id: 'cineplanet', empresa: 'Cineplanet', descuento: '2×1 en entradas 2D', categoria: 'Entretenimiento', vigencia: '2026-11-30', modalidad: 'Canje en boletería' },
+  { id: 'entel', empresa: 'Entel', descuento: '25% en planes postpago', categoria: 'Prime', vigencia: '2026-12-31', modalidad: 'Tienda y web' },
+  { id: 'lenovo', empresa: 'Lenovo', descuento: 'Hasta 15% en laptops', categoria: 'Prime', vigencia: '2026-12-15', modalidad: 'Tienda online' },
+  { id: 'bembos', empresa: 'Bembos', descuento: '20% en el combo universitario', categoria: 'Gastronomía', vigencia: '2026-11-30', modalidad: 'Canje en caja' },
+  { id: 'starbucks', empresa: 'Starbucks', descuento: '15% en bebidas y snacks', categoria: 'Gastronomía', vigencia: '2026-12-15', modalidad: 'Canje en caja' },
+  { id: 'oechsle', empresa: 'Oechsle', descuento: '10% en ropa y calzado', categoria: 'Moda y estilo', vigencia: '2026-12-31', modalidad: 'Tienda y web' },
+  { id: 'adidas', empresa: 'Adidas', descuento: '12% en zapatillas y ropa deportiva', categoria: 'Moda y estilo', vigencia: '2026-12-20', modalidad: 'Tienda online' },
+  { id: 'teleticket', empresa: 'Teleticket', descuento: '15% en conciertos y shows', categoria: 'Entretenimiento', vigencia: '2026-12-31', modalidad: 'Compra online' },
+  { id: 'open-english', empresa: 'Open English', descuento: '40% en tu programa de inglés', categoria: 'Educación e idiomas', vigencia: '2026-12-30', modalidad: 'Plataforma online' },
+  { id: 'icpna', empresa: 'ICPNA', descuento: '25% en matrícula de idiomas', categoria: 'Educación e idiomas', vigencia: '2027-01-31', modalidad: 'Sede o virtual' },
+] as const
+
+const ESTADO_TRAMITE = { en_revision: 'en revisión', aprobado: 'aprobado', rechazado: 'rechazado', cancelada: 'cancelada' } as const
 
 interface Ctx {
   deps: AgentDeps
@@ -530,6 +619,83 @@ async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): 
       }
     }
 
+    case 'info_curso': {
+      const { courses, term } = await db.courses()
+      const picked = pickCourses(courses, args.curso)
+      if (!picked.length) return { error: `No encontré ese curso. Sus cursos son: ${courses.map((c) => c.nombre).join(', ')}.` }
+      const c = picked[0]
+      const info = await db.courseInfo(c.id)
+      const week = term?.semana_actual ?? 1
+      // Semanas 1-8 y 10-17 tienen tema; la 9 es el parcial y la 18 el final.
+      const tema = week === 9 ? 'Examen parcial' : week === 18 ? 'Examen final' : info.temas[week < 9 ? week - 1 : week - 2] ?? null
+      return {
+        curso: c.nombre,
+        sigla: c.id,
+        docente: c.docente,
+        creditos: c.creditos,
+        modalidad: c.modalidad,
+        semana: week,
+        tema_de_esta_semana: tema,
+        clases_en_vivo: info.sesiones.map((x) => ({ dia: DAYS[x.dow], desde: x.inicio, hasta: x.fin, tipo: x.tipo })),
+        anuncios_recientes: info.anuncios.slice(0, 3).map((a) => ({ titulo: a.titulo, texto: a.texto.slice(0, 160) })),
+      }
+    }
+
+    case 'mis_tramites': {
+      const rows = await db.procedures()
+      const list = rows
+        .filter((p) => !args.estado || p.estado === args.estado)
+        .slice(0, 8)
+        .map((p) => ({ codigo: p.codigo, tramite: p.titulo, estado: ESTADO_TRAMITE[p.estado], fecha: p.fecha.slice(0, 10), ultimo_movimiento: p.ultimo_evento }))
+      return list.length ? { solicitudes: list } : { solicitudes: [], nota: 'El alumno no tiene solicitudes de trámites.' }
+    }
+
+    case 'buscar_tramites': {
+      const q = typeof args.consulta === 'string' ? norm(args.consulta).trim() : ''
+      const words = q.split(/\s+/).filter((w) => w.length > 2)
+      const all = await db.procedureTypes()
+      const list = all
+        .filter((t) => {
+          const hay = norm(`${t.titulo} ${t.descripcion}`)
+          return !words.length || words.some((w) => hay.includes(w))
+        })
+        .slice(0, 6)
+        .map((t) => ({
+          id: t.id,
+          tramite: t.titulo,
+          categoria: t.categoria === 'sae' ? 'SAE en línea' : 'Autogestionable',
+          costo: t.costo > 0 ? `S/ ${t.costo}` : 'Gratis',
+          plazo: t.plazo,
+          modalidad: t.modalidad,
+        }))
+      return list.length ? { tramites: list, nota: 'Para solicitarlo, el alumno entra a Trámites en la app.' } : { tramites: [], nota: 'No encontré un trámite con esas palabras.' }
+    }
+
+    case 'buscar_beneficios': {
+      const q = typeof args.consulta === 'string' ? norm(args.consulta).trim() : ''
+      const list = BENEFICIOS.filter(
+        (b) => (!args.categoria || b.categoria === args.categoria) && (!q || norm(`${b.empresa} ${b.descuento} ${b.categoria}`).includes(q)),
+      ).map((b) => ({ id: b.id, marca: b.empresa, descuento: b.descuento, categoria: b.categoria, vigente_hasta: b.vigencia, canje: b.modalidad }))
+      return list.length ? { beneficios: list } : { beneficios: [], nota: 'No encontré beneficios con esas condiciones.' }
+    }
+
+    case 'proponer_cupon': {
+      const b = BENEFICIOS.find((x) => x.id === args.beneficio_id)
+      if (!b) return { ok: false, error: 'No encontré ese beneficio. Usa buscar_beneficios.' }
+      if (b.vigencia < ctx.today.fecha) return { ok: false, error: 'Ese beneficio ya venció.' }
+      ctx.proposal = { kind: 'cupon', beneficioId: b.id, empresa: b.empresa, resumen: `Generar tu cupón de ${b.empresa}: ${b.descuento} · vigente hasta el ${b.vigencia}` }
+      return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
+    }
+
+    case 'proponer_cancelar_tramite': {
+      const codigo = typeof args.codigo === 'string' ? args.codigo.trim().toUpperCase() : ''
+      const p = (await db.procedures()).find((x) => x.codigo.toUpperCase() === codigo)
+      if (!p) return { ok: false, error: 'No encontré una solicitud con ese código. Usa mis_tramites.' }
+      if (p.estado !== 'en_revision') return { ok: false, error: `Esa solicitud está ${ESTADO_TRAMITE[p.estado]} y ya no se puede cancelar.` }
+      ctx.proposal = { kind: 'cancelar_tramite', codigo: p.codigo, resumen: `Cancelar la solicitud ${p.codigo}: ${p.titulo}.` }
+      return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
+    }
+
     case 'proponer_reserva': {
       const { space_id, fecha, hora_inicio } = args
       if (typeof space_id !== 'string' || !isDate(fecha) || !isTime(hora_inicio)) {
@@ -662,7 +828,9 @@ export function systemPrompt(me: { codigo: string; nombre: string; sede: string 
     '- Las herramientas proponer_* NO ejecutan nada: la app muestra una tarjeta y el alumno confirma. Después de proponer, di en una frase qué propones y pide que confirme con el botón. Nunca digas que ya está hecho.',
     '- Si una herramienta devuelve error, explícalo en palabras simples y ofrece una alternativa (por ejemplo, otros horarios libres).',
     '- También ayudas con la vida de estudiante: cursos que lleva, notas y cuánto necesita para aprobar, tareas pendientes y próximas evaluaciones (herramientas mis_cursos, mis_notas, tareas_pendientes y proximas_evaluaciones). Da cifras reales de las herramientas, con pocas palabras, y menciona primero lo más urgente.',
-    '- Si piden algo fuera de reservas, grupos, actividades del campus, cursos o ayuda de la app, di amablemente qué sí puedes hacer.',
+    '- También consultas el estado de sus trámites (mis_tramites), el costo y plazo de cada trámite (buscar_tramites), los datos de un curso, su horario de clases en vivo y el tema de la semana (info_curso) y los cupones de Beneficios+ (buscar_beneficios). Para generar un cupón o cancelar un trámite usa proponer_cupon o proponer_cancelar_tramite. No puedes crear solicitudes de trámites: indica que lo haga en la sección Trámites.',
+    '- Habla como una persona: natural, cálida y directa, con frases cortas y conectores ("vale", "mira", "listo"). Evita sonar a lista o a formulario. Di las fechas como se dicen ("el jueves 27", "mañana"), no como códigos.',
+    '- Si piden algo fuera de reservas, grupos, actividades del campus, cursos, trámites, beneficios o ayuda de la app, di amablemente qué sí puedes hacer.',
     '',
     'Reglas de la universidad:',
     `- Salas grupales: mínimo ${cfg.minMembers ?? 3} personas (incluido el alumno), cerradas los sábados. PCs y cubículos: 1 persona.`,

@@ -277,22 +277,28 @@ function codigoNuevo(prefijo: string): string {
   return `${prefijo}-${Array.from(bytes, (b) => ALFABETO[b % ALFABETO.length]).join('')}`
 }
 
+/** Genera el cupón de un beneficio (uno por beneficio) y lo guarda en este dispositivo. */
+export function crearCupon(b: Beneficio): { cupon: Cupon; lista: Cupon[]; nuevo: boolean } {
+  const actual = leer()
+  const previo = actual.find((c) => c.beneficioId === b.id)
+  if (previo) return { cupon: previo, lista: actual, nuevo: false }
+  const cupon: Cupon = { beneficioId: b.id, codigo: codigoNuevo(b.prefijo), generado: new Date().toISOString() }
+  const lista = [cupon, ...actual]
+  try {
+    localStorage.setItem(KEY, JSON.stringify(lista))
+  } catch {
+    /* sin almacenamiento: el cupón vive solo en esta sesión */
+  }
+  return { cupon, lista, nuevo: true }
+}
+
 export function useCupones() {
   const [cupones, setCupones] = useState<Cupon[]>(leer)
 
   const generar = useCallback((b: Beneficio): Cupon => {
-    const actual = leer()
-    const previo = actual.find((c) => c.beneficioId === b.id)
-    if (previo) return previo
-    const nuevo: Cupon = { beneficioId: b.id, codigo: codigoNuevo(b.prefijo), generado: new Date().toISOString() }
-    const lista = [nuevo, ...actual]
-    try {
-      localStorage.setItem(KEY, JSON.stringify(lista))
-    } catch {
-      /* sin almacenamiento: el cupón vive solo en esta sesión */
-    }
+    const { cupon, lista } = crearCupon(b)
     setCupones(lista)
-    return nuevo
+    return cupon
   }, [])
 
   const de = useCallback((id: string) => cupones.find((c) => c.beneficioId === id), [cupones])

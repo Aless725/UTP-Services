@@ -102,7 +102,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
 - **Trámites** (menú *Más de UTP+ → Trámites*): catálogo de 26 trámites en *Autogestionables* y *SAE en línea*, con búsqueda. Cada uno muestra costo, plazo y modalidad, y su formulario se arma con los campos que define en la base de datos (selecciones, texto, curso de tu matrícula, aceptaciones). El servidor valida los datos y evita solicitudes repetidas en revisión. En **Mis solicitudes** ves el estado y el historial de cada una y puedes cancelarla mientras esté en revisión. Los costos y plazos son de ejemplo.
 - **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo, confirmar una actividad o enviar una solicitud de trámite. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
-- **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. También se le puede **hablar**: el micrófono graba (hasta 30 s), el servidor transcribe y la respuesta se lee en voz alta (se activa sola la primera vez que usas la voz y se puede silenciar). Consulta también tus cursos, notas (cuánto necesitas para aprobar) y tareas pendientes. Todo lo que hace el asistente también se puede hacer tocando.
+- **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. También se le puede **hablar**: el micrófono graba (hasta 30 s), el servidor transcribe y la respuesta se lee en voz alta (se activa sola la primera vez que usas la voz y se puede silenciar). Consulta también tus cursos (docente, clases en vivo y tema de la semana), notas (cuánto necesitas para aprobar), tareas pendientes, el estado de tus trámites y los cupones de Beneficios+, y propone generar un cupón o cancelar una solicitud. La voz de respuesta es la de Gemini (con la del navegador como respaldo). Todo lo que hace el asistente también se puede hacer tocando.
 - **Perfil:** datos institucionales de solo lectura (nombre, correo, código, DNI, modalidad y campus), cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
@@ -163,8 +163,8 @@ El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subir
 ## Próximos pasos
 
 1. Biblioteca (catálogo, préstamos y biblioteca virtual).
-2. Que el asistente también consulte el estado de los trámites.
-3. Optimizar la voz (por ejemplo, la API Live de Gemini para conversar en tiempo real) y la actualización automática de la PWA.
+2. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
+3. Guardar los cupones y referidos en Supabase.
 4. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
 5. Guion de demo y evidencia de pruebas de usabilidad.
 

@@ -8,6 +8,8 @@ const META: Record<Proposal['kind'], { icon: string; title: string; action: stri
   cancelar: { icon: 'event_busy', title: 'Confirma la cancelación', action: 'Cancelar reserva' },
   asistencia: { icon: 'how_to_reg', title: 'Confirma tu asistencia', action: 'Confirmar asistencia' },
   unirse_grupo: { icon: 'group_add', title: 'Confirma tu ingreso al grupo', action: 'Unirme al grupo' },
+  cupon: { icon: 'sell', title: 'Confirma tu cupón', action: 'Generar cupón' },
+  cancelar_tramite: { icon: 'cancel', title: 'Confirma la cancelación', action: 'Cancelar solicitud' },
 }
 
 interface ProposalCardProps {
