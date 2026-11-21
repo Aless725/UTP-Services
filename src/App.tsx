@@ -29,6 +29,8 @@ import AnnouncementsPage from '@/features/announcements/AnnouncementsPage'
 import AnnouncementDetailPage from '@/features/announcements/AnnouncementDetailPage'
 import ComingSoonPage from '@/features/more/ComingSoonPage'
 import SupportPage from '@/features/support/SupportPage'
+import NotificationsPage from '@/features/notifications/NotificationsPage'
+import MailPage from '@/features/mail/MailPage'
 import ReservationsHome from '@/features/reservations/ReservationsHome'
 import SpaceListPage from '@/features/reservations/SpaceListPage'
 import SpaceDetailPage from '@/features/reservations/SpaceDetailPage'
@@ -66,6 +68,7 @@ const detailRoutes = (
     <Route path="/tramites/seguimiento" element={<SeguimientoPage />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
+    <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -94,6 +97,8 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/grupos" element={<GroupsPage />} />
         <Route path="/anuncios" element={<AnnouncementsPage />} />
         <Route path="/soporte" element={<SupportPage />} />
+        <Route path="/notificaciones" element={<NotificationsPage />} />
+        <Route path="/correo" element={<MailPage />} />
         <Route path="/reservas" element={<ReservationsHome />} />
         <Route path="/reservas/lista/:tipo" element={<SpaceListPage />} />
         <Route path="/reservas/mis" element={<MyReservationsPage />} />

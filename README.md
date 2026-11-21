@@ -95,10 +95,11 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Reserva de espacios** (menú *Más de UTP+ → Espacios*): buscar y filtrar salas grupales, PCs de biblioteca y cubículos por fecha y sede; elegir horario según la disponibilidad; agregar integrantes por código de alumno; confirmar con las normas; recibir un código `RES-AAAA-NNNN` con **QR real**; y ver, cancelar o descargar al calendario desde *Mis reservas*.
   - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
-- **Detalle del curso** (tocar un curso o una clase): sílabo (con descarga), contenido con información del curso, bibliografía y las 18 semanas (foro de consultas y materiales con avance), evaluaciones, tareas con entrega de archivo, foros donde se puede responder, notas con cálculo de lo que falta para aprobar, anuncios y datos de Zoom con la próxima sesión.
+- **Cursos:** lista agrupada con la semana del ciclo, el promedio de cada curso y las tareas pendientes, y avance de malla con la información académica plegada. Dentro de un curso hay tres secciones a la vista (**Resumen**, **Notas** y **Tareas**) y un botón **⋯** con Contenido, Foros, Anuncios, Zoom y Sílabo. El resumen muestra la semana, el promedio, lo que viene (tareas y evaluaciones) y atajos para repasar (reservar una sala, crear un grupo del curso o preguntarle al asistente). Notas reúne tu nota acumulada, los filtros Todas, Calificadas y Sin calificar, y una calculadora plegada de cuánto necesitas para aprobar.
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
+- **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo o confirmar una actividad. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
 - **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. Todo lo que hace el asistente también se puede hacer tocando.
-- **Perfil:** edición de nombre y DNI, cambio de foto y copiado del código universitario.
+- **Perfil:** datos institucionales de solo lectura (nombre, correo, código, DNI, modalidad y campus), cambio de foto y copiado del código universitario.
 
 ## Accesibilidad e inclusión
 
@@ -138,6 +139,18 @@ src/
 docs/               # enunciado del curso y plantillas de usabilidad
 supabase/           # migraciones SQL (esquema, reglas, lecturas) y seed de demostración
 ```
+
+## Despliegue
+
+El frontend se publica en **Vercel** conectado a GitHub, con las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` cargadas en el proyecto. Para no gastar el cupo de despliegues del plan gratuito, solo se despliegan automáticamente estas ramas (regla `git.deploymentEnabled` de `vercel.json`):
+
+| Rama | Qué es |
+|---|---|
+| `main` | Producción. |
+| `integracion` | Pruebas: dirección fija con lo último antes de pasar a producción. |
+| `preview/*` | Solo cuando se quiere probar una rama aparte en el celular: basta nombrarla así (por ejemplo `preview/mi-prueba`). |
+
+El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subirlas. Flujo de trabajo: rama de la función → `integracion` → `main`.
 
 ## Próximos pasos
 

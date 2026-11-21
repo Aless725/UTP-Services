@@ -32,6 +32,8 @@ export default function ContentTab({ state, onOpenForum }: ContentTabProps) {
   const weeks = useMemo(() => weeksOf(raw), [raw])
   const [open, setOpen] = useState<Set<number>>(new Set([CURRENT_WEEK]))
   const [openContent, setOpenContent] = useState<Set<number>>(new Set([CURRENT_WEEK]))
+  // La información del curso queda plegada: se abre solo si hace falta.
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const total = weeks.reduce((s, w) => s + w.materiales.length, 0)
   const seen = weeks.reduce((s, w) => s + w.materiales.filter((m) => state.done.includes(m.id)).length, 0)
@@ -46,16 +48,30 @@ export default function ContentTab({ state, onOpenForum }: ContentTabProps) {
 
   return (
     <div className="space-y-3">
-      <section aria-labelledby="info" className="rounded-card bg-card p-4 shadow-card">
-        <h2 id="info" className="text-sm font-bold text-ink">
-          Información del curso
-        </h2>
-        <Block title="Bibliografía base" items={meta.bibBase} />
-        <Block title="Bibliografía" items={meta.bibComp} />
-        <div className="mt-3 flex items-center justify-between border-t border-fill/5 pt-3 text-sm">
-          <span className="text-ink-muted">Total de semanas</span>
-          <span className="font-bold text-ink">{TOTAL_WEEKS}</span>
-        </div>
+      <section aria-labelledby="info" className="overflow-hidden rounded-card bg-card shadow-card">
+        <button
+          type="button"
+          onClick={() => setInfoOpen((o) => !o)}
+          aria-expanded={infoOpen}
+          aria-controls="info-curso"
+          className="pressable flex min-h-14 w-full items-center gap-3 px-4 text-left"
+        >
+          <h2 id="info" className="flex-1 text-sm font-bold text-ink">
+            Información del curso
+          </h2>
+          <span className="text-xs text-ink-muted">{TOTAL_WEEKS} semanas</span>
+          <Icon
+            name="expand_more"
+            size={20}
+            className={`text-ink-muted transition-transform duration-300 ease-smooth ${infoOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {infoOpen && (
+          <div id="info-curso" className="animate-rise border-t border-fill/5 px-4 pb-4">
+            <Block title="Bibliografía base" items={meta.bibBase} />
+            <Block title="Bibliografía" items={meta.bibComp} />
+          </div>
+        )}
       </section>
 
       <section aria-label="Tu avance" className="rounded-card bg-card p-4 shadow-card">
@@ -80,7 +96,7 @@ export default function ContentTab({ state, onOpenForum }: ContentTabProps) {
         </div>
       </section>
 
-      <h2 className="px-1 pt-1 text-sm font-bold text-ink">Contenido</h2>
+      <h2 className="px-1 pt-1 text-sm font-bold text-ink">Semanas</h2>
       <ul className="space-y-3">
         {weeks.map((w) => {
           const isOpen = open.has(w.n)

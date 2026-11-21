@@ -3,6 +3,22 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "integracion": true,
+      "preview/*": true,
+      "*": false,
+      "feat/*": false,
+      "fix/*": false,
+      "docs/*": false,
+      "chore/*": false,
+      "refactor/*": false,
+      "perf/*": false,
+      "build/*": false,
+      "test/*": false
+    }
+  },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
