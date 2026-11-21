@@ -2,9 +2,18 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Course, Cycle, StatGroup } from './coursesData'
 
+/** Resumen de un curso para la lista: promedio de lo calificado y tareas por entregar. */
+export interface CourseSummary {
+  /** Promedio ponderado de lo ya calificado, sobre 20 (null si todavía no hay notas). */
+  nota: number | null
+  /** Tareas que aún no entregaste. */
+  pendientes: number
+}
+
 export interface CoursesData {
   courses: Course[]
   cycle: Cycle
+  summary: Record<string, CourseSummary>
   academicInfo: { label: string; value: string }[]
   progress: StatGroup[]
 }
@@ -25,17 +34,16 @@ function one<T>(rel: unknown): T | null {
 const GROUP_ORDER = ['Avance', 'Créditos', 'Electivos']
 
 async function fetchCourses(): Promise<CoursesData> {
-  const [enr, prog, prof] = await Promise.all([
+  const [enr, prog, prof, evs, grs, tks, sub] = await Promise.all([
     supabase.from('enrollments').select('orden, courses(*), terms(*)').order('orden'),
     supabase.from('progress_stats').select('grupo, orden, etiqueta, valor, decimales').order('orden'),
-    supabase
-      .from('profiles')
-      .select('carrera, plan_codigo, modalidad, campuses(nombre)')
-      .maybeSingle(),
+    supabase.from('profiles').select('carrera, plan_codigo, modalidad, campuses(nombre)').maybeSingle(),
+    supabase.from('course_evaluations').select('id, course_id, peso'),
+    supabase.from('evaluation_grades').select('evaluation_id, nota'),
+    supabase.from('course_tasks').select('id, course_id'),
+    supabase.from('task_submissions').select('task_id'),
   ])
-  if (enr.error) throw enr.error
-  if (prog.error) throw prog.error
-  if (prof.error) throw prof.error
+  for (const r of [enr, prog, prof, evs, grs, tks, sub]) if (r.error) throw r.error
 
   const rows = enr.data ?? []
   const courses = rows.map((r) => one<Course>(r.courses)).filter((c): c is Course => !!c)
@@ -59,6 +67,21 @@ async function fetchCourses(): Promise<CoursesData> {
       }
     : { nombre: 'Sin ciclo activo', estado: '', semanaActual: 0, semanasTotal: 1, inicio: '', fin: '' }
 
+  // Nota acumulada y tareas pendientes por curso.
+  const nota = new Map((grs.data ?? []).map((g) => [g.evaluation_id as string, g.nota as number]))
+  const delivered = new Set((sub.data ?? []).map((s) => s.task_id as string))
+  const summary: Record<string, CourseSummary> = {}
+  for (const c of courses) {
+    const mine = (evs.data ?? []).filter((e) => e.course_id === c.id)
+    const graded = mine.filter((e) => nota.has(e.id))
+    summary[c.id] = {
+      nota: graded.length
+        ? (graded.reduce((s, e) => s + (nota.get(e.id) as number) * e.peso, 0) / graded.reduce((s, e) => s + e.peso, 0))
+        : null,
+      pendientes: (tks.data ?? []).filter((x) => x.course_id === c.id && !delivered.has(x.id)).length,
+    }
+  }
+
   const campus = one<{ nombre: string }>(prof.data?.campuses)?.nombre ?? ''
   const academicInfo = [
     { label: 'Carrera', value: prof.data?.carrera ?? '' },
@@ -74,7 +97,7 @@ async function fetchCourses(): Promise<CoursesData> {
       .map((p) => ({ value: Number(p.valor), label: p.etiqueta, decimals: p.decimales || undefined })),
   })).filter((g) => g.items.length > 0)
 
-  return { courses, cycle, academicInfo, progress }
+  return { courses, cycle, summary, academicInfo, progress }
 }
 
 /** Cursos matriculados, ciclo y avance del alumno (Supabase, con caché de 5 minutos). */
