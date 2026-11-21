@@ -43,7 +43,7 @@ export default function OnboardingPage() {
 
   return (
     <section
-      className="relative flex h-full flex-col bg-surface"
+      className="relative flex h-full flex-col overflow-y-auto bg-surface"
       onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -53,7 +53,7 @@ export default function OnboardingPage() {
         if (e.key === 'ArrowLeft') prev()
       }}
     >
-      <header className="flex items-center justify-between px-5 pt-5">
+      <header className="flex items-center justify-between px-5 pt-5 short:pt-2">
         {/* La primera pantalla no tiene "regresar": se sale con "Saltar". Desde la segunda, vuelve al paso anterior. */}
         {index > 0 ? (
           <button
@@ -85,13 +85,15 @@ export default function OnboardingPage() {
           {slides.map((s, i) => (
             <article
               key={s.id}
-              className="w-full shrink-0 px-6 pt-16"
+              className="w-full shrink-0 px-6 pt-16 short:flex short:items-center short:gap-8 short:px-12 short:pt-0"
               aria-hidden={i !== index}
               aria-label={`${i + 1} de ${slides.length}`}
             >
-              <h1 className="text-display text-ink">{s.title}</h1>
-              <p className="mt-3 max-w-[16rem] text-sm leading-snug text-ink-muted">{s.description}</p>
-              <div className="mt-6 h-[260px]">
+              <div className="short:w-1/2 short:shrink-0">
+                <h1 className="text-display text-ink">{s.title}</h1>
+                <p className="mt-3 max-w-[16rem] text-sm leading-snug text-ink-muted">{s.description}</p>
+              </div>
+              <div className="mt-6 h-[260px] short:mt-0 short:h-[230px] short:flex-1">
                 <Illustration id={s.id} />
               </div>
             </article>
@@ -99,7 +101,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <footer className="mt-auto flex items-center justify-between px-8 pb-10">
+      <footer className="mt-auto flex items-center justify-between px-8 pb-10 short:pb-3 short:pt-1">
         <div className="flex items-center gap-1.5" role="tablist" aria-label="Progreso">
           {slides.map((s, i) => (
             <button

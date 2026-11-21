@@ -28,9 +28,10 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Trámites: 26 trámites autogestionables y SAE, solicitud, seguimiento y cancelación | Listo |
 | Asistente de Soporte con IA por **texto y voz** (Gemini): consulta espacios, cursos, notas y tareas, y propone reservas, grupos y asistencias con confirmación | Listo |
 | Backend en Supabase con RLS y reglas en el servidor | Listo |
-| App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular, tableta, plegable y doble pantalla) | Listo |
+| App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, tableta, plegable y doble pantalla) | Listo |
 | Biblioteca | Pendiente |
-| Actualización automática de la PWA y modo sin conexión | Pendiente |
+| Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
+| Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
 
 La autenticación, el perfil, los grupos, las reservas, los cursos (incluido su contenido y el avance de cada alumno), los anuncios, las notificaciones y los trámites usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
 
@@ -120,6 +121,7 @@ Se abre desde **Mi Perfil → Accesibilidad** y se aplica en toda la app:
 | Formato | Comportamiento |
 |---|---|
 | Celular (menos de 640 px) | Un panel a pantalla completa. |
+| Celular en horizontal | Sin marco, con la navegación en una barra vertical a la izquierda y, si el ancho alcanza, lista y detalle en dos paneles. |
 | Tableta o plegable abierto | Dos paneles: lista a la izquierda y detalle a la derecha. |
 | Doble pantalla | Dos paneles alineados a cada pantalla, con la bisagra vacía (CSS Viewport Segments). |
 | Escritorio | Vista previa dentro de un marco, con un selector de **Celular / Doble pantalla / Tableta**. |

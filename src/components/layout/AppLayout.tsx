@@ -3,6 +3,8 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import MoreSheet from '@/features/more/MoreSheet'
 import { DockContext } from './DockContext'
 import BottomNav from './BottomNav'
+import { useDevice } from './DeviceContext'
+import SideNav from './SideNav'
 
 const TABS = ['/inicio', '/calendario', '/cursos', '/pagos']
 const isTab = (p: string | null) => !!p && TABS.includes(p)
@@ -60,6 +62,7 @@ export default function AppLayout() {
   const chat = isChat(pathname)
   const [dockEl, setDockEl] = useState<HTMLElement | null>(null)
   const keyboard = useKeyboardOffset(chat)
+  const { landscape } = useDevice()
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 })
@@ -69,7 +72,7 @@ export default function AppLayout() {
     <div className="relative h-full">
       <div
         ref={scroller}
-        className={`no-scrollbar h-full overflow-y-auto overscroll-contain ${chat ? 'pb-[calc(var(--nav-bottom)+150px)]' : 'pb-[calc(var(--nav-bottom)+98px)]'}`}
+        className={`no-scrollbar h-full overflow-y-auto overscroll-contain pl-[var(--rail)] ${chat ? 'pb-[var(--dock-chat)]' : 'pb-[var(--dock-pad)]'}`}
       >
         <div key={pathname} className={`flex min-h-full flex-col ${animation}`}>
           <DockContext.Provider value={chat ? dockEl : null}>
@@ -83,11 +86,12 @@ export default function AppLayout() {
           key="dock-chat"
           ref={setDockEl}
           style={keyboard ? { transform: `translate3d(0, -${keyboard}px, 0)` } : undefined}
-          className="absolute inset-x-3 bottom-[calc(var(--nav-bottom)+8px)] z-20 animate-rise"
+          className="absolute bottom-[calc(var(--nav-bottom)+8px)] left-[calc(var(--rail)+0.75rem)] right-3 z-20 animate-rise"
         />
-      ) : (
+      ) : landscape ? null : (
         <BottomNav moreOpen={moreOpen} onToggleMore={() => setMoreOpen((o) => !o)} />
       )}
+      {landscape && <SideNav moreOpen={moreOpen} onToggleMore={() => setMoreOpen((o) => !o)} />}
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
     </div>
   )
