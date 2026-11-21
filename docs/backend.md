@@ -16,9 +16,11 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 5 | `supabase/migrations/0005_contenido_cursos.sql` | Contenido de los cursos y estado del alumno |
 | 6 | `supabase/migrations/0006_anuncios_campus.sql` | Anuncios del campus y asistencia a las actividades |
 | 7 | `supabase/migrations/0007_agent_logs.sql` | Registro de conversaciones del asistente |
-| 8 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 9 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 10 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 8 | `supabase/migrations/0008_notificaciones.sql` | Centro de notificaciones y avisos automáticos |
+| 9 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 10 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 11 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 12 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -67,6 +69,14 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 | `campus_announcements` | Campañas, eventos y actividades (salud, cultura, académico, deporte, empleabilidad) con fecha, lugar y cupos opcionales. |
 | `announcement_rsvps` | Quién confirmó asistencia. Cada alumno solo ve la suya. |
 | `campus_announcements_view` | Vista con el total de asistentes y si el alumno ya confirmó, sin exponer nombres. |
+
+**Notificaciones**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `notifications` | Avisos de cada alumno (reserva, tarea, nota, anuncio, grupo, sistema) con la pantalla a la que llevan y si ya se leyeron. El alumno solo puede marcarlas como leídas; el contenido lo escribe el servidor. |
+
+Se crean solas con disparadores cuando el alumno confirma o cancela una reserva, otra persona lo agrega a una reserva, confirma su asistencia a una actividad o se une a un grupo. `seed_notificaciones.sql` agrega avisos de ejemplo y conserva cuáles ya fueron leídas al volver a ejecutarse.
 
 **Asistente**
 
