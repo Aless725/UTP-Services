@@ -57,10 +57,26 @@ import ReferirPage from '@/features/beneficios/ReferirPage'
 import TriviaPage from '@/features/beneficios/TriviaPage'
 import OpinaPage from '@/features/beneficios/OpinaPage'
 import PonteAlDiaPage from '@/features/beneficios/PonteAlDiaPage'
+import EmpleabilidadPage from '@/features/empleabilidad/EmpleabilidadPage'
+import ProgramasPage from '@/features/empleabilidad/ProgramasPage'
+import ProgramaDetailPage from '@/features/empleabilidad/ProgramaDetailPage'
+import PostularProgramaPage from '@/features/empleabilidad/PostularProgramaPage'
+import OfertasPage from '@/features/empleabilidad/OfertasPage'
+import OfertaDetailPage from '@/features/empleabilidad/OfertaDetailPage'
+import PostularPage from '@/features/empleabilidad/PostularPage'
+import MisPostulacionesPage from '@/features/empleabilidad/MisPostulacionesPage'
+import PostulacionDetailPage from '@/features/empleabilidad/PostulacionDetailPage'
+import PostulacionEnviadaPage from '@/features/empleabilidad/PostulacionEnviadaPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
   <>
+    <Route path="/empleabilidad/programas/:id" element={<ProgramaDetailPage />} />
+    <Route path="/empleabilidad/programas/:id/postular" element={<PostularProgramaPage />} />
+    <Route path="/empleabilidad/ofertas/:id" element={<OfertaDetailPage />} />
+    <Route path="/empleabilidad/ofertas/:id/postular" element={<PostularPage />} />
+    <Route path="/empleabilidad/postulaciones/:id" element={<PostulacionDetailPage />} />
+    <Route path="/empleabilidad/postulaciones/:id/confirmacion" element={<PostulacionEnviadaPage />} />
     <Route path="/cursos/:id" element={<CourseDetailPage />} />
     <Route path="/grupos/nuevo" element={<CreateGroupPage />} />
     <Route path="/grupos/creado/:id" element={<GroupCreatedPage />} />
@@ -89,6 +105,7 @@ const detailRoutes = (
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
+    <Route path="/mas/empleabilidad" element={<Navigate to="/empleabilidad" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -125,6 +142,10 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/tramites" element={<TramitesPage />} />
         <Route path="/beneficios" element={<BeneficiosPage />} />
+        <Route path="/empleabilidad" element={<EmpleabilidadPage />} />
+        <Route path="/empleabilidad/programas" element={<ProgramasPage />} />
+        <Route path="/empleabilidad/ofertas" element={<OfertasPage />} />
+        <Route path="/empleabilidad/postulaciones" element={<MisPostulacionesPage />} />
         {detailRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -152,13 +173,15 @@ function Panes() {
   // Acceso y onboarding: formulario a la izquierda, marca a la derecha.
   if (!app) return <TwoPane left={<AppRoutes />} right={<BrandPane />} />
 
-  const master = detail ? masterFor(pathname, lastMaster.current) : { pathname, search }
+  const master = detail ? masterFor(pathname, lastMaster.current, search) : { pathname, search }
   const detailPath = detail ? pathname : null
   const companion = detailPath ? null : companionFor(master.pathname)
 
   const right = detailPath ? (
-    <Routes location={{ pathname: detailPath }}>
-      <Route element={<DetailLayout />}>{detailRoutes}</Route>
+    <Routes location={{ pathname: detailPath, search }}>
+      <Route element={<RequireAuth><DetailLayout /></RequireAuth>}>
+        {detailRoutes}
+      </Route>
     </Routes>
   ) : companion ? (
     <DetailLayout id={companion}>{companion === 'calendario' ? <CalendarPage /> : <CoursesPage />}</DetailLayout>

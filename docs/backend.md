@@ -19,12 +19,16 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 | 8 | `supabase/migrations/0008_notificaciones.sql` | Centro de notificaciones y avisos automáticos |
 | 9 | `supabase/migrations/0009_perfil_solo_lectura.sql` | El perfil pasa a ser de solo lectura (datos institucionales) |
 | 10 | `supabase/migrations/0010_tramites.sql` | Catálogo de trámites, solicitudes de los alumnos y su historial |
-| 11 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 12 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 13 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
-| 14 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
-| 15 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
-| 16 | `supabase/seed_tramites.sql` | 26 trámites (autogestionables y SAE) y solicitudes de ejemplo de las cuentas demo |
+| 11 | `supabase/migrations/0011_empleabilidad.sql` | Programas, ofertas, postulaciones privadas, RLS, RPC y notificaciones |
+| 12 | `supabase/migrations/0012_programas_empleabilidad.sql` | Detalles de programas, postulaciones a programas y listado compartido con ofertas |
+| 13 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
+| 14 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
+| 15 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
+| 16 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
+| 17 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
+| 18 | `supabase/seed_tramites.sql` | 26 trámites (autogestionables y SAE) y solicitudes de ejemplo de las cuentas demo |
+| 19 | `supabase/seed_empleabilidad.sql` | Cinco programas y tres ofertas ilustrativas con fechas relativas a hoy |
+| 20 | `supabase/seed_programas_empleabilidad.sql` | Detalle de los cinco programas según MagicPath: lema, formato, beneficios, requisitos, nota y enlace oficial |
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -88,7 +92,23 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 |---|---|
 | `notifications` | Avisos de cada alumno (reserva, tarea, nota, anuncio, grupo, sistema) con la pantalla a la que llevan y si ya se leyeron. El alumno solo puede marcarlas como leídas; el contenido lo escribe el servidor. |
 
-Se crean solas con disparadores cuando el alumno confirma o cancela una reserva, otra persona lo agrega a una reserva, confirma su asistencia a una actividad o se une a un grupo. `seed_notificaciones.sql` agrega avisos de ejemplo y conserva cuáles ya fueron leídas al volver a ejecutarse.
+Se crean solas con disparadores cuando el alumno confirma o cancela una reserva, otra persona lo agrega a una reserva, confirma su asistencia a una actividad, se une a un grupo o postula a una oferta. `seed_notificaciones.sql` agrega avisos de ejemplo y conserva cuáles ya fueron leídas al volver a ejecutarse.
+
+**Empleabilidad**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `employment_programs` | Programas con detalle, lema, descripción, ciclos, formato, frecuencia, beneficios, requisitos, nota y enlace oficial. Solo se consultan los activos. |
+| `job_offers` | Ofertas, carreras, funciones, requisitos, beneficios, fechas y estado (`publicada`, `cerrada`, `archivada`). RLS solo muestra ofertas publicadas y vigentes. |
+| `job_applications` | Postulaciones privadas a ofertas y programas, con código `POS-AAAA-NNNNNN`, contacto, estado y copia del nombre y entidad al enviar. Cada registro tiene exactamente uno de `oferta_id` o `programa_id`, con unicidad por alumno y destino. Los programas añaden código de alumno, campus, ciclo y aceptación de requisitos. |
+
+Se escribe exclusivamente mediante `postular_oferta` o `postular_programa`; el cliente no puede insertar, editar estados ni borrar registros. El nombre y correo son datos de contacto y no modifican `profiles`. Ambas funciones obtienen la identidad de `auth.uid()`, validan contacto y disponibilidad, bloquean el destino y devuelven el mismo registro si se reintenta un envío ya aceptado. El registro y su notificación se crean en una transacción. Los campos `puesto_snapshot` y `empresa_snapshot` conservan el puesto y empresa para ofertas, o el título del programa y «Programa de empleabilidad · UTP» para programas, aunque el destino cierre o cambie. Un destino con postulaciones no puede eliminarse: se cierra, archiva o desactiva.
+
+`postular_programa` exige correo `@utp.edu.pe`, campus de 2 a 120 caracteres, ciclo entero del 1 al 12 y aceptación explícita. El código de alumno lo obtiene de `profiles`; no acepta un código ni un propietario suministrado por el cliente. La pertenencia al tercio, promedios, idiomas y admisión son requisitos sujetos a revisión posterior; no se inventa una validación académica con datos que no existen. El estado inicial compartido `enviada` se muestra como «Pendiente de revisión» para programas. Se conservan las políticas RLS y notificaciones de 0011.
+
+Los estados son `enviada`, `en_revision`, `seleccionada` y `no_seleccionada`. Los cambios administrativos de estado actualizan la fecha y generan un aviso con enlace al registro. Se realizan desde el SQL Editor con privilegios administrativos; no hay panel de empleadores ni envío de correos o solicitudes a empresas reales.
+
+En el frontend, los hooks se concentran en `src/features/empleabilidad/empleabilidadData.ts`. El catálogo se recupera en páginas de 100 filas con orden estable y se filtra localmente por texto (sin distinguir tildes), tipo y ciudad. La URL conserva la búsqueda entre listado, detalle y formulario, incluidos los dos paneles y los enlaces directos. Las consultas personales incluyen el código del alumno en su clave; la caché existente se limpia al cerrar sesión y permite leer los datos consultados sin conexión. El envío requiere internet y no tiene reintentos automáticos.
 
 **Asistente**
 
@@ -127,6 +147,8 @@ Se crean solas con disparadores cuando el alumno confirma o cancela una reserva,
 | `publicar_comentario(foro, texto, respuesta_a)` | Publica un comentario o respuesta (2 a 1000 caracteres). |
 | `solicitar_tramite(tipo, datos)` | Valida cada campo del trámite (obligatorios, opciones permitidas, que el curso esté en tu matrícula, largos) y que no tengas ya una solicitud igual en revisión. Crea la solicitud, su primer evento y un aviso. |
 | `cancelar_tramite(codigo)` | Cancela una solicitud propia que siga en revisión. |
+| `postular_oferta(oferta_id, nombre_contacto, correo_contacto)` | Valida sesión, oferta y contacto; registra una postulación privada con aviso. Devuelve el registro anterior si ya se había enviado. |
+| `postular_programa(programa_id, nombre_contacto, correo_contacto, campus, ciclo, acepta_requisitos)` | Valida sesión, programa activo, contacto institucional y campos; obtiene el código desde el perfil y registra la postulación en el mismo historial con aviso, sin duplicados. |
 | `asistir_anuncio(id, asistir)` | Confirma o cancela la asistencia a una actividad validando que no haya terminado y que queden cupos. |
 
 Los errores de regla se devuelven con `errcode = 'P0001'` y un `hint` (`penalty`, `conflict`, `members`, `full`…) que la app traduce a mensajes claros.

@@ -12,7 +12,7 @@ export const moreItems: MoreItem[] = [
   { slug: 'talleres', label: 'Talleres', icon: 'event_note' },
   { slug: 'biblioteca', label: 'Biblioteca', icon: 'menu_book' },
   { slug: 'reserva-de-equipos', label: 'Reserva de equipos', icon: 'event_available' },
-  { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'folder_open' },
+  { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'work', to: '/empleabilidad' },
   { slug: 'grupos', label: 'Grupos', icon: 'group', to: '/grupos' },
   { slug: 'espacios', label: 'Espacios', icon: 'location_on', to: '/reservas' },
   { slug: 'beneficios', label: 'Beneficios', icon: 'sell', to: '/beneficios' },

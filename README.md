@@ -26,6 +26,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Anuncios del campus (campañas y actividades, con confirmación de asistencia) | Listo |
 | Notificaciones (campanita con insignia y avisos automáticos) y pantalla de correo | Listo |
 | Trámites: 26 trámites autogestionables y SAE, solicitud, seguimiento y cancelación | Listo |
+| Empleabilidad: detalle y postulación a programas, bolsa de trabajo, búsqueda y filtros, seguimiento unificado | Listo (requiere migraciones 0011–0012 y seeds de empleabilidad) |
 | Asistente de Soporte con IA por **texto y voz** (Gemini): consulta espacios, cursos, notas y tareas, y propone reservas, grupos y asistencias con confirmación | Listo |
 | Backend en Supabase con RLS y reglas en el servidor | Listo |
 | App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, iPad, plegables y doble pantalla) | Listo |
@@ -33,7 +34,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
 | Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
 
-La autenticación, el perfil, los grupos, las reservas, los cursos (incluido su contenido y el avance de cada alumno), los anuncios, las notificaciones y los trámites usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
+La autenticación, el perfil, los grupos, las reservas, los cursos (incluido su contenido y el avance de cada alumno), los anuncios, las notificaciones, los trámites y la empleabilidad usan **Supabase** (Auth + Postgres con RLS). Siguen locales el calendario, los pagos y la foto de perfil, y la recuperación de contraseña es simulada porque los correos de demostración no existen. El detalle está en [`docs/backend.md`](docs/backend.md).
 
 ## Tecnologías
 
@@ -70,7 +71,7 @@ npm run typecheck   # revisa los tipos de TypeScript
 ### Backend (Supabase)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email*.
-2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0010` de `supabase/migrations/`, luego los seeds `seed.sql`, `seed_contenido.sql`, `seed_anuncios.sql`, `seed_notificaciones.sql`, `seed_semana16.sql` y `seed_tramites.sql` (espacios, grupos, cursos, contenido, anuncios, notificaciones, trámites y las 3 cuentas de demostración). La guía completa está en [`docs/backend.md`](docs/backend.md).
+2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0012` de `supabase/migrations/`, luego los seeds `seed.sql`, `seed_contenido.sql`, `seed_anuncios.sql`, `seed_notificaciones.sql`, `seed_semana16.sql`, `seed_tramites.sql`, `seed_empleabilidad.sql` y `seed_programas_empleabilidad.sql` (catálogos y las 3 cuentas de demostración). Si ya tienes el backend configurado hasta `0011`, ejecuta solo `0012_programas_empleabilidad.sql` y `seed_programas_empleabilidad.sql`. La guía completa está en [`docs/backend.md`](docs/backend.md).
 3. Para el asistente, crea una llave en [Google AI Studio](https://aistudio.google.com), cárgala como secreto `GEMINI_API_KEY` (*Edge Functions → Secrets*) y despliega la función: `npx supabase functions deploy agent --project-ref <ref-del-proyecto> --use-api`. La llave nunca va en el frontend ni en el repositorio.
 4. Copia `.env.example` a `.env` y completa la URL del proyecto y la llave pública (*publishable* o *anon*):
 
@@ -96,6 +97,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Acceso:** onboarding de 3 pasos, inicio de sesión con estados de carga, éxito y error, y recuperación de contraseña. Desde el login se puede volver a ver la introducción y, en el onboarding, "Saltar" regresa al login (la flecha de regreso aparece desde la segunda pantalla).
 - **Pantallas principales:** agenda del día, calendario mensual con filtros, cursos matriculados con avance de malla y pagos con un pago simulado.
 - **Grupos de estudio:** explorar y filtrar grupos, crear uno propio (presencial o virtual), unirse con confirmación y manejo de error sin conexión, descargar el evento al calendario (`.ics`) y compartir la invitación.
+- **Empleabilidad** (menú *Más de UTP+ → Empleabilidad*): cinco programas (Primer Empleo, Ruta Laboral, Generación Top, Impulsa y Egresa con Potencial) con descripción, beneficios, requisitos, enlaces oficiales y formulario de postulación. El formulario precarga nombre, código de la cuenta, correo institucional y campus; solicita ciclo y confirmación de requisitos. Incluye bolsa de trabajo con búsqueda por puesto, empresa y requisitos, filtros por tipo y ciudad, detalle de ofertas y postulación con nombre y correo de contacto. La confirmación se conserva al recargar y **Mis postulaciones** reúne ofertas y programas con su tipo y estado. El servidor evita duplicados por alumno y destino, comprueba disponibilidad y genera notificaciones; cada alumno solo consulta sus propios registros. Son registros de demostración: no se envían solicitudes a empresas ni a la universidad. Los requisitos académicos de programas quedan sujetos a revisión, no se deducen del ciclo declarado. Los datos ya consultados se pueden leer sin conexión; postular requiere internet.
 - **Reserva de espacios** (menú *Más de UTP+ → Espacios*): buscar y filtrar salas grupales, PCs de biblioteca y cubículos por fecha y sede; elegir horario según la disponibilidad; agregar integrantes por código de alumno; confirmar con las normas; recibir un código `RES-AAAA-NNNN` con **QR real**; y ver, cancelar o descargar al calendario desde *Mis reservas*.
   - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
@@ -147,6 +149,7 @@ src/
 │  ├─ reservations/  # reserva de espacios (reglas en rules.ts)
 │  ├─ announcements/ ├─ notifications/ ├─ mail/
 │  ├─ tramites/    # catálogo, solicitud, seguimiento y detalle
+│  ├─ empleabilidad/  # programas, ofertas, postulación y seguimiento
 │  ├─ support/     # asistente de IA (chat, voz y confirmación de acciones)
 │  └─ more/        # menú Más de UTP+
 ├─ hooks/  lib/  types/
