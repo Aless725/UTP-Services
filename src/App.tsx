@@ -67,10 +67,18 @@ import PostularPage from '@/features/empleabilidad/PostularPage'
 import MisPostulacionesPage from '@/features/empleabilidad/MisPostulacionesPage'
 import PostulacionDetailPage from '@/features/empleabilidad/PostulacionDetailPage'
 import PostulacionEnviadaPage from '@/features/empleabilidad/PostulacionEnviadaPage'
+import TalleresPage from '@/features/talleres/TalleresPage'
+import CatalogoTalleresPage from '@/features/talleres/CatalogoTalleresPage'
+import TallerDetailPage from '@/features/talleres/TallerDetailPage'
+import MisTalleresPage from '@/features/talleres/MisTalleresPage'
+import InscripcionPage from '@/features/talleres/InscripcionPage'
+import SessionExpiredPage from '@/features/auth/SessionExpiredPage'
 
 /** Pantallas que en dos paneles se abren a la derecha. Se comparten entre ambas vistas. */
 const detailRoutes = (
   <>
+    <Route path="/talleres/inscripcion/:id" element={<InscripcionPage />} />
+    <Route path="/talleres/:categoria/:tallerId" element={<TallerDetailPage />} />
     <Route path="/empleabilidad/programas/:id" element={<ProgramaDetailPage />} />
     <Route path="/empleabilidad/programas/:id/postular" element={<PostularProgramaPage />} />
     <Route path="/empleabilidad/ofertas/:id" element={<OfertaDetailPage />} />
@@ -106,6 +114,7 @@ const detailRoutes = (
     <Route path="/mas/soporte" element={<Navigate to="/soporte" replace />} />
     <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
     <Route path="/mas/empleabilidad" element={<Navigate to="/empleabilidad" replace />} />
+    <Route path="/mas/talleres" element={<Navigate to="/talleres" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -116,6 +125,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
       <Route path="/" element={<SplashPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/sesion-expirada" element={<SessionExpiredPage />} />
       <Route path="/recuperar" element={<ForgotPasswordPage />} />
       <Route path="/recuperar/enviado" element={<EmailSentPage />} />
       <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
@@ -146,6 +156,9 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/empleabilidad/programas" element={<ProgramasPage />} />
         <Route path="/empleabilidad/ofertas" element={<OfertasPage />} />
         <Route path="/empleabilidad/postulaciones" element={<MisPostulacionesPage />} />
+        <Route path="/talleres" element={<TalleresPage />} />
+        <Route path="/talleres/mis" element={<MisTalleresPage />} />
+        <Route path="/talleres/:categoria" element={<CatalogoTalleresPage />} />
         {detailRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -190,9 +203,11 @@ function Panes() {
   )
 
   return (
-    <ShellContext.Provider value={{ detailPath }}>
-      <TwoPane left={<AppRoutes location={master} />} right={right} />
-    </ShellContext.Provider>
+    <RequireAuth>
+      <ShellContext.Provider value={{ detailPath }}>
+        <TwoPane left={<AppRoutes location={master} />} right={right} />
+      </ShellContext.Provider>
+    </RequireAuth>
   )
 }
 

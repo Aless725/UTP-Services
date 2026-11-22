@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Presence from '@/components/ui/Presence'
@@ -7,11 +7,15 @@ import TextField from '@/components/ui/TextField'
 import AuthLayout, { AuthHeading } from './AuthLayout'
 import { useAuth } from './AuthContext'
 import { validateCodigo } from './validation'
+import { safeReturnTo } from './returnTo'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [params] = useSearchParams()
+  const returnTo = safeReturnTo(params.get('volver') ?? (location.state as { from?: unknown } | null)?.from)
   const { signIn } = useAuth()
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
@@ -90,7 +94,7 @@ export default function LoginPage() {
           title="Acceso exitoso"
           description="Tus credenciales se han validado correctamente."
           actionLabel="Continuar"
-          onAction={() => navigate('/inicio', { replace: true })}
+          onAction={() => navigate(returnTo, { replace: true })}
         />
       </Presence>
       <Presence show={status === 'error'}>
