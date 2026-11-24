@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import FlowHeader from '@/components/layout/FlowHeader'
 import { useShell } from '@/components/layout/ShellContext'
@@ -6,24 +6,36 @@ import BottomSheet from '@/components/ui/BottomSheet'
 import Chip from '@/components/ui/Chip'
 import Icon from '@/components/ui/Icon'
 import Skeleton from '@/components/ui/Skeleton'
+import { useNow } from '@/hooks/useNow'
 import { useCourseList } from '@/features/courses/useCourses'
 import {
   IDIOMAS,
   TEMAS,
   coincide,
+  hayCopiaLibre,
   metaDe,
+  situacionLibro,
+  useDisponibilidad,
   useLibros,
+  useMisReservasLibros,
   type Idioma,
   type Libro,
   type Tema,
 } from './bibliotecaData'
 
 type Vista = 'mis' | 'todos' | string
-type Formato = 'todos' | 'pdf' | 'epub'
+type Formato = 'todos' | 'pdf' | 'epub' | 'fisico'
+
+/** Libros por página: la lista no crece sin fin. */
+const POR_PAGINA = 6
 
 export default function BibliotecaPage() {
   const libros = useLibros()
   const cursos = useCourseList()
+  const disp = useDisponibilidad()
+  const reservas = useMisReservasLibros()
+  const now = useNow(60_000)
+  const listaRef = useRef<HTMLElement>(null)
   const { detailPath } = useShell()
   const [vista, setVista] = useState<Vista | null>(null)
   const [texto, setTexto] = useState('')
@@ -31,6 +43,7 @@ export default function BibliotecaPage() {
   const [formato, setFormato] = useState<Formato>('todos')
   const [tema, setTema] = useState<Tema | 'todos'>('todos')
   const [filtros, setFiltros] = useState(false)
+  const [pag, setPag] = useState({ clave: '', n: 0 })
 
   const all = useMemo(() => libros.data ?? [], [libros.data])
   const misIds = useMemo(() => new Set(cursos.map((c) => c.id)), [cursos])
@@ -43,9 +56,18 @@ export default function BibliotecaPage() {
     (l) =>
       coincide(l, texto) &&
       (idioma === 'todos' || l.idioma === idioma) &&
-      (formato === 'todos' || l.enlaces.some((e) => e.tipo === formato)) &&
+      (formato === 'todos' || (formato === 'fisico' ? hayCopiaLibre(disp.data ?? [], l.id) : l.enlaces.some((e) => e.tipo === formato))) &&
       (tema === 'todos' || l.tema === tema),
   )
+  const clave = `${actual}|${idioma}|${formato}|${tema}|${texto}`
+  const paginas = Math.max(1, Math.ceil(list.length / POR_PAGINA))
+  const pagina = Math.min(pag.clave === clave ? pag.n : 0, paginas - 1)
+  const visibles = list.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA)
+  const irA = (n: number) => {
+    setPag({ clave, n })
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }
+  const porRecoger = (reservas.data ?? []).filter((r) => situacionLibro(r, now) === 'vigente').length
   const activos = (idioma !== 'todos' ? 1 : 0) + (formato !== 'todos' ? 1 : 0) + (tema !== 'todos' ? 1 : 0)
   const limpiar = () => {
     setIdioma('todos')
@@ -62,10 +84,29 @@ export default function BibliotecaPage() {
         title="Biblioteca"
         back="/inicio"
         backLabel="Volver al inicio"
-        subtitle="Libros gratuitos para tus cursos, en PDF y EPUB."
+        subtitle="Descarga libros gratuitos o reserva una copia impresa en tu sede."
       />
 
-      <div className="mt-4 flex gap-2 px-5">
+      <div className="mt-4 px-5">
+        <Link to="/biblioteca/mis" className="pressable flex min-h-16 items-center gap-3 rounded-card bg-card px-3.5 py-3 shadow-card">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <Icon name="bookmark_added" size={20} filled />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-ink">Mis reservas de libros</span>
+            <span className="block text-[0.6875rem] text-ink-muted">
+              {reservas.isLoading
+                ? 'Cargando…'
+                : porRecoger > 0
+                  ? `${porRecoger} ${porRecoger === 1 ? 'libro por recoger' : 'libros por recoger'}`
+                  : 'Reserva copias impresas y recógelas en la sede'}
+            </span>
+          </span>
+          <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />
+        </Link>
+      </div>
+
+      <div className="mt-3 flex gap-2 px-5">
         <label className="flex min-h-11 flex-1 items-center gap-2 rounded-card bg-card px-3.5 shadow-card focus-within:ring-2 focus-within:ring-primary">
           <Icon name="search" size={18} className="text-ink-muted" />
           <input
@@ -114,12 +155,12 @@ export default function BibliotecaPage() {
       {activos > 0 && (
         <div className="mt-2 flex flex-wrap gap-2 px-5">
           {idioma !== 'todos' && <Quitar texto={IDIOMAS[idioma]} onClick={() => setIdioma('todos')} />}
-          {formato !== 'todos' && <Quitar texto={formato.toUpperCase()} onClick={() => setFormato('todos')} />}
+          {formato !== 'todos' && <Quitar texto={formato === 'fisico' ? 'Impreso en sede' : formato.toUpperCase()} onClick={() => setFormato('todos')} />}
           {tema !== 'todos' && <Quitar texto={TEMAS[tema].label} onClick={() => setTema('todos')} />}
         </div>
       )}
 
-      <section aria-label="Libros" className="mt-4 px-5">
+      <section ref={listaRef} aria-label="Libros" className="mt-4 scroll-mt-4 px-5">
         {libros.isLoading ? (
           <div role="status" aria-label="Cargando" className="space-y-px overflow-hidden rounded-card">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -146,13 +187,46 @@ export default function BibliotecaPage() {
         ) : (
           <>
             <p className="mb-2 px-1 text-[0.6875rem] text-ink-muted">
-              {list.length} {list.length === 1 ? 'libro' : 'libros'}
+              {list.length > POR_PAGINA
+                ? `Mostrando ${pagina * POR_PAGINA + 1}–${pagina * POR_PAGINA + visibles.length} de ${list.length} libros`
+                : `${list.length} ${list.length === 1 ? 'libro' : 'libros'}`}
             </p>
-            <ul key={`${actual}-${idioma}-${formato}-${tema}-${texto}`} className="stagger divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
-              {list.map((l) => (
-                <LibroRow key={l.id} libro={l} seleccionado={detailPath === `/biblioteca/${l.id}`} para={recomendadoPara(l)} />
+            <ul key={`${clave}|${pagina}`} className="stagger divide-y divide-fill/5 overflow-hidden rounded-card bg-card shadow-card">
+              {visibles.map((l) => (
+                <LibroRow
+                  key={l.id}
+                  libro={l}
+                  seleccionado={detailPath === `/biblioteca/${l.id}`}
+                  para={recomendadoPara(l)}
+                  impreso={hayCopiaLibre(disp.data ?? [], l.id)}
+                />
               ))}
             </ul>
+            {paginas > 1 && (
+              <nav aria-label="Páginas" className="mt-3 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  disabled={pagina === 0}
+                  onClick={() => irA(pagina - 1)}
+                  className="pressable flex min-h-11 items-center gap-1 rounded-full bg-card px-4 text-xs font-semibold text-ink shadow-card disabled:opacity-40"
+                >
+                  <Icon name="chevron_left" size={18} />
+                  Anterior
+                </button>
+                <span className="text-xs font-medium text-ink-muted">
+                  Página {pagina + 1} de {paginas}
+                </span>
+                <button
+                  type="button"
+                  disabled={pagina >= paginas - 1}
+                  onClick={() => irA(pagina + 1)}
+                  className="pressable flex min-h-11 items-center gap-1 rounded-full bg-card px-4 text-xs font-semibold text-ink shadow-card disabled:opacity-40"
+                >
+                  Siguiente
+                  <Icon name="chevron_right" size={18} />
+                </button>
+              </nav>
+            )}
           </>
         )}
         <p className="mt-4 px-1 text-[0.6875rem] leading-relaxed text-ink-faint">
@@ -169,8 +243,8 @@ export default function BibliotecaPage() {
             ))}
           </Grupo>
           <Grupo titulo="Formato">
-            {(['todos', 'pdf', 'epub'] as Formato[]).map((f) => (
-              <Opcion key={f} activa={formato === f} onClick={() => setFormato(f)}>{f === 'todos' ? 'Todos' : f.toUpperCase()}</Opcion>
+            {(['todos', 'pdf', 'epub', 'fisico'] as Formato[]).map((f) => (
+              <Opcion key={f} activa={formato === f} onClick={() => setFormato(f)}>{f === 'todos' ? 'Todos' : f === 'fisico' ? 'Impreso en sede' : f.toUpperCase()}</Opcion>
             ))}
           </Grupo>
           <Grupo titulo="Tema">
@@ -205,7 +279,7 @@ export default function BibliotecaPage() {
   )
 }
 
-function LibroRow({ libro, seleccionado, para }: { libro: Libro; seleccionado: boolean; para: string[] }) {
+function LibroRow({ libro, seleccionado, para, impreso }: { libro: Libro; seleccionado: boolean; para: string[]; impreso: boolean }) {
   return (
     <li>
       <Link
@@ -217,7 +291,7 @@ function LibroRow({ libro, seleccionado, para }: { libro: Libro; seleccionado: b
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold leading-snug text-ink">{libro.titulo}</span>
           <span className="block truncate text-[0.6875rem] text-ink-muted">{libro.autor}</span>
-          <span className="block text-[0.6875rem] text-ink-muted">{metaDe(libro)}</span>
+          <span className="block text-[0.6875rem] text-ink-muted">{metaDe(libro)}{impreso ? ' · Impreso en sede' : ''}</span>
           {para.length > 0 && <span className="mt-0.5 block text-[0.6875rem] font-semibold text-primary">Recomendado para {para.join(', ')}</span>}
         </span>
         <Icon name="chevron_right" size={20} className="shrink-0 text-ink-faint" />

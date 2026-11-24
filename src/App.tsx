@@ -53,6 +53,8 @@ import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
 import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
 import BibliotecaPage from '@/features/biblioteca/BibliotecaPage'
 import LibroDetailPage from '@/features/biblioteca/LibroDetailPage'
+import MisReservasLibrosPage from '@/features/biblioteca/MisReservasLibrosPage'
+import ReservaLibroPage from '@/features/biblioteca/ReservaLibroPage'
 import EquiposPage from '@/features/equipos/EquiposPage'
 import EquipoDetailPage from '@/features/equipos/EquipoDetailPage'
 import ReservarEquipoPage from '@/features/equipos/ReservarEquipoPage'
@@ -115,6 +117,8 @@ const detailRoutes = (
     <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
     <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
     <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
+    <Route path="/biblioteca/mis" element={<MisReservasLibrosPage />} />
+    <Route path="/biblioteca/reserva/:codigo" element={<ReservaLibroPage />} />
     <Route path="/biblioteca/:id" element={<LibroDetailPage />} />
     <Route path="/equipos/mis" element={<MisReservasEquiposPage />} />
     <Route path="/equipos/reserva/:codigo" element={<ReservaEquipoPage />} />
