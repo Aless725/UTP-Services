@@ -5,32 +5,14 @@ El backend es un proyecto de **Supabase**: Postgres con RLS, Auth y funciones SQ
 ## Puesta en marcha
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email* (las cuentas de demostración usan correos ficticios).
-2. En el **SQL Editor** ejecuta los archivos en este orden. Todos se pueden repetir sin duplicar datos:
+2. En el **SQL Editor** ejecuta **dos archivos**, en este orden. Los dos se pueden repetir cuando quieras, sin duplicar datos:
 
 | Orden | Archivo | Contenido |
 |---|---|---|
-| 1 | `supabase/migrations/0001_esquema.sql` | Tablas base, restricción contra dobles reservas y RLS |
-| 2 | `supabase/migrations/0002_funciones.sql` | Reglas de reserva y de grupos como funciones |
-| 3 | `supabase/migrations/0003_lecturas.sql` | Lecturas que usa la app (mis reservas, ocupación, vista de grupos) |
-| 4 | `supabase/migrations/0004_cursos.sql` | Ciclo, cursos, matrícula y avance de malla |
-| 5 | `supabase/migrations/0005_contenido_cursos.sql` | Contenido de los cursos y estado del alumno |
-| 6 | `supabase/migrations/0006_anuncios_campus.sql` | Anuncios del campus y asistencia a las actividades |
-| 7 | `supabase/migrations/0007_agent_logs.sql` | Registro de conversaciones del asistente |
-| 8 | `supabase/migrations/0008_notificaciones.sql` | Centro de notificaciones y avisos automáticos |
-| 9 | `supabase/migrations/0009_perfil_solo_lectura.sql` | El perfil pasa a ser de solo lectura (datos institucionales) |
-| 10 | `supabase/migrations/0010_tramites.sql` | Catálogo de trámites, solicitudes de los alumnos y su historial |
-| 11 | `supabase/migrations/0011_empleabilidad.sql` | Programas, ofertas, postulaciones privadas, RLS, RPC y notificaciones |
-| 12 | `supabase/migrations/0012_programas_empleabilidad.sql` | Detalles de programas, postulaciones a programas y listado compartido con ofertas |
-| 13 | `supabase/migrations/0013_talleres.sql` | Talleres, grupos, horarios, inscripciones privadas, restricciones y RPC transaccional |
-| 14 | `supabase/seed.sql` | Sedes, espacios, grupos, cuentas demo, cursos, matrícula y avance |
-| 15 | `supabase/seed_contenido.sql` | Materiales, evaluaciones, tareas, foros, anuncios de curso, notas y entregas |
-| 16 | `supabase/seed_anuncios.sql` | Campañas y actividades del campus, con fechas relativas a hoy |
-| 17 | `supabase/seed_notificaciones.sql` | Notificaciones de ejemplo, con horas relativas a ahora |
-| 18 | `supabase/seed_semana16.sql` | Pone el ciclo en la semana 16 y completa notas, entregas y foros de ejemplo hasta esa semana |
-| 19 | `supabase/seed_tramites.sql` | 26 trámites (autogestionables y SAE) y solicitudes de ejemplo de las cuentas demo |
-| 20 | `supabase/seed_empleabilidad.sql` | Cinco programas y tres ofertas ilustrativas con fechas relativas a hoy |
-| 21 | `supabase/seed_programas_empleabilidad.sql` | Detalle de los cinco programas según MagicPath: lema, formato, beneficios, requisitos, nota y enlace oficial |
-| 22 | `supabase/seed_talleres.sql` | Catálogo inicial cultural y deportivo con grupos y horarios para los períodos configurados |
+| 1 | `supabase/schema.sql` | **Todo el esquema**: tablas, restricciones, RLS, funciones (reglas de negocio), vistas, disparadores y permisos. Sirve para crear la base desde cero y también para actualizar una que ya tenía versiones anteriores. |
+| 2 | `supabase/seed.sql` | **Datos de demostración**: reglas, sedes, espacios, las 3 cuentas demo, grupos, el ciclo 2026-2 con sus 5 cursos y su contenido, notas y entregas, anuncios, notificaciones, trámites, empleabilidad y talleres. |
+
+El ciclo de demostración dura del lunes 17 de agosto al **viernes 18 de diciembre de 2026** (18 semanas). La semana actual, las tareas, las evaluaciones, las actividades y las notificaciones salen de la fecha de hoy; si pasa mucho tiempo, vuelve a ejecutar `seed.sql` para renovar las fechas. Los cursos son Gestión del Servicio TI, Interacción Hombre Máquina, Desarrollo Web Integrado, Curso Integrador II y **Herramientas de Prototipado** (con Figma).
 
 3. Copia `.env.example` a `.env` con la URL del proyecto y la llave pública:
 
@@ -41,7 +23,7 @@ VITE_SUPABASE_ANON_KEY=
 
 Vite lee el `.env` al arrancar: reinicia `npm run dev` si lo cambias. Nunca uses la llave `service_role` en el frontend ni la subas al repositorio.
 
-Para actualizar una base existente que ya llega a `0012`, ejecuta `0013_talleres.sql` y después `seed_talleres.sql` en el SQL Editor de ese proyecto Supabase. Los archivos del repositorio no se aplican automáticamente a la base remota.
+Los archivos del repositorio no se aplican solos a la base remota: hay que ejecutarlos en el SQL Editor de tu proyecto de Supabase.
 
 ## Cuentas de demostración
 
@@ -96,7 +78,7 @@ El alumno escribe solo su código; la app arma el correo interno `<codigo en min
 |---|---|
 | `notifications` | Avisos de cada alumno (reserva, tarea, nota, anuncio, grupo, sistema) con la pantalla a la que llevan y si ya se leyeron. El alumno solo puede marcarlas como leídas; el contenido lo escribe el servidor. |
 
-Se crean solas con disparadores cuando el alumno confirma o cancela una reserva, otra persona lo agrega a una reserva, confirma su asistencia a una actividad, se une a un grupo, postula a una oferta o se inscribe en un taller. `seed_notificaciones.sql` agrega avisos de ejemplo y conserva cuáles ya fueron leídas al volver a ejecutarse.
+Se crean solas con disparadores cuando el alumno confirma o cancela una reserva, otra persona lo agrega a una reserva, confirma su asistencia a una actividad, se une a un grupo, postula a una oferta o se inscribe en un taller. `seed.sql` agrega avisos de ejemplo y conserva cuáles ya fueron leídas al volver a ejecutarse.
 
 **Empleabilidad**
 
@@ -108,7 +90,7 @@ Se crean solas con disparadores cuando el alumno confirma o cancela una reserva,
 
 Se escribe exclusivamente mediante `postular_oferta` o `postular_programa`; el cliente no puede insertar, editar estados ni borrar registros. El nombre y correo son datos de contacto y no modifican `profiles`. Ambas funciones obtienen la identidad de `auth.uid()`, validan contacto y disponibilidad, bloquean el destino y devuelven el mismo registro si se reintenta un envío ya aceptado. El registro y su notificación se crean en una transacción. Los campos `puesto_snapshot` y `empresa_snapshot` conservan el puesto y empresa para ofertas, o el título del programa y «Programa de empleabilidad · UTP» para programas, aunque el destino cierre o cambie. Un destino con postulaciones no puede eliminarse: se cierra, archiva o desactiva.
 
-`postular_programa` exige correo `@utp.edu.pe`, campus de 2 a 120 caracteres, ciclo entero del 1 al 12 y aceptación explícita. El código de alumno lo obtiene de `profiles`; no acepta un código ni un propietario suministrado por el cliente. La pertenencia al tercio, promedios, idiomas y admisión son requisitos sujetos a revisión posterior; no se inventa una validación académica con datos que no existen. El estado inicial compartido `enviada` se muestra como «Pendiente de revisión» para programas. Se conservan las políticas RLS y notificaciones de 0011.
+`postular_programa` exige correo `@utp.edu.pe`, campus de 2 a 120 caracteres, ciclo entero del 1 al 12 y aceptación explícita. El código de alumno lo obtiene de `profiles`; no acepta un código ni un propietario suministrado por el cliente. La pertenencia al tercio, promedios, idiomas y admisión son requisitos sujetos a revisión posterior; no se inventa una validación académica con datos que no existen. El estado inicial compartido `enviada` se muestra como «Pendiente de revisión» para programas. Se conservan las políticas RLS y notificaciones de las ofertas.
 
 Los estados son `enviada`, `en_revision`, `seleccionada` y `no_seleccionada`. Los cambios administrativos de estado actualizan la fecha y generan un aviso con enlace al registro. Se realizan desde el SQL Editor con privilegios administrativos; no hay panel de empleadores ni envío de correos o solicitudes a empresas reales.
 
@@ -187,7 +169,7 @@ El asistente de **Soporte** usa Gemini desde una función de Supabase (`supabase
 
 1. Crea la llave en [Google AI Studio](https://aistudio.google.com).
 2. En Supabase: *Edge Functions → Secrets* y agrega `GEMINI_API_KEY`. Opcional: `GEMINI_MODEL` (por defecto `gemini-3.5-flash-lite`, el más barato y con más cupo gratuito: 15 solicitudes por minuto y 500 por día). Si lo defines, cámbialo o bórralo cuando quieras volver al valor por defecto.
-3. Ejecuta `0007_agent_logs.sql` en el SQL Editor.
+3. Asegúrate de haber ejecutado `schema.sql` (incluye la tabla `agent_logs` del registro de conversaciones).
 4. Despliega la función (necesitas un token personal de *Account → Access Tokens*):
 
 ```bash
@@ -217,5 +199,5 @@ Se leen de la tabla `settings` y se aplican en el servidor: mínimo 3 integrante
 - El **calendario** y los **pagos** siguen con datos locales.
 - La **recuperación de contraseña** es simulada: los correos de demostración no existen.
 - Que un foro esté cerrado se valida en la pantalla, no en el servidor.
-- Las fechas de los anuncios del campus se renuevan al volver a ejecutar `seed_anuncios.sql`.
+- Las fechas de los anuncios del campus se renuevan al volver a ejecutar `seed.sql`.
 - La ocupación "de otros alumnos" que se ve en los horarios es ruido determinista de la demo; el servidor solo bloquea conflictos reales.
