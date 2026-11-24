@@ -105,6 +105,14 @@ En el frontend, los hooks se concentran en `src/features/empleabilidad/empleabil
 
 `reservar_equipo(equipo, fecha, inicio, fin)` valida en el servidor: sesión, equipo activo, penalidad vigente, horario válido, máximo 4 horas, hasta 30 días por adelantado, solo de lunes a viernes de 08:00 a 20:00, que no haya pasado, una reserva activa por alumno y conflictos (`hint`: `auth`, `unavailable`, `penalty`, `invalid`, `duration`, `closed`, `past`, `active_exists`, `conflict`). `cancelar_reserva_equipo(codigo)` devuelve `true` si fue sin penalidad; con menos de 1 hora de anticipación registra la misma penalidad de 7 días de las reservas de espacios. `equipos_ocupacion(desde, hasta)` devuelve solo las franjas ocupadas, sin datos de quién reservó, y `mis_reservas_equipos()` las reservas del alumno con hora de Lima. Un disparador avisa en el centro de notificaciones.
 
+**Biblioteca**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `library_books` | Catálogo de libros gratuitos: título, autor, año, idioma (`es` o `en`), tema, descripción breve, ids de los cursos para los que se recomienda y los enlaces oficiales (`enlaces`: PDF, EPUB o lectura en línea). Solo lectura para el alumno; la app no guarda archivos, solo enlaza a la fuente. |
+
+El seed carga 24 libros tomados de las listas de [Free Programming Books](https://github.com/EbookFoundation/free-programming-books) (EbookFoundation); sus enlaces se comprobaron antes de cargarlos. Los recomendados salen de cruzar `cursos` con la matrícula del alumno.
+
 **Talleres**
 
 | Tabla | Para qué sirve |
