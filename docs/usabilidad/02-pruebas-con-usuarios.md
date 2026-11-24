@@ -1,110 +1,116 @@
-# 2. Pruebas de usabilidad con usuarios
+# Pruebas con usuarios
 
-**Objetivo:** comprobar si alumnos reales pueden completar las tareas principales de UTP+ sin ayuda, y encontrar dónde se confunden.
+La idea es ver si alumnos de verdad pueden hacer las tareas principales de la app sin ayuda, y dónde se confunden. Se prueba con 5 alumnos de la UTP que no hayan participado en el desarrollo. Cada prueba dura entre 30 y 40 minutos y se hace con dos personas: un moderador que guía y un observador que anota.
 
-**Participantes:** 5 alumnos de pregrado de la UTP (de distintos ciclos y carreras). Evita a quienes participaron en el desarrollo. Si puedes, incluye a alguien que use letra grande o modo oscuro.
-
-**Duración:** 30 a 40 minutos por persona.
-
-**Equipo:** un **moderador** (guía y hace las preguntas) y un **observador** (anota sin intervenir).
-
-**Dispositivo:** el celular del participante o un iPhone del equipo, con la app abierta en `https://utp-services.vercel.app`. Si es posible, graba la pantalla (con permiso).
+Se usa un celular con la app abierta en `https://utp-services.vercel.app` y, si el alumno lo permite, se graba la pantalla.
 
 ## Antes de empezar
 
-- [ ] Ejecutaste `supabase/seed.sql` para tener las fechas al día.
-- [ ] Cerraste sesión y la app está en el inicio de sesión.
-- [ ] Revisaste que tengan conexión y que el volumen del celular esté activado (para la voz).
-- [ ] Tienes una hoja de registro por participante (abajo) y el cuestionario SUS impreso o en pantalla.
-- [ ] **Entre participantes:** cancela las reservas y solicitudes creadas, o vuelve a ejecutar `seed.sql` para reiniciar los datos de ejemplo. Cada persona debe empezar con la misma situación.
+- Ejecutar `supabase/seed.sql` para que las fechas estén al día.
+- Cerrar sesión para empezar desde el inicio de sesión.
+- Tener buena conexión y el volumen del celular activado (para la voz).
+- Entre un alumno y otro, cancelar las reservas y solicitudes que se hayan creado, o volver a ejecutar el seed. Todos deben empezar igual.
 
-## Guion del moderador
+## Qué se le dice al alumno
 
-### 1. Bienvenida (3 min)
+> Gracias por ayudarnos. Estamos probando la aplicación, no a ti. Si algo te confunde, es culpa de la app y justo eso queremos saber. Te voy a pedir que hagas unas tareas y que vayas diciendo en voz alta lo que piensas. No te voy a ayudar mientras las haces. Los datos son de prueba y solo anotamos un código, no tu nombre. Puedes parar cuando quieras. ¿Estás de acuerdo en que anotemos lo que hagas?
 
-> «Gracias por ayudarnos. Estamos probando una aplicación para alumnos de la UTP, **no a ti**. No hay respuestas correctas o incorrectas: si algo te confunde, es un problema de la app y justo eso queremos descubrir. Te pediré que pienses en voz alta mientras haces unas tareas. No te voy a ayudar durante las tareas, pero puedo repetirlas. Puedes parar cuando quieras. Los datos son de prueba y solo anotaremos un código (P1, P2…), no tu nombre. ¿Estás de acuerdo en participar y en que anotemos lo que hagas?»
-
-- [ ] El participante dio su consentimiento verbal (o firmado).
-
-### 2. Preguntas iniciales (3 min)
+## Preguntas antes de las tareas
 
 1. ¿Qué servicios de la universidad usas más desde el celular?
-2. ¿Has usado antes asistentes de voz (Siri, Google, Alexa)? ¿Para qué?
-3. ¿Qué tan cómodo te sientes con aplicaciones nuevas? (1 a 5)
+2. ¿Has usado asistentes de voz como Siri o Google? ¿Para qué?
+3. Del 1 al 5, ¿qué tan cómodo te sientes con aplicaciones nuevas?
 
-### 3. Tareas (20 a 25 min)
+## Tareas
 
-Entrega **una tarea a la vez**, leída en voz alta (sin decir qué botón tocar). Inicia el cronómetro cuando el participante empieza y detenlo cuando termina o se rinde (máximo 3 minutos por tarea; si pasa, se marca como «no completó»).
+Se lee una a la vez, sin decir qué botón tocar. Se mide el tiempo hasta que termina o se rinde (máximo 3 minutos). Después de cada una se le pregunta: «Del 1 (muy difícil) al 7 (muy fácil), ¿qué tan fácil fue?».
 
-| # | Escenario para el participante | Módulo | Éxito si… | Meta |
-|---|---|---|---|---|
-| T1 | «Entra a la app con tu código y averigua cuánto debes pagar este mes y cuándo vence.» | Acceso, Pagos | Dice el monto pendiente y la fecha de vencimiento | 1 min |
-| T2 | «Quieres saber qué nota necesitas en el examen final de *Interacción Hombre Máquina* para aprobar.» | Cursos → Notas | Encuentra la calculadora o el promedio necesario | 1,5 min |
-| T3 | «Reserva una sala de estudio para mañana a las 3 de la tarde con tus compañeros.» | Espacios | Llega a la confirmación con su código y QR | 3 min |
-| T4 | «Usa el asistente y **por voz** pídele reservar una tablet para el lunes por la tarde.» | Soporte (voz), Equipos | El asistente propone la reserva y la persona la confirma | 3 min |
-| T5 | «Necesitas una constancia de estudios. Solicítala y revisa en qué estado quedó.» | Trámites | Envía la solicitud y ve su estado | 2,5 min |
-| T6 | «Quieres inscribirte en un taller deportivo o cultural.» | Talleres | Termina la inscripción y ve «Inscripción confirmada» | 3 min |
-| T7 | «Obtén el cupón de descuento para el cine y muéstralo como lo harías en la boletería.» | Beneficios+ | Genera el cupón y muestra el QR | 2 min |
-| T8 | «La letra se te hace pequeña y quieres verla más grande, con modo oscuro.» | Perfil → Accesibilidad | Cambia el tamaño y activa el modo oscuro | 2 min |
-| T9 | «Descarga el comprobante de la cuota que ya pagaste en octubre.» | Pagos → detalle de cuota | Descarga el comprobante | 2 min |
+| N.º | Qué se le pide | Módulo | Se cumple cuando |
+|---|---|---|---|
+| 1 | «Entra con tu código y averigua cuánto debes pagar este mes y cuándo vence» | Acceso y Pagos | Dice el monto y la fecha |
+| 2 | «Quieres saber qué nota necesitas en el final de Interacción Hombre Máquina para aprobar» | Cursos → Notas | Encuentra la calculadora o el promedio necesario |
+| 3 | «Reserva una sala de estudio para mañana a las 3 de la tarde con tus compañeros» | Espacios | Llega a la confirmación con código y QR |
+| 4 | «Usa el asistente y pídele por voz una tablet para el lunes en la tarde» | Soporte y Equipos | El asistente propone la reserva y la confirma |
+| 5 | «Necesitas una constancia de estudios. Pídela y revisa cómo quedó» | Trámites | Envía la solicitud y ve su estado |
+| 6 | «Quieres inscribirte en un taller» | Talleres | Termina la inscripción |
+| 7 | «Consigue el cupón de descuento para el cine y muéstralo como en la boletería» | Beneficios+ | Genera el cupón y muestra el QR |
+| 8 | «La letra se te hace pequeña: ponla más grande y activa el modo oscuro» | Perfil → Accesibilidad | Cambia ambas cosas |
 
-**Si hay poco tiempo:** T1, T3, T4, T5 y T8 son las más importantes (cubren acceso, reglas de negocio, voz con IA, formularios y accesibilidad).
+Si hay poco tiempo, las más importantes son la 1, 3, 4, 5 y 8.
 
-### 4. Preguntas después de cada tarea (1 min)
-
-**SEQ (Single Ease Question):** «En una escala del 1 (muy difícil) al 7 (muy fácil), ¿qué tan fácil fue esta tarea?»
-
-### 5. Cierre (5 min)
+## Preguntas al final
 
 1. ¿Qué fue lo que más te gustó?
-2. ¿Qué fue lo más confuso o lo que cambiarías primero?
-3. ¿Usarías esta app en tu día a día? ¿Por qué?
-4. Sobre el asistente de voz: ¿te entendió bien? ¿Confiarías en él para hacer trámites?
-5. Entrega el cuestionario **SUS** (`03-cuestionario-sus.md`).
+2. ¿Qué fue lo más confuso o lo primero que cambiarías?
+3. ¿Usarías esta app en tu día a día?
+4. Sobre el asistente de voz: ¿te entendió? ¿Le confiarías hacer un trámite por ti?
 
-> Agradece y, si ofreciste algo (un incentivo, constancia, etc.), cúmplelo.
+Después se le entrega el cuestionario SUS (más abajo).
 
-## Hoja de registro por participante
+## Hoja de registro (una por alumno)
 
-**Participante:** P__  **Fecha:** ____  **Modalidad usada:** ☐ iPhone ☐ Android ☐ otro: ______
+Participante: P__ · Fecha: ____ · Celular: ________ · Carrera y ciclo: ________ · Comodidad con apps (1–5): __ · Usa asistentes de voz: sí / no
 
-**Perfil:** carrera ________ · ciclo ____ · comodidad con apps nuevas (1–5): ____ · usa asistentes de voz: ☐ sí ☐ no
-
-| Tarea | ¿Completó? (sí / con ayuda / no) | Tiempo (s) | Errores (toques equivocados, retrocesos) | SEQ (1–7) | Observaciones y frases textuales |
+| Tarea | ¿La hizo? (sí / con ayuda / no) | Tiempo (segundos) | Errores | Facilidad (1–7) | Qué pasó y qué dijo |
 |---|---|---|---|---|---|
-| T1 | | | | | |
-| T2 | | | | | |
-| T3 | | | | | |
-| T4 | | | | | |
-| T5 | | | | | |
-| T6 | | | | | |
-| T7 | | | | | |
-| T8 | | | | | |
-| T9 | | | | | |
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+| 4 | | | | | |
+| 5 | | | | | |
+| 6 | | | | | |
+| 7 | | | | | |
+| 8 | | | | | |
 
-**Lo que más le gustó:** ______________________________
+Lo que más le gustó: ______________________ · Lo más confuso: ______________________ · SUS: ____
 
-**Lo más confuso:** ______________________________
+## Cuestionario SUS
 
-**SUS (puntaje 0–100):** ____ (ver `03-cuestionario-sus.md`)
+Cada alumno marca qué tan de acuerdo está con cada frase, del 1 (nada de acuerdo) al 5 (totalmente de acuerdo):
 
-## Cómo registrar los problemas
+1. Creo que me gustaría usar esta aplicación con frecuencia.
+2. Encontré la aplicación innecesariamente compleja.
+3. Pensé que la aplicación era fácil de usar.
+4. Creo que necesitaría ayuda de una persona con conocimientos técnicos para usarla.
+5. Encontré que las funciones de la aplicación estaban bien integradas.
+6. Pensé que había demasiada inconsistencia en la aplicación.
+7. Imagino que la mayoría de las personas aprendería a usarla muy rápido.
+8. Encontré la aplicación muy incómoda de usar.
+9. Me sentí muy seguro(a) usándola.
+10. Necesité aprender muchas cosas antes de poder usarla.
 
-Por cada problema que observes, anota el momento (tarea y tiempo), qué hizo la persona, qué esperaba y qué pasó. Súbelo a la tabla de hallazgos de `04-plantilla-de-resultados.md` con una severidad (escala de `01-evaluacion-heuristica.md`).
+**Cómo se calcula.** En las frases impares (1, 3, 5, 7, 9) se resta 1 a la respuesta. En las pares (2, 4, 6, 8, 10) se resta la respuesta a 5. Se suman los diez resultados y el total se multiplica por 2,5. Queda un puntaje de 0 a 100.
 
-## Métricas que se calculan
+Ejemplo: con respuestas 4, 2, 5, 1, 4, 2, 5, 1, 4, 2 los resultados son 3, 3, 4, 4, 3, 3, 4, 4, 3, 3. Suman 34 y 34 × 2,5 = 85.
 
-| Métrica | Cómo se calcula |
-|---|---|
-| **Tasa de éxito** por tarea | Participantes que completaron sin ayuda ÷ 5 (se puede contar «con ayuda» como medio éxito) |
-| **Tiempo en tarea** | Promedio (y mediana) de los que completaron |
-| **Errores por tarea** | Promedio de toques equivocados y retrocesos |
-| **SEQ** por tarea | Promedio de las respuestas de 1 a 7 (≥ 5,5 se considera bueno) |
-| **SUS** global | Ver `03-cuestionario-sus.md` (≥ 68 es el promedio de la industria) |
+En una hoja de cálculo, con las diez respuestas en `B2:K2`: `=2,5*((B2-1)+(5-C2)+(D2-1)+(5-E2)+(F2-1)+(5-G2)+(H2-1)+(5-I2)+(J2-1)+(5-K2))`
 
-## Consejos para el moderador
+Para interpretarlo: 68 es el promedio de la industria. Más de 80 es muy bueno y menos de 51 indica problemas serios. Con 5 personas es solo una referencia.
 
-- No expliques la interfaz ni des pistas; si se traba, pregunta «¿qué esperabas que pasara?».
-- Deja los silencios: suelen ser los momentos de duda más útiles.
-- Para la tarea de voz, prueba en un lugar tranquilo y comprueba que el navegador tenga permiso de micrófono; si la persona prefiere escribir, anótalo (la voz es un canal alternativo y siempre se puede escribir).
-- Si el participante comete un error de la app (no suyo), dilo al terminar para que no se culpe.
+## Resultados
+
+Esto se llena al terminar las pruebas.
+
+| Tarea | Alumnos que la hicieron solos (de 5) | Tiempo promedio (s) | Errores promedio | Facilidad promedio (1–7) |
+|---|---|---|---|---|
+| 1 | | | | |
+| 2 | | | | |
+| 3 | | | | |
+| 4 | | | | |
+| 5 | | | | |
+| 6 | | | | |
+| 7 | | | | |
+| 8 | | | | |
+
+| Alumno | P1 | P2 | P3 | P4 | P5 | Promedio |
+|---|---|---|---|---|---|---|
+| Puntaje SUS | | | | | | |
+
+**Problemas que salieron** (de más a menos grave, con lo que se hizo para arreglarlos):
+
+| Problema | Gravedad (0–4) | Qué se cambió | Estado |
+|---|---|---|---|
+| | | | |
+| | | | |
+
+Las tareas que menos de 4 de 5 alumnos hagan solos o con facilidad menor a 5,5 son las primeras que hay que mejorar.
