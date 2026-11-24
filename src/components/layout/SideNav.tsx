@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import PlusIcon from '@/components/ui/PlusIcon'
-import { activeOf, tabs } from './navTabs'
+import { MORE_ACTIVE_RING, activeOf, isMoreRoute, tabs } from './navTabs'
 
 interface SideNavProps {
   moreOpen: boolean
@@ -11,6 +11,7 @@ interface SideNavProps {
 /** Navegación vertical para el celular en horizontal: mismas secciones que la barra inferior. */
 export default function SideNav({ moreOpen, onToggleMore }: SideNavProps) {
   const { pathname } = useLocation()
+  const inMore = isMoreRoute(pathname)
   return (
     <nav
       aria-label="Navegación principal"
@@ -23,12 +24,12 @@ export default function SideNav({ moreOpen, onToggleMore }: SideNavProps) {
             to={t.to}
             className={({ isActive }) =>
               `pressable flex min-h-11 w-full flex-1 flex-col items-center justify-center gap-0.5 ${
-                activeOf(t.to, isActive, pathname) ? 'text-primary' : 'text-ink-muted'
+                !inMore && activeOf(t.to, isActive, pathname) ? 'text-primary' : 'text-ink-muted'
               }`
             }
           >
             {({ isActive }) => {
-              const on = activeOf(t.to, isActive, pathname)
+              const on = !inMore && activeOf(t.to, isActive, pathname)
               return (
                 <>
                   <Icon name={t.icon} size={22} filled={on} />
@@ -45,7 +46,10 @@ export default function SideNav({ moreOpen, onToggleMore }: SideNavProps) {
         aria-label="Más de UTP+"
         aria-expanded={moreOpen}
         aria-haspopup="dialog"
-        className="pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+        aria-current={inMore ? 'true' : undefined}
+        className={`pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white transition-shadow duration-300 ease-smooth ${
+          inMore ? MORE_ACTIVE_RING : ''
+        }`}
       >
         <span className={`transition-transform duration-300 ease-out ${moreOpen ? 'rotate-45' : ''}`}>
           <PlusIcon size={22} />
