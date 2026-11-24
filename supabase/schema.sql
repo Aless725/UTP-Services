@@ -17,6 +17,7 @@
 --   11. Programas, ofertas y postulaciones
 --   12. Detalle de programas y postulaciones a programas
 --   13. Talleres, grupos, horarios e inscripciones
+--   14. Reserva de equipos (laptops, computadoras y tablets)
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1712,3 +1713,230 @@ grant execute on function public.listar_talleres(), public.inscribir_taller(text
 revoke execute on function public.trg_notif_taller() from public, anon, authenticated;
 revoke execute on function public.restringir_talleres(uuid, text[], text, uuid) from public, anon, authenticated;
 grant execute on function public.restringir_talleres(uuid, text[], text, uuid) to service_role;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 0014 · Reserva de equipos (laptops, computadoras y tablets)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Reglas (validadas en el servidor): de lunes a viernes, de 08:00 a 20:00, hasta 30 días por adelantado,
+-- máximo 4 horas por reserva, una reserva activa por alumno y sin dobles reservas del mismo equipo.
+-- Cancelar con menos de 1 hora de anticipación genera la misma penalidad que las reservas de espacios.
+
+create table if not exists public.equipment (
+  id             text primary key,
+  tipo           text not null check (tipo in ('laptop', 'computadora', 'tablet')),
+  nombre         text not null,
+  descripcion    text not null default '',
+  campus_id      text not null references public.campuses(id),
+  ubicacion      text not null,
+  procesador     text not null,
+  ram            text not null,
+  almacenamiento text not null,
+  sistema        text not null,
+  software       text[] not null default '{}',
+  activo         boolean not null default true,
+  orden          int not null default 0
+);
+
+-- Si la tabla ya existía con solo laptops y computadoras, se amplía el tipo para incluir tablets.
+alter table public.equipment drop constraint if exists equipment_tipo_check;
+alter table public.equipment add constraint equipment_tipo_check check (tipo in ('laptop', 'computadora', 'tablet'));
+
+create sequence if not exists public.equipment_reservation_seq start 100;
+
+create table if not exists public.equipment_reservations (
+  id            uuid primary key default gen_random_uuid(),
+  codigo        text not null unique,
+  equipment_id  text not null references public.equipment(id),
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  inicio        timestamptz not null,
+  fin           timestamptz not null,
+  estado        text not null default 'confirmada' check (estado in ('confirmada', 'cancelada')),
+  created_at    timestamptz not null default now(),
+  cancelada_en  timestamptz,
+  check (fin > inicio),
+  -- Impide que dos alumnos reserven el mismo equipo en horarios que se cruzan.
+  constraint sin_doble_reserva_equipo
+    exclude using gist (equipment_id with =, tstzrange(inicio, fin) with &&)
+    where (estado = 'confirmada')
+);
+create index if not exists equipment_reservations_user_idx on public.equipment_reservations (user_id, inicio);
+
+alter table public.equipment              enable row level security;
+alter table public.equipment_reservations enable row level security;
+
+drop policy if exists "equipos_leer" on public.equipment;
+create policy "equipos_leer" on public.equipment for select to authenticated using (activo);
+drop policy if exists "equipos_reservas_leer" on public.equipment_reservations;
+create policy "equipos_reservas_leer" on public.equipment_reservations for select to authenticated using (user_id = auth.uid());
+
+revoke all on public.equipment, public.equipment_reservations from anon;
+revoke insert, update, delete on public.equipment, public.equipment_reservations from authenticated;
+
+-- Franjas ocupadas de todos los equipos en un rango de fechas (sin datos de quién reservó).
+create or replace function public.equipos_ocupacion(p_desde date, p_hasta date)
+returns table (equipment_id text, fecha date, inicio text, fin text)
+language sql stable security definer set search_path = public as $$
+  select
+    r.equipment_id,
+    (r.inicio at time zone 'America/Lima')::date,
+    to_char(r.inicio at time zone 'America/Lima', 'HH24:MI'),
+    to_char(r.fin    at time zone 'America/Lima', 'HH24:MI')
+  from public.equipment_reservations r
+  where r.estado = 'confirmada'
+    and r.inicio >= (p_desde::timestamp at time zone 'America/Lima')
+    and r.inicio <  ((p_hasta + 1)::timestamp at time zone 'America/Lima')
+$$;
+
+-- Reservas de equipos del alumno, con fecha y hora de Lima.
+create or replace function public.mis_reservas_equipos()
+returns table (
+  id uuid, codigo text, equipment_id text, fecha date, inicio text, fin text,
+  estado text, creada_en timestamptz, cancelada_en timestamptz
+)
+language sql stable security definer set search_path = public as $$
+  select
+    r.id, r.codigo, r.equipment_id,
+    (r.inicio at time zone 'America/Lima')::date,
+    to_char(r.inicio at time zone 'America/Lima', 'HH24:MI'),
+    to_char(r.fin    at time zone 'America/Lima', 'HH24:MI'),
+    r.estado, r.created_at, r.cancelada_en
+  from public.equipment_reservations r
+  where r.user_id = auth.uid()
+  order by r.inicio
+$$;
+
+-- Reservar: valida todas las reglas en el servidor.
+create or replace function public.reservar_equipo(p_equipo text, p_fecha date, p_inicio time, p_fin time)
+returns public.equipment_reservations
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_eq    public.equipment%rowtype;
+  v_ini   timestamptz;
+  v_fin   timestamptz;
+  v_ahora timestamptz := now();
+  v_hoy   date := (now() at time zone 'America/Lima')::date;
+  v_res   public.equipment_reservations%rowtype;
+begin
+  if v_uid is null then
+    raise exception 'Debes iniciar sesión.' using errcode = 'P0001', hint = 'auth';
+  end if;
+
+  select * into v_eq from public.equipment where id = p_equipo and activo;
+  if not found then
+    raise exception 'Ese equipo ya no está disponible.' using errcode = 'P0001', hint = 'unavailable';
+  end if;
+
+  if exists (select 1 from public.penalties where user_id = v_uid and hasta > v_ahora) then
+    raise exception 'Tienes una penalidad activa y no puedes reservar por ahora.' using errcode = 'P0001', hint = 'penalty';
+  end if;
+
+  v_ini := (p_fecha + p_inicio) at time zone 'America/Lima';
+  v_fin := (p_fecha + p_fin)    at time zone 'America/Lima';
+
+  if not (v_fin > v_ini) then
+    raise exception 'El horario elegido no es válido.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  if extract(epoch from (v_fin - v_ini)) / 3600 > 4 then
+    raise exception 'Cada reserva dura como máximo 4 horas.' using errcode = 'P0001', hint = 'duration';
+  end if;
+  if p_fecha < v_hoy or p_fecha > v_hoy + 30 then
+    raise exception 'Solo puedes reservar hasta 30 días por adelantado.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  if extract(dow from p_fecha) in (0, 6) then
+    raise exception 'Los equipos se reservan de lunes a viernes.' using errcode = 'P0001', hint = 'closed';
+  end if;
+  if p_inicio < time '08:00' or p_fin > time '20:00' then
+    raise exception 'El horario está fuera de la atención (08:00 a 20:00).' using errcode = 'P0001', hint = 'closed';
+  end if;
+  if v_ini <= v_ahora then
+    raise exception 'Ese horario ya pasó. Elige uno posterior.' using errcode = 'P0001', hint = 'past';
+  end if;
+
+  if exists (
+    select 1 from public.equipment_reservations r
+    where r.user_id = v_uid and r.estado = 'confirmada' and r.fin > v_ahora
+  ) then
+    raise exception 'Ya tienes una reserva de equipo activa. Cancélala o espera a que termine.'
+      using errcode = 'P0001', hint = 'active_exists';
+  end if;
+
+  begin
+    insert into public.equipment_reservations (codigo, equipment_id, user_id, inicio, fin)
+    values (
+      'EQ-' || to_char(v_hoy, 'YYYY') || '-' || lpad(nextval('public.equipment_reservation_seq')::text, 4, '0'),
+      p_equipo, v_uid, v_ini, v_fin
+    )
+    returning * into v_res;
+  exception when exclusion_violation then
+    raise exception 'Ese horario se ocupó mientras reservabas.' using errcode = 'P0001', hint = 'conflict';
+  end;
+
+  return v_res;
+end $$;
+
+-- Cancelar: devuelve true si fue sin penalidad (con más de 1 hora de anticipación).
+create or replace function public.cancelar_reserva_equipo(p_codigo text)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid  uuid := auth.uid();
+  v_res  public.equipment_reservations%rowtype;
+  v_free boolean;
+begin
+  select * into v_res from public.equipment_reservations where codigo = p_codigo and user_id = v_uid for update;
+  if not found then
+    raise exception 'No encontramos esa reserva.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  if v_res.estado <> 'confirmada' or v_res.fin <= now() then
+    raise exception 'Esa reserva ya no se puede cancelar.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+
+  v_free := (v_res.inicio - now()) >= make_interval(mins => public.cfg('freeCancelMinutes'));
+
+  update public.equipment_reservations set estado = 'cancelada', cancelada_en = now() where id = v_res.id;
+
+  if not v_free then
+    insert into public.penalties (user_id, hasta, motivo)
+    values (v_uid, now() + make_interval(days => public.cfg('penaltyDays')), 'Cancelación de equipo con menos de 1 hora de anticipación');
+  end if;
+  return v_free;
+end $$;
+
+-- Avisos en el centro de notificaciones.
+create or replace function public.trg_notif_equipo()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_nombre text;
+  v_cuando text;
+begin
+  select nombre into v_nombre from public.equipment where id = new.equipment_id;
+  v_cuando := to_char(new.inicio at time zone 'America/Lima', 'DD/MM "a las" HH24:MI');
+  if tg_op = 'INSERT' then
+    perform public.notificar(new.user_id, 'reserva', 'Equipo reservado',
+      coalesce(v_nombre, 'Equipo') || ' · ' || v_cuando || ' · ' || new.codigo,
+      '/equipos/reserva/' || new.codigo);
+  elsif tg_op = 'UPDATE' and old.estado = 'confirmada' and new.estado = 'cancelada' then
+    perform public.notificar(new.user_id, 'reserva', 'Reserva de equipo cancelada',
+      new.codigo || ' · ' || coalesce(v_nombre, 'Equipo') || ' · ' || v_cuando,
+      '/equipos/mis');
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_equipo_notif on public.equipment_reservations;
+create trigger trg_equipo_notif
+  after insert or update of estado on public.equipment_reservations
+  for each row execute function public.trg_notif_equipo();
+
+revoke execute on function public.equipos_ocupacion(date, date)              from public, anon;
+revoke execute on function public.mis_reservas_equipos()                     from public, anon;
+revoke execute on function public.reservar_equipo(text, date, time, time)    from public, anon;
+revoke execute on function public.cancelar_reserva_equipo(text)              from public, anon;
+revoke execute on function public.trg_notif_equipo()                         from public, anon, authenticated;
+grant  execute on function public.equipos_ocupacion(date, date)              to authenticated;
+grant  execute on function public.mis_reservas_equipos()                     to authenticated;
+grant  execute on function public.reservar_equipo(text, date, time, time)    to authenticated;
+grant  execute on function public.cancelar_reserva_equipo(text)              to authenticated;
