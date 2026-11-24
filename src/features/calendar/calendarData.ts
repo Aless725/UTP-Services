@@ -33,6 +33,9 @@ const clase = (
 /** Ciclo 2026-2: las clases solo existen entre el inicio y el fin del ciclo (viernes 18 de diciembre). */
 const CICLO = { inicio: '2026-08-17', fin: '2026-12-18' }
 
+/** Último día del ciclo: la agenda deja de cargar días después de esta fecha. */
+export const FIN_CICLO = CICLO.fin
+
 /** Horario semanal de demostración (clave = Date.getDay(); 0 = domingo). */
 const WEEKLY: Record<number, CalEvent[]> = {
   1: [
