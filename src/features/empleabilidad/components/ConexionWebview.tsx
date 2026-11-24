@@ -78,7 +78,17 @@ export default function ConexionWebview({
           <div className="flex items-center justify-center gap-3" aria-hidden="true">
             <span className="flex h-12 w-12 items-center justify-center">{red.logo}</span>
             <Icon name="sync_alt" size={20} className="text-ink-faint" />
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-extrabold text-white">UTP+</span>
+            {/* Logo UTP+ de la app (public/icons), sobre fondo blanco y recortado para que llene el cuadro. */}
+            <span className="relative flex h-12 w-[6.5rem] shrink-0 overflow-hidden rounded-xl bg-white">
+              <img
+                src="/icons/icon-512.png"
+                alt=""
+                width={135}
+                height={135}
+                className="absolute max-w-none"
+                style={{ width: 135, height: 135, left: -15, top: -43 }}
+              />
+            </span>
           </div>
           <h1 className="mt-5 text-center text-lg font-bold leading-snug text-ink">UTP+ Service quiere conectarse con tu cuenta de {red.nombre}</h1>
 
