@@ -1,4 +1,4 @@
-const APP_DESTINATION = /^\/(?:inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios|empleabilidad|talleres|equipos)(?:\/[A-Za-z0-9_-]+)*\/?$/
+const APP_DESTINATION = /^\/(?:inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios|empleabilidad|talleres|equipos|biblioteca)(?:\/[A-Za-z0-9_-]+)*\/?$/
 const UNSAFE_CHARACTER = /[\\\u0000-\u001f\u007f]/
 
 /** Conserva destinos de la app, nunca URLs externas, rutas de acceso ni segmentos codificados. */

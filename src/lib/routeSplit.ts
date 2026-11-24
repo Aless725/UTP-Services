@@ -9,7 +9,7 @@ export interface MasterLocation {
 }
 
 const APP_PATH =
-  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios|empleabilidad|talleres|equipos)(\/|$)/
+  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios|empleabilidad|talleres|equipos|biblioteca)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
@@ -20,6 +20,7 @@ const DETAIL_PATH = [
   /^\/tramites\/[^/]+/,
   /^\/pagos\/[^/]+/,
   /^\/equipos\/[^/]+/,
+  /^\/biblioteca\/[^/]+/,
   /^\/beneficios\/[^/]+/,
   /^\/empleabilidad\/(ofertas|programas|postulaciones)\/[^/]+/,
   /^\/talleres\/(inscripcion|culturales|deportivos)\/[^/]+/,
@@ -60,6 +61,7 @@ export function masterFor(detail: string, last: MasterLocation | null, search = 
   if (/^\/tramites/.test(detail)) return { pathname: '/tramites', search: '' }
   if (/^\/pagos/.test(detail)) return { pathname: '/pagos', search: '' }
   if (/^\/equipos/.test(detail)) return { pathname: '/equipos', search: '' }
+  if (/^\/biblioteca/.test(detail)) return { pathname: '/biblioteca', search: '' }
   if (/^\/beneficios/.test(detail)) return { pathname: '/beneficios', search: '' }
   // Opciones de "Más de UTP+": se abren junto a la pantalla desde donde se invocó el menú.
   if (last && !isDetailPath(last.pathname) && isAppPath(last.pathname)) return last

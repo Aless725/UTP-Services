@@ -18,6 +18,7 @@
 --   12. Detalle de programas y postulaciones a programas
 --   13. Talleres, grupos, horarios e inscripciones
 --   14. Reserva de equipos (laptops, computadoras y tablets)
+--   15. Biblioteca digital (libros gratuitos en PDF y EPUB)
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1940,3 +1941,34 @@ grant  execute on function public.equipos_ocupacion(date, date)              to 
 grant  execute on function public.mis_reservas_equipos()                     to authenticated;
 grant  execute on function public.reservar_equipo(text, date, time, time)    to authenticated;
 grant  execute on function public.cancelar_reserva_equipo(text)              to authenticated;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 0015 · Biblioteca digital (libros gratuitos en PDF y EPUB)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Catálogo de libros de acceso libre. Cada libro apunta a la fuente oficial (PDF, EPUB o lectura en línea);
+-- la app no guarda archivos. `cursos` son los ids de los cursos para los que se recomienda.
+create table if not exists public.library_books (
+  id          text primary key,
+  titulo      text not null,
+  autor       text not null,
+  anio        int,
+  idioma      text not null check (idioma in ('es', 'en')),
+  tema        text not null check (tema in ('web', 'programacion', 'datos', 'ingenieria', 'gestion', 'diseno', 'sistemas', 'ia', 'otros')),
+  descripcion text not null,
+  cursos      text[] not null default '{}',
+  -- [{ "tipo": "pdf" | "epub" | "web", "url": "https://…" }]
+  enlaces     jsonb not null default '[]',
+  licencia    text,
+  activo      boolean not null default true,
+  orden       int not null default 0
+);
+
+alter table public.library_books enable row level security;
+
+drop policy if exists "libros_leer" on public.library_books;
+create policy "libros_leer" on public.library_books for select to authenticated using (activo);
+
+revoke all on public.library_books from anon;
+revoke insert, update, delete on public.library_books from authenticated;

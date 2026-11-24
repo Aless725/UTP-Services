@@ -339,6 +339,9 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
     async myApplications() {
       return must(await sb.from('job_applications').select('oferta_id, codigo, estado').not('oferta_id', 'is', null))
     },
+    async books() {
+      return must(await sb.from('library_books').select('id, titulo, autor, idioma, tema, descripcion, cursos, enlaces').order('orden'))
+    },
     async notifications() {
       return must(await sb.from('notifications').select('titulo, cuerpo, leida, created_at').order('created_at', { ascending: false }).limit(10))
     },

@@ -75,6 +75,19 @@ export interface Db {
   jobOffers(): Promise<JobOfferRow[]>
   myApplications(): Promise<JobApplicationRow[]>
   notifications(): Promise<NotificationRow[]>
+  /** Libros gratuitos de la biblioteca digital. */
+  books(): Promise<BookRow[]>
+}
+
+export interface BookRow {
+  id: string
+  titulo: string
+  autor: string
+  idioma: 'es' | 'en'
+  tema: string
+  descripcion: string
+  cursos: string[]
+  enlaces: { tipo: 'pdf' | 'epub' | 'web'; url: string }[]
 }
 
 export interface EquipmentRow {
@@ -516,6 +529,20 @@ export const TOOL_DECLARATIONS = [
         datos_json: str('Objeto JSON con los campos del trámite, por ejemplo {"motivo":"Trabajo","curso":"ihm"}.'),
       },
       required: ['tramite_id'],
+    },
+  },
+  {
+    name: 'buscar_libros',
+    description:
+      'Busca libros gratuitos de la Biblioteca (PDF, EPUB o lectura en línea, en español e inglés). Sin filtros devuelve primero los recomendados para los cursos del alumno.',
+    parameters: {
+      type: 'object',
+      properties: {
+        consulta: str('Título, autor o tema (opcional).'),
+        idioma: str('Idioma (opcional).', { enum: ['es', 'en'] }),
+        formato: str('Formato disponible (opcional).', { enum: ['pdf', 'epub'] }),
+        curso: str('Nombre o sigla de un curso del alumno para ver sus libros recomendados (opcional).'),
+      },
     },
   },
   {
@@ -1244,6 +1271,37 @@ async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): 
       return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
     }
 
+    case 'buscar_libros': {
+      const [libros, { courses }] = await Promise.all([db.books(), db.courses()])
+      const mios = new Set(courses.map((c) => c.id))
+      let ids: Set<string> | null = null
+      if (typeof args.curso === 'string' && args.curso.trim()) {
+        const found = pickCourses(courses, args.curso)
+        if (!found.length) return { error: `No encontré ese curso. Sus cursos son: ${courses.map((c) => c.nombre).join(', ')}.` }
+        ids = new Set(found.map((c) => c.id))
+      }
+      const q = typeof args.consulta === 'string' ? norm(args.consulta).trim() : ''
+      const nombreCurso = (id: string) => courses.find((c) => c.id === id)?.nombre
+      const list = libros
+        .filter((l) => !ids || l.cursos.some((c) => ids!.has(c)))
+        .filter((l) => !args.idioma || l.idioma === args.idioma)
+        .filter((l) => !args.formato || l.enlaces.some((e) => e.tipo === args.formato))
+        .filter((l) => !q || norm(`${l.titulo} ${l.autor} ${l.descripcion} ${l.tema}`).includes(q))
+        .map((l) => ({ l, rec: l.cursos.filter((c) => mios.has(c)) }))
+        .sort((a, b) => b.rec.length - a.rec.length)
+        .slice(0, 6)
+        .map(({ l, rec }) => ({
+          titulo: l.titulo,
+          autor: l.autor,
+          idioma: l.idioma === 'es' ? 'español' : 'inglés',
+          formatos: l.enlaces.map((e) => (e.tipo === 'web' ? 'lectura en línea' : e.tipo.toUpperCase())),
+          recomendado_para: rec.map((c) => nombreCurso(c)).filter(Boolean),
+        }))
+      return list.length
+        ? { libros: list, nota: 'Para descargarlos, el alumno abre Biblioteca en la app y toca el libro.' }
+        : { libros: [], nota: 'No encontré libros con esas condiciones.' }
+    }
+
     case 'mis_notificaciones': {
       const rows = await db.notifications()
       return rows.length
@@ -1387,7 +1445,8 @@ export function systemPrompt(me: { codigo: string; nombre: string; sede: string 
     '- Habla como una persona: natural, cálida y directa, con frases cortas y conectores ("vale", "mira", "listo"). Evita sonar a lista o a formulario. Di las fechas como se dicen ("el jueves 27", "mañana"), no como códigos.',
     '- Reserva de equipos (laptops, computadoras y tablets como iPad o Galaxy Tab): si piden "una tablet" o "una laptop" sin más datos, llama a buscar_equipos con el tipo, ofrece en una frase 2 o 3 opciones con su próxima disponibilidad y pregunta cuál, qué día y a qué hora. Cuando elijan, llama a buscar_equipos con esa fecha para ver las horas libres y propón con proponer_reserva_equipo (2 horas si no dicen otra duración; máximo 4). Si dan todo de una vez, busca y propón directo. Solo se puede tener una reserva de equipo activa; si ya tiene una, ofrece cancelarla con proponer_cancelacion_equipo.',
     '- Talleres: busca con buscar_talleres, resume las opciones y propón la inscripción con proponer_inscripcion_taller; al confirmar el alumno acepta los términos del taller. Empleabilidad: busca con buscar_ofertas y propón con proponer_postulacion. Trámites: usa buscar_tramites, luego info_tramite para ver qué datos pide, pregunta al alumno lo que falte (de a una cosa) y propón con proponer_solicitud_tramite; las casillas de aceptación las debe aceptar el alumno de forma expresa.',
-    '- Si piden algo fuera de reservas de espacios y equipos, grupos, actividades del campus, cursos, trámites, talleres, empleabilidad, beneficios, notificaciones o ayuda de la app (por ejemplo pagos o el calendario, que aún no consultas), di amablemente qué sí puedes hacer.',
+    '- Biblioteca: con buscar_libros recomienda libros gratuitos (los de los cursos del alumno primero) y di que puede descargarlos en PDF o EPUB desde Biblioteca; tú no descargas nada.',
+    '- Si piden algo fuera de reservas de espacios y equipos, grupos, actividades del campus, cursos, libros de la biblioteca, trámites, talleres, empleabilidad, beneficios, notificaciones o ayuda de la app (por ejemplo pagos o el calendario, que aún no consultas), di amablemente qué sí puedes hacer.',
     '',
     'Reglas de la universidad:',
     `- Salas grupales: mínimo ${cfg.minMembers ?? 3} personas (incluido el alumno), cerradas los sábados. PCs y cubículos: 1 persona.`,
