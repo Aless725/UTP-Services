@@ -29,3 +29,6 @@ CLAUDE.md
 .claude-flow/
 .mcp.json
 *.claude.*
+
+# Enunciado del curso (se queda solo en local)
+docs/requerimientos.md

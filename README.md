@@ -164,7 +164,7 @@ src/
 │  └─ more/        # menú Más de UTP+
 ├─ hooks/  lib/  types/
 public/             # manifiesto e íconos de la app instalable
-docs/               # guía del backend, enunciado del curso y plantillas de usabilidad
+docs/               # guía del backend
 supabase/           # schema.sql (esquema), seed.sql (datos de demostración) y la función `agent` (asistente)
 ```
 
@@ -186,10 +186,8 @@ El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subir
 2. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
 3. Guardar los cupones y referidos en Supabase.
 4. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
-5. Guion de demo y resultados de las pruebas de usabilidad (la guía ya está en `docs/usabilidad/`).
+5. Guion de demo y pruebas de usabilidad con alumnos.
 
 ## Documentación
 
 - Backend (modelo de datos, seguridad y funciones): [`docs/backend.md`](docs/backend.md)
-- Enunciado del curso: [`docs/requerimientos.md`](docs/requerimientos.md)
-- Evaluación de usabilidad (guía de evaluación heurística, pruebas con usuarios, SUS, accesibilidad y pruebas de funcionamiento): [`docs/usabilidad/`](docs/usabilidad/README.md)
