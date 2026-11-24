@@ -29,6 +29,11 @@ export type Proposal =
   | { kind: 'unirse_grupo'; grupoId: string; titulo: string; resumen: string }
   | { kind: 'cupon'; beneficioId: string; empresa: string; resumen: string }
   | { kind: 'cancelar_tramite'; codigo: string; resumen: string }
+  | { kind: 'reserva_equipo'; equipoId: string; nombre: string; fecha: string; inicio: string; fin: string; resumen: string }
+  | { kind: 'cancelar_equipo'; codigo: string; penalizacion: boolean; resumen: string }
+  | { kind: 'inscripcion_taller'; grupoId: string; titulo: string; version: string; resumen: string }
+  | { kind: 'postulacion'; ofertaId: string; titulo: string; nombre: string; correo: string; resumen: string }
+  | { kind: 'solicitud_tramite'; tipoId: string; titulo: string; detalle: Record<string, string>; resumen: string }
 
 export interface AssistantReply {
   reply: string
@@ -105,7 +110,18 @@ export interface Outcome {
  * Ejecuta la propuesta confirmada con las mismas funciones de siempre: las reglas se validan en el servidor.
  * Lanza un Error con un mensaje listo para mostrar si algo falla.
  */
-export async function executeProposal(p: Proposal, attend: (id: string, asistir: boolean) => Promise<void>): Promise<Outcome> {
+export async function executeProposal(
+  p: Proposal,
+  attend: (id: string, asistir: boolean) => Promise<void>,
+  /** Refresca las listas guardadas (reservas, inscripciones, notificaciones…) después de ejecutar. */
+  refresh: () => void = () => undefined,
+): Promise<Outcome> {
+  /** Llama a una función del servidor; los errores de regla (P0001) traen un mensaje listo para mostrar. */
+  const rpc = async <T,>(name: string, args: Record<string, unknown>): Promise<T> => {
+    const { data, error } = await supabase.rpc(name, args)
+    if (error) throw new Error(error.code === 'P0001' ? error.message : 'No pude completar la acción. Inténtalo de nuevo.')
+    return data as T
+  }
   try {
     switch (p.kind) {
       case 'reserva': {
@@ -144,6 +160,56 @@ export async function executeProposal(p: Proposal, attend: (id: string, asistir:
         return {
           text: nuevo ? `Listo, generé tu cupón de ${b.empresa}: ${cupon.codigo}.` : `Ya tenías tu cupón de ${b.empresa}: ${cupon.codigo}.`,
           link: { to: `/beneficios/${b.id}/cupon`, label: 'Ver cupón y QR' },
+        }
+      }
+      case 'reserva_equipo': {
+        const r = await rpc<{ codigo: string }>('reservar_equipo', {
+          p_equipo: p.equipoId,
+          p_fecha: p.fecha,
+          p_inicio: p.inicio,
+          p_fin: p.fin,
+        })
+        refresh()
+        return {
+          text: `Listo, reservé ${p.nombre}. Tu código es ${r.codigo}.`,
+          link: { to: `/equipos/reserva/${r.codigo}`, label: 'Ver reserva y QR' },
+        }
+      }
+      case 'cancelar_equipo': {
+        const libre = await rpc<boolean>('cancelar_reserva_equipo', { p_codigo: p.codigo })
+        refresh()
+        return {
+          text: libre
+            ? `Cancelé la reserva ${p.codigo} sin penalidad.`
+            : `Cancelé la reserva ${p.codigo}. Como faltaba poco, tendrás una penalidad de 7 días sin reservar.`,
+          link: { to: '/equipos/mis', label: 'Ver mis reservas de equipos' },
+        }
+      }
+      case 'inscripcion_taller': {
+        const r = await rpc<{ id: string }>('inscribir_taller', {
+          p_grupo_id: p.grupoId,
+          p_version_terminos: p.version,
+          p_acepta_terminos: true,
+          p_acepta_declaracion: true,
+        })
+        refresh()
+        return { text: `Listo, te inscribí en «${p.titulo}».`, link: { to: `/talleres/inscripcion/${r.id}`, label: 'Ver inscripción' } }
+      }
+      case 'postulacion': {
+        const r = await rpc<{ id: string }>('postular_oferta', {
+          p_oferta_id: p.ofertaId,
+          p_nombre_contacto: p.nombre,
+          p_correo_contacto: p.correo,
+        })
+        refresh()
+        return { text: `Listo, postulé a «${p.titulo}».`, link: { to: `/empleabilidad/postulaciones/${r.id}`, label: 'Ver postulación' } }
+      }
+      case 'solicitud_tramite': {
+        const r = await rpc<{ codigo: string }>('solicitar_tramite', { p_tipo: p.tipoId, p_detalle: p.detalle })
+        refresh()
+        return {
+          text: `Listo, envié tu solicitud de «${p.titulo}». Su código es ${r.codigo}.`,
+          link: { to: `/tramites/solicitud/${r.codigo}`, label: 'Ver solicitud' },
         }
       }
       case 'cancelar_tramite': {
