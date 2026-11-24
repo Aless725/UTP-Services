@@ -62,7 +62,7 @@ export default function CatalogoTalleresPage() {
     <div className="flex flex-1 flex-col pb-4">
       <FlowHeader title={CATEGORIAS_TALLER[tipo].label} back="/talleres" backLabel="Volver a talleres" />
       <div className="space-y-4 px-5 pt-4">
-        <label className="flex min-h-12 items-center gap-2 rounded-card bg-card px-3 shadow-card focus-within:ring-2 focus-within:ring-primary">
+        <label className="flex min-h-11 items-center gap-2 rounded-card bg-card px-3 shadow-card focus-within:ring-2 focus-within:ring-primary">
           <Icon name="search" size={20} className="shrink-0 text-ink-muted" />
           <input
             type="search"
@@ -71,7 +71,7 @@ export default function CatalogoTalleresPage() {
             onChange={(e) => cambiar('q', e.target.value)}
             aria-label="Buscar talleres"
             placeholder="Taller, docente o sede…"
-            className="h-12 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted"
+            className="h-11 min-w-0 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-ink-muted"
           />
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -83,7 +83,7 @@ export default function CatalogoTalleresPage() {
               id={`${id}-sede`}
               value={sede}
               onChange={(e) => cambiar('sede', e.target.value)}
-              className="min-h-11 w-full rounded-lg bg-card px-2 text-sm text-ink focus:ring-2 focus:ring-primary"
+              className="min-h-11 w-full rounded-lg bg-card px-2 text-xs text-ink focus:ring-2 focus:ring-primary"
             >
               <option value="">Todas las sedes</option>
               {sede && !sedes.includes(sede) && <option value={sede}>{sede}</option>}
@@ -100,7 +100,7 @@ export default function CatalogoTalleresPage() {
               id={`${id}-modalidad`}
               value={modalidad}
               onChange={(e) => cambiar('modalidad', e.target.value)}
-              className="min-h-11 w-full rounded-lg bg-card px-2 text-sm text-ink focus:ring-2 focus:ring-primary"
+              className="min-h-11 w-full rounded-lg bg-card px-2 text-xs text-ink focus:ring-2 focus:ring-primary"
             >
               <option value="">Todas</option>
               <option value="presencial">Presencial</option>
@@ -120,7 +120,7 @@ export default function CatalogoTalleresPage() {
               id={`${id}-periodo`}
               value={periodo}
               onChange={(e) => cambiar('periodo', e.target.value)}
-              className="min-h-11 w-full rounded-lg bg-card px-2 text-sm text-ink focus:ring-2 focus:ring-primary"
+              className="min-h-11 w-full rounded-lg bg-card px-2 text-xs text-ink focus:ring-2 focus:ring-primary"
             >
               <option value="">Todos los períodos</option>
               {periodos.map(([value, label]) => (

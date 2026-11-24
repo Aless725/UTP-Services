@@ -1,6 +1,56 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import FlowHeader from '@/components/layout/FlowHeader'
 import Icon from '@/components/ui/Icon'
+import Presence from '@/components/ui/Presence'
+import { useToast } from '@/components/ui/Toast'
+import { useAuth } from '@/features/auth/AuthContext'
+import { displayName, useProfile } from '@/features/profile/profileData'
+import ConexionWebview, { type RedProfesional } from './components/ConexionWebview'
+
+/** Logos oficiales (imágenes en /public/logos); se recorta el margen blanco para que llenen el cuadro. */
+function Logo({ src, zoom, size }: { src: string; zoom: string; size: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex shrink-0 overflow-hidden bg-white ${size > 30 ? 'rounded-xl' : 'rounded-md'}`}
+      style={{ width: size, height: size }}
+    >
+      <img src={src} alt="" width={size} height={size} className={`h-full w-full object-cover ${zoom}`} />
+    </span>
+  )
+}
+
+const REDES: RedProfesional[] = [
+  {
+    id: 'linkedin',
+    nombre: 'LinkedIn',
+    dominio: 'linkedin.com/oauth',
+    logo: <Logo src="/logos/linkedin.jpg" zoom="scale-[1.55]" size={48} />,
+    permisos: ['Ver tu nombre y tu foto de perfil', 'Ver tu titular y tu experiencia', 'Usar tu perfil para postular más rápido'],
+  },
+  {
+    id: 'bumeran',
+    nombre: 'Bumeran',
+    dominio: 'bumeran.com.pe/autorizar',
+    logo: <Logo src="/logos/bumeran.jpg" zoom="scale-[1.7]" size={48} />,
+    permisos: ['Ver tu nombre y tus datos de contacto', 'Ver tu CV y tus postulaciones', 'Usar tu CV para postular más rápido'],
+  },
+]
+const LOGO_BOTON: Record<string, JSX.Element> = {
+  linkedin: <Logo src="/logos/linkedin.jpg" zoom="scale-[1.55]" size={24} />,
+  bumeran: <Logo src="/logos/bumeran.jpg" zoom="scale-[1.7]" size={24} />,
+}
+const KEY = 'utp.empleabilidad.conexiones'
+
+function leer(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY) ?? '[]')
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
 
 const SECCIONES = [
   {
@@ -18,6 +68,25 @@ const SECCIONES = [
 ]
 
 export default function EmpleabilidadPage() {
+  const { show } = useToast()
+  const [conectadas, setConectadas] = useState<string[]>(leer)
+  // Conexión de demostración: solo se recuerda en este dispositivo, no se envían datos a esas redes.
+  const [abierta, setAbierta] = useState<RedProfesional | null>(null)
+  const { session } = useAuth()
+  const { data: perfil } = useProfile(session?.codigo ?? '')
+  const alumno = displayName(perfil.nombreCompleto)
+  const alternar = (id: string, nombre: string) => {
+    const activa = conectadas.includes(id)
+    const next = activa ? conectadas.filter((c) => c !== id) : [...conectadas, id]
+    setConectadas(next)
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next))
+    } catch {
+      /* sin almacenamiento: queda solo en pantalla */
+    }
+    show(activa ? `${nombre} desconectado` : `${nombre} conectado`, activa ? 'link_off' : 'check_circle')
+  }
+
   return (
     <div className="flex flex-1 flex-col pb-4">
       <FlowHeader
@@ -27,6 +96,35 @@ export default function EmpleabilidadPage() {
         subtitle="Tu siguiente oportunidad empieza aquí."
       />
       <div className="stagger space-y-3 px-5 pt-5">
+        <section aria-labelledby="conexiones" className="rounded-card bg-card p-4 shadow-card">
+          <h2 id="conexiones" className="text-sm font-bold text-ink">
+            Conecta tu perfil profesional
+          </h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
+            Vincula tus cuentas para postular más rápido.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {REDES.map((r) => {
+              const activa = conectadas.includes(r.id)
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  aria-pressed={activa}
+                  onClick={() => (conectadas.includes(r.id) ? alternar(r.id, r.nombre) : setAbierta(r))}
+                  aria-label={activa ? `${r.nombre} conectado. Tocar para desconectar` : `Conectar ${r.nombre}`}
+                  className={`pressable flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${
+                    activa ? 'bg-success-soft text-success' : 'bg-surface text-ink'
+                  }`}
+                >
+                  {LOGO_BOTON[r.id]}
+                  {r.nombre}
+                  {activa && <Icon name="check_circle" size={16} filled />}
+                </button>
+              )
+            })}
+          </div>
+        </section>
         {SECCIONES.map((s) => (
           <Link
             key={s.to}
@@ -61,6 +159,19 @@ export default function EmpleabilidadPage() {
           empresas reales.
         </p>
       </div>
+      <Presence show={abierta !== null}>
+        {abierta && (
+          <ConexionWebview
+            red={abierta}
+            alumno={alumno}
+            onCerrar={() => setAbierta(null)}
+            onPermitir={() => {
+              alternar(abierta.id, abierta.nombre)
+              setAbierta(null)
+            }}
+          />
+        )}
+      </Presence>
     </div>
   )
 }
