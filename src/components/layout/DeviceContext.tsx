@@ -67,7 +67,11 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const realDual = useMedia('(horizontal-viewport-segments: 2)')
   const realStacked = useMedia('(vertical-viewport-segments: 2)')
   // Escritorio = pantalla grande con mouse. Un iPad (táctil) con 1180 o 1376 px de ancho NO es escritorio: usa la app a pantalla completa.
-  const isDesktop = useMedia(`(min-width: ${DESKTOP_MIN}px) and (hover: hover) and (pointer: fine)`)
+  const mouse = useMedia('(hover: hover) and (pointer: fine)')
+  // Un dispositivo con pantalla táctil (iPad, celular, o su emulación en las herramientas del navegador) nunca usa la vista previa en marco.
+  const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
+  const hasMouse = mouse && !touch
+  const isDesktop = useMedia(`(min-width: ${DESKTOP_MIN}px)`) && hasMouse
   const isCompact = useMedia(`(max-width: ${COMPACT_MAX - 0.02}px)`)
   const landscape = useMedia(LANDSCAPE_QUERY)
   const landscapeTwoPanes = useMedia(`(min-width: ${LANDSCAPE_TWO_PANES_MIN}px)`)
@@ -86,9 +90,11 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     if (realDual) return { pref, setPref, mode: 'dual', framed: false, realDual, landscape: false, stacked: false }
     // Celular en horizontal: pantalla completa (sin marco), con navegación lateral; dos paneles si cabe.
     if (landscape) return { pref, setPref, mode: landscapeTwoPanes ? 'wide' : 'phone', framed: false, realDual, landscape: true, stacked: false }
-    if (pref === 'phone') return { pref, setPref, mode: 'phone', framed: !isCompact, realDual, landscape: false, stacked: false }
-    if (pref === 'duo') return { pref, setPref, mode: 'dual', framed: !isCompact, realDual, landscape: false, stacked: false }
-    if (pref === 'tablet') return { pref, setPref, mode: 'wide', framed: !isCompact, realDual, landscape: false, stacked: false }
+    // La vista previa elegida en escritorio no se aplica a un dispositivo táctil (aunque quede guardada en el navegador).
+    const p = hasMouse ? pref : 'auto'
+    if (p === 'phone') return { pref, setPref, mode: 'phone', framed: !isCompact, realDual, landscape: false, stacked: false }
+    if (p === 'duo') return { pref, setPref, mode: 'dual', framed: !isCompact, realDual, landscape: false, stacked: false }
+    if (p === 'tablet') return { pref, setPref, mode: 'wide', framed: !isCompact, realDual, landscape: false, stacked: false }
     // Automático: celular a pantalla completa, tableta/plegable abierto con dos paneles
     // y, en escritorio, una vista previa de celular dentro de un marco.
     if (isCompact) return { pref, setPref, mode: 'phone', framed: false, realDual, landscape: false, stacked: false }
@@ -96,7 +102,7 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     return { pref, setPref, mode: 'phone', framed: true, realDual, landscape: false, stacked: false }
     // setPref es estable en la práctica (solo cambia estado local)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pref, realDual, realStacked, isDesktop, isCompact, landscape, landscapeTwoPanes])
+  }, [pref, hasMouse, realDual, realStacked, isDesktop, isCompact, landscape, landscapeTwoPanes])
 
   useEffect(() => {
     document.documentElement.dataset.layout = value.mode
