@@ -198,13 +198,14 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
   }
   return {
     async me() {
-      const p = must(await sb.from('profiles').select('codigo, nombre, campuses(nombre)').single()) as {
+      const p = must(await sb.from('profiles').select('codigo, nombre, nombre_completo, campuses(nombre)').single()) as {
         codigo: string
         nombre: string
+        nombre_completo: string
         campuses: { nombre: string } | { nombre: string }[] | null
       }
       const campus = Array.isArray(p.campuses) ? p.campuses[0] : p.campuses
-      return { codigo: p.codigo, nombre: p.nombre, sede: campus?.nombre ?? 'Lima Centro' }
+      return { codigo: p.codigo, nombre: p.nombre, nombre_completo: p.nombre_completo, sede: campus?.nombre ?? 'Lima Centro' }
     },
     async settings() {
       const rows = must(await sb.from('settings').select('clave, valor')) as { clave: string; valor: unknown }[]
@@ -290,7 +291,7 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
       }) as never
     },
     async procedureTypes() {
-      return must(await sb.from('procedure_types').select('id, categoria, titulo, descripcion, costo, plazo, modalidad').order('orden'))
+      return must(await sb.from('procedure_types').select('id, categoria, titulo, descripcion, costo, plazo, modalidad, campos').order('orden'))
     },
     async courseInfo(courseId) {
       const [d, a] = await Promise.all([
@@ -304,6 +305,42 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
         temas: det?.temas ?? [],
         anuncios: ann ?? [],
       }
+    },
+    async equipment() {
+      const rows = must(
+        await sb.from('equipment').select('id, tipo, nombre, ubicacion, campuses(nombre)').order('orden'),
+      ) as unknown as (Record<string, unknown> & { campuses: { nombre: string } | { nombre: string }[] | null })[]
+      return rows.map((r) => {
+        const c = Array.isArray(r.campuses) ? r.campuses[0] : r.campuses
+        return { id: r.id, tipo: r.tipo, nombre: r.nombre, ubicacion: r.ubicacion, sede: c?.nombre ?? '' }
+      }) as never
+    },
+    async equipmentBusy(desde, hasta) {
+      return must(await sb.rpc('equipos_ocupacion', { p_desde: desde, p_hasta: hasta }))
+    },
+    async myEquipmentReservations() {
+      return must(await sb.rpc('mis_reservas_equipos'))
+    },
+    async workshops() {
+      return (must(await sb.rpc('listar_talleres')) ?? []) as never
+    },
+    async myWorkshopEnrollments() {
+      return must(await sb.from('workshop_enrollments').select('codigo, estado, grupo_id, snapshot'))
+    },
+    async jobOffers() {
+      return must(
+        await sb
+          .from('job_offers')
+          .select('id, empresa, puesto, tipo, ciudad, area, experiencia, cierra_en')
+          .order('publicado_en', { ascending: false })
+          .limit(40),
+      )
+    },
+    async myApplications() {
+      return must(await sb.from('job_applications').select('oferta_id, codigo, estado').not('oferta_id', 'is', null))
+    },
+    async notifications() {
+      return must(await sb.from('notifications').select('titulo, cuerpo, leida, created_at').order('created_at', { ascending: false }).limit(10))
     },
     async groups() {
       const rows = must(

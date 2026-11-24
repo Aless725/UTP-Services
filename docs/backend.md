@@ -175,7 +175,9 @@ Los errores de regla se devuelven con `errcode = 'P0001'` y un `hint` (`penalty`
 
 ## Asistente UTP+ (función `agent`)
 
-El asistente de **Soporte** usa Gemini desde una función de Supabase (`supabase/functions/agent/`). El modelo solo **lee** datos y **propone** acciones: la app muestra una tarjeta con *Confirmar / Cambiar* y, al confirmar, llama a las mismas funciones validadas de siempre (`crear_reserva`, `cancelar_reserva`, `unirse_grupo`, `asistir_anuncio`). El modelo nunca escribe en la base.
+El asistente de **Soporte** usa Gemini desde una función de Supabase (`supabase/functions/agent/`). El modelo solo **lee** datos y **propone** acciones: la app muestra una tarjeta con *Confirmar / Cambiar* y, al confirmar, llama a las mismas funciones validadas de siempre (`crear_reserva`, `cancelar_reserva`, `unirse_grupo`, `asistir_anuncio`, `reservar_equipo`, `cancelar_reserva_equipo`, `inscribir_taller`, `postular_oferta`, `solicitar_tramite`, `cancelar_tramite`). El modelo nunca escribe en la base.
+
+**Qué puede hacer** (por texto o por voz): consultar espacios, equipos, cursos, notas, tareas, evaluaciones, talleres, ofertas, trámites, beneficios y notificaciones; y **proponer** reservar o cancelar un espacio o un equipo, unirse a un grupo, confirmar asistencia, inscribirse en un taller, postular a una oferta, solicitar o cancelar un trámite y generar un cupón. Una conversación típica: *«reserva una tablet»* → el asistente busca los equipos y pregunta cuál, qué día y a qué hora → al responder busca los horarios libres y deja la propuesta lista → la persona confirma con el botón. Las reglas (horario, cupos, duplicados, penalidades) las valida el servidor al confirmar; el asistente además las revisa antes para sugerir alternativas.
 
 **Dónde va la llave de Gemini:** como *secreto* de la función, nunca en `.env` ni en el repositorio.
 

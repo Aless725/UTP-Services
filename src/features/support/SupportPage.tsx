@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { DockContext } from '@/components/layout/DockContext'
 import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
@@ -63,6 +64,7 @@ function load(): Msg[] {
 export default function SupportPage() {
   const { session } = useAuth()
   const attend = useAttendance()
+  const qc = useQueryClient()
   const dock = useContext(DockContext)
   const [msgs, setMsgs] = useState<Msg[]>(load)
   const [text, setText] = useState('')
@@ -229,7 +231,7 @@ export default function SupportPage() {
     if (!m.proposal) return
     patch(m.id, { pstate: 'running' })
     try {
-      const out = await executeProposal(m.proposal, attend)
+      const out = await executeProposal(m.proposal, attend, () => void qc.invalidateQueries())
       patch(m.id, { pstate: 'done' })
       setMsgs((all) => [...all, { id: uid(), role: 'assistant', text: out.text, link: out.link }])
       if (speakOn && msgs.at(-1)?.id === m.id && msgs.some((x) => x.voice)) speak(out.text)

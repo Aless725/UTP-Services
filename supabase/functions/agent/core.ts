@@ -30,6 +30,11 @@ export type Proposal =
   | { kind: 'unirse_grupo'; grupoId: string; titulo: string; resumen: string }
   | { kind: 'cupon'; beneficioId: string; empresa: string; resumen: string }
   | { kind: 'cancelar_tramite'; codigo: string; resumen: string }
+  | { kind: 'reserva_equipo'; equipoId: string; nombre: string; fecha: string; inicio: string; fin: string; resumen: string }
+  | { kind: 'cancelar_equipo'; codigo: string; penalizacion: boolean; resumen: string }
+  | { kind: 'inscripcion_taller'; grupoId: string; titulo: string; version: string; resumen: string }
+  | { kind: 'postulacion'; ofertaId: string; titulo: string; nombre: string; correo: string; resumen: string }
+  | { kind: 'solicitud_tramite'; tipoId: string; titulo: string; detalle: Record<string, string>; resumen: string }
 
 export interface AgentResult {
   reply: string
@@ -39,7 +44,7 @@ export interface AgentResult {
 
 /** Acceso de solo lectura a los datos, con la sesión del alumno. */
 export interface Db {
-  me(): Promise<{ codigo: string; nombre: string; sede: string }>
+  me(): Promise<{ codigo: string; nombre: string; sede: string; nombre_completo?: string }>
   settings(): Promise<Record<string, number>>
   spaces(): Promise<SpaceRow[]>
   students(): Promise<{ codigo: string; nombre: string }[]>
@@ -60,6 +65,95 @@ export interface Db {
   procedureTypes(): Promise<ProcedureTypeRow[]>
   /** Clases en vivo, temas y anuncios de un curso. */
   courseInfo(courseId: string): Promise<CourseInfoRow>
+  /** Equipos reservables (laptops, computadoras y tablets). */
+  equipment(): Promise<EquipmentRow[]>
+  /** Franjas ocupadas de los equipos en un rango de fechas (sin datos de quién reservó). */
+  equipmentBusy(desde: string, hasta: string): Promise<EquipmentBusyRow[]>
+  myEquipmentReservations(): Promise<EquipmentReservationRow[]>
+  workshops(): Promise<WorkshopRow[]>
+  myWorkshopEnrollments(): Promise<WorkshopEnrollmentRow[]>
+  jobOffers(): Promise<JobOfferRow[]>
+  myApplications(): Promise<JobApplicationRow[]>
+  notifications(): Promise<NotificationRow[]>
+}
+
+export interface EquipmentRow {
+  id: string
+  tipo: 'laptop' | 'computadora' | 'tablet'
+  nombre: string
+  ubicacion: string
+  sede: string
+}
+export interface EquipmentBusyRow {
+  equipment_id: string
+  fecha: string
+  inicio: string
+  fin: string
+}
+export interface EquipmentReservationRow {
+  codigo: string
+  equipment_id: string
+  fecha: string
+  inicio: string
+  fin: string
+  estado: 'confirmada' | 'cancelada'
+}
+export interface WorkshopGroupRow {
+  id: string
+  sede: string
+  docente: string
+  modalidad: string
+  lugar: string
+  inicio: string
+  fin: string
+  inscripcion_abre: string
+  inscripcion_cierra: string
+  estado: string
+  vacantes: number
+  horarios: { dia: number; inicio: string; fin: string }[]
+}
+export interface WorkshopRow {
+  id: string
+  categoria: 'cultural' | 'deportivo'
+  titulo: string
+  descripcion: string
+  version_terminos: string
+  declaracion: string
+  grupos: WorkshopGroupRow[]
+}
+export interface WorkshopEnrollmentRow {
+  codigo: string
+  estado: string
+  grupo_id: string
+  snapshot: { titulo?: string; sede?: string; inicio?: string; fin?: string }
+}
+export interface JobOfferRow {
+  id: string
+  empresa: string
+  puesto: string
+  tipo: 'full_time' | 'part_time' | 'practica'
+  ciudad: string
+  area: string
+  experiencia: string
+  cierra_en: string | null
+}
+export interface JobApplicationRow {
+  oferta_id: string
+  codigo: string
+  estado: string
+}
+export interface NotificationRow {
+  titulo: string
+  cuerpo: string
+  leida: boolean
+  created_at: string
+}
+export interface CampoRow {
+  key: string
+  label: string
+  type: 'select' | 'text' | 'textarea' | 'curso' | 'check'
+  options?: string[]
+  required?: boolean
 }
 
 export interface ProcedureRow {
@@ -78,6 +172,7 @@ export interface ProcedureTypeRow {
   costo: number
   plazo: string
   modalidad: string
+  campos?: CampoRow[]
 }
 export interface CourseInfoRow {
   sesiones: { dow: number; inicio: string; fin: string; tipo: string }[]
@@ -322,6 +417,113 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'object', properties: { codigo: str('Código de la solicitud, por ejemplo SOL-2026-0148.') }, required: ['codigo'] },
   },
   {
+    name: 'buscar_equipos',
+    description:
+      'Busca equipos reservables (laptops, computadoras y tablets como iPad o Galaxy Tab). Con fecha devuelve los horarios libres de ese día; sin fecha, la próxima disponibilidad de cada equipo. Úsala antes de proponer una reserva de equipo.',
+    parameters: {
+      type: 'object',
+      properties: {
+        tipo: str('Tipo de equipo (opcional).', { enum: ['laptop', 'computadora', 'tablet'] }),
+        fecha: str('Fecha AAAA-MM-DD (opcional).'),
+        hora_desde: str('Hora mínima de inicio, HH:MM (opcional, solo con fecha).'),
+        duracion_horas: { type: 'integer', description: 'Duración en horas: 2 o 4. Por defecto 2.' },
+      },
+    },
+  },
+  {
+    name: 'mis_reservas_equipos',
+    description: 'Reservas de equipos del alumno (código, equipo, fecha y horario).',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'proponer_reserva_equipo',
+    description:
+      'Propone reservar un equipo en un día y hora. No reserva: el alumno confirma con un botón. El horario debe estar libre según buscar_equipos.',
+    parameters: {
+      type: 'object',
+      properties: {
+        equipo_id: str('Id devuelto por buscar_equipos.'),
+        fecha: str('Fecha AAAA-MM-DD.'),
+        hora_inicio: str('Hora de inicio en punto, HH:MM (de 08:00 a 18:00).'),
+        duracion_horas: { type: 'integer', description: 'Duración en horas: 2 o 4. Por defecto 2.' },
+      },
+      required: ['equipo_id', 'fecha', 'hora_inicio'],
+    },
+  },
+  {
+    name: 'proponer_cancelacion_equipo',
+    description: 'Propone cancelar una reserva de equipo. No cancela: el alumno confirma con un botón.',
+    parameters: { type: 'object', properties: { codigo: str('Código de la reserva, por ejemplo EQ-2026-0101.') }, required: ['codigo'] },
+  },
+  {
+    name: 'buscar_talleres',
+    description: 'Talleres culturales y deportivos con sus grupos abiertos (sede, modalidad, horario, fechas y vacantes).',
+    parameters: {
+      type: 'object',
+      properties: {
+        categoria: str('Categoría (opcional).', { enum: ['cultural', 'deportivo'] }),
+        consulta: str('Palabra del taller o del docente (opcional).'),
+      },
+    },
+  },
+  {
+    name: 'mis_talleres',
+    description: 'Talleres en los que el alumno está inscrito.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'proponer_inscripcion_taller',
+    description: 'Propone inscribir al alumno en un grupo de taller. No inscribe: el alumno confirma con un botón.',
+    parameters: { type: 'object', properties: { grupo_id: str('Id de grupo devuelto por buscar_talleres.') }, required: ['grupo_id'] },
+  },
+  {
+    name: 'buscar_ofertas',
+    description: 'Ofertas de la bolsa de trabajo de Empleabilidad (prácticas, part-time y full-time).',
+    parameters: {
+      type: 'object',
+      properties: {
+        consulta: str('Puesto, empresa o área (opcional).'),
+        tipo: str('Tipo de oferta (opcional).', { enum: ['practica', 'part_time', 'full_time'] }),
+        ciudad: str('Ciudad (opcional).'),
+      },
+    },
+  },
+  {
+    name: 'mis_postulaciones',
+    description: 'Ofertas a las que el alumno ya postuló, con su estado.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'proponer_postulacion',
+    description:
+      'Propone postular a una oferta con el nombre y el correo institucional del alumno. No postula: el alumno confirma con un botón.',
+    parameters: { type: 'object', properties: { oferta_id: str('Id devuelto por buscar_ofertas.') }, required: ['oferta_id'] },
+  },
+  {
+    name: 'info_tramite',
+    description:
+      'Campos que pide un trámite (obligatorios, opciones permitidas y, si pide un curso, los cursos del alumno). Úsala antes de proponer una solicitud.',
+    parameters: { type: 'object', properties: { tramite_id: str('Id devuelto por buscar_tramites.') }, required: ['tramite_id'] },
+  },
+  {
+    name: 'proponer_solicitud_tramite',
+    description:
+      'Propone enviar una solicitud de trámite con los datos del alumno. No la envía: el alumno confirma con un botón. Pide al alumno los datos que falten; nunca inventes datos ni marques una aceptación sin que el alumno la diga.',
+    parameters: {
+      type: 'object',
+      properties: {
+        tramite_id: str('Id devuelto por buscar_tramites.'),
+        datos_json: str('Objeto JSON con los campos del trámite, por ejemplo {"motivo":"Trabajo","curso":"ihm"}.'),
+      },
+      required: ['tramite_id'],
+    },
+  },
+  {
+    name: 'mis_notificaciones',
+    description: 'Las últimas notificaciones del alumno (avisos de reservas, tareas, notas, trámites y más).',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
     name: 'proponer_reserva',
     description:
       'Prepara una reserva para que el alumno la confirme. NO la crea. Solo llámala cuando ya tengas espacio, fecha, hora y (en salas) integrantes.',
@@ -444,6 +646,35 @@ function pickCourses(courses: CourseRow[], q: unknown): CourseRow[] {
       .join('')
   return courses.filter((c) => c.id === n || norm(c.nombre).includes(n) || initials(c.nombre) === n || n.includes(c.id))
 }
+
+const EQUIP_ABRE = 8
+const EQUIP_CIERRA = 20
+const DIAS_ISO = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+const TIPO_EQUIPO = { laptop: 'laptop', computadora: 'computadora', tablet: 'tablet' } as const
+
+/** Horas de inicio (en punto) libres para un equipo un día dado: lunes a viernes, 08:00 a 20:00, hasta 30 días. */
+function equipLibres(id: string, fecha: string, horas: number, busy: EquipmentBusyRow[], ctx: Ctx): string[] {
+  const dow = dowOf(fecha)
+  if (dow === 0 || dow === 6) return []
+  if (fecha < ctx.today.fecha || diffDays(ctx.today.fecha, fecha) > 30) return []
+  const out: string[] = []
+  for (let h = EQUIP_ABRE; h + horas <= EQUIP_CIERRA; h++) {
+    const ini = h * 60
+    const fin = (h + horas) * 60
+    if (fecha === ctx.today.fecha && ini <= ctx.today.min) continue
+    if (busy.some((b) => b.equipment_id === id && b.fecha === fecha && toMin(b.inicio) < fin && toMin(b.fin) > ini)) continue
+    out.push(fromMin(ini))
+  }
+  return out
+}
+
+const horarioTexto = (hs: { dia: number; inicio: string; fin: string }[]) => {
+  if (!hs.length) return 'sin horario confirmado'
+  const dias = Array.from(new Set(hs.map((h) => DIAS_ISO[h.dia]))).join(' y ')
+  return `${dias} de ${hs[0].inicio.slice(0, 5)} a ${hs[0].fin.slice(0, 5)}`
+}
+
+const OFERTA_TIPO = { practica: 'práctica', part_time: 'part-time', full_time: 'full-time' } as const
 
 async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): Promise<unknown> {
   const { db } = ctx.deps
@@ -696,6 +927,330 @@ async function execTool(name: string, args: Record<string, unknown>, ctx: Ctx): 
       return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
     }
 
+    case 'buscar_equipos': {
+      const horas = args.duracion_horas === 4 ? 4 : 2
+      const todos = await db.equipment()
+      const lista = todos.filter((e) => !args.tipo || e.tipo === args.tipo)
+      if (!lista.length) return { equipos: [], nota: 'No hay equipos de ese tipo.' }
+      if (args.fecha !== undefined && !isDate(args.fecha)) return { error: 'La fecha debe tener formato AAAA-MM-DD.' }
+
+      if (isDate(args.fecha)) {
+        const fecha = args.fecha
+        const busy = await db.equipmentBusy(fecha, fecha)
+        const desde = isTime(args.hora_desde) ? toMin(args.hora_desde) : 0
+        const con = lista
+          .map((e) => ({ e, libres: equipLibres(e.id, fecha, horas, busy, ctx).filter((h) => toMin(h) >= desde) }))
+          .filter((x) => x.libres.length)
+        if (!con.length) {
+          return {
+            equipos: [],
+            nota: 'No hay equipos libres ese día. Se reservan de lunes a viernes, de 08:00 a 20:00 y hasta 30 días por adelantado.',
+          }
+        }
+        return {
+          fecha,
+          dia: DAYS[dowOf(fecha)],
+          duracion_horas: horas,
+          equipos: con.slice(0, 8).map(({ e, libres }) => ({
+            id: e.id,
+            nombre: e.nombre,
+            tipo: TIPO_EQUIPO[e.tipo],
+            ubicacion: `${e.ubicacion} · ${e.sede}`,
+            horarios_libres: libres,
+          })),
+        }
+      }
+
+      const hasta = addDays(ctx.today.fecha, 7)
+      const busy = await db.equipmentBusy(ctx.today.fecha, hasta)
+      const equipos = lista.slice(0, 10).map((e) => {
+        for (let i = 0; i <= 7; i++) {
+          const f = addDays(ctx.today.fecha, i)
+          const libres = equipLibres(e.id, f, horas, busy, ctx)
+          if (libres.length) {
+            return {
+              id: e.id,
+              nombre: e.nombre,
+              tipo: TIPO_EQUIPO[e.tipo],
+              ubicacion: `${e.ubicacion} · ${e.sede}`,
+              proxima_disponibilidad: { fecha: f, dia: DAYS[dowOf(f)], desde: libres[0] },
+            }
+          }
+        }
+        return { id: e.id, nombre: e.nombre, tipo: TIPO_EQUIPO[e.tipo], ubicacion: `${e.ubicacion} · ${e.sede}`, proxima_disponibilidad: null }
+      })
+      return { equipos, nota: 'Pregunta al alumno qué equipo, qué día y a qué hora lo quiere.' }
+    }
+
+    case 'mis_reservas_equipos': {
+      const [rows, equipos] = await Promise.all([db.myEquipmentReservations(), db.equipment()])
+      const list = rows
+        .filter((r) => r.estado === 'confirmada' && (r.fecha > ctx.today.fecha || (r.fecha === ctx.today.fecha && toMin(r.fin) > ctx.today.min)))
+        .map((r) => ({
+          codigo: r.codigo,
+          equipo: equipos.find((e) => e.id === r.equipment_id)?.nombre ?? r.equipment_id,
+          fecha: r.fecha,
+          dia: DAYS[dowOf(r.fecha)],
+          horario: `${r.inicio} a ${r.fin}`,
+        }))
+      return list.length ? { reservas: list } : { reservas: [], nota: 'No tiene reservas de equipos próximas.' }
+    }
+
+    case 'proponer_reserva_equipo': {
+      const { equipo_id, fecha, hora_inicio } = args
+      if (typeof equipo_id !== 'string' || !isDate(fecha) || !isTime(hora_inicio)) {
+        return { ok: false, error: 'Faltan datos válidos: equipo, fecha (AAAA-MM-DD) y hora (HH:MM).' }
+      }
+      const horas = args.duracion_horas === 4 ? 4 : 2
+      const [equipos, mine] = await Promise.all([db.equipment(), db.myEquipmentReservations()])
+      const equipo = equipos.find((e) => e.id === equipo_id)
+      if (!equipo) return { ok: false, error: 'Ese equipo no existe. Usa un id de buscar_equipos.' }
+      const activa = mine.find(
+        (r) => r.estado === 'confirmada' && (r.fecha > ctx.today.fecha || (r.fecha === ctx.today.fecha && toMin(r.fin) > ctx.today.min)),
+      )
+      if (activa) {
+        return { ok: false, error: `Ya tiene una reserva de equipo activa (${activa.codigo}). Solo puede tener una: debe cancelarla antes de reservar otra.` }
+      }
+      const busy = await db.equipmentBusy(fecha, fecha)
+      const libres = equipLibres(equipo.id, fecha, horas, busy, ctx)
+      if (!libres.includes(hora_inicio)) {
+        return {
+          ok: false,
+          error: 'Ese horario no está libre (los equipos se reservan de lunes a viernes, de 08:00 a 20:00, hasta 30 días por adelantado y en horas en punto).',
+          horarios_libres: libres.slice(0, 8),
+        }
+      }
+      const fin = fromMin(toMin(hora_inicio) + horas * 60)
+      ctx.proposal = {
+        kind: 'reserva_equipo',
+        equipoId: equipo.id,
+        nombre: equipo.nombre,
+        fecha,
+        inicio: hora_inicio,
+        fin,
+        resumen: `${equipo.nombre} · ${equipo.ubicacion}, ${equipo.sede} · ${DAYS[dowOf(fecha)]} ${fecha} de ${hora_inicio} a ${fin}`,
+      }
+      return { ok: true, mensaje: 'Propuesta lista. La app mostrará un botón de confirmación al alumno; pídele que confirme.' }
+    }
+
+    case 'proponer_cancelacion_equipo': {
+      const codigo = typeof args.codigo === 'string' ? args.codigo.trim().toUpperCase() : ''
+      const rows = await db.myEquipmentReservations()
+      const r = rows.find((x) => x.codigo.toUpperCase() === codigo && x.estado === 'confirmada')
+      if (!r) return { ok: false, error: 'No encontré una reserva de equipo activa con ese código. Usa mis_reservas_equipos.' }
+      const cfg = await db.settings()
+      const minsToStart = diffDays(ctx.today.fecha, r.fecha) * 1440 + toMin(r.inicio) - ctx.today.min
+      if (toMin(r.fin) + diffDays(ctx.today.fecha, r.fecha) * 1440 <= ctx.today.min) return { ok: false, error: 'Esa reserva ya terminó.' }
+      const penal = minsToStart < (cfg.freeCancelMinutes ?? 60)
+      ctx.proposal = {
+        kind: 'cancelar_equipo',
+        codigo: r.codigo,
+        penalizacion: penal,
+        resumen: `Cancelar la reserva ${r.codigo} del ${r.fecha} a las ${r.inicio}.${penal ? ` Falta menos de ${cfg.freeCancelMinutes ?? 60} minutos: habrá ${cfg.penaltyDays ?? 7} días de penalidad.` : ''}`,
+      }
+      return { ok: true, penalidad: penal, mensaje: 'Propuesta lista. Avisa si hay penalidad y pide confirmación.' }
+    }
+
+    case 'buscar_talleres': {
+      const ahora = (ctx.deps.now ?? new Date()).getTime()
+      const q = typeof args.consulta === 'string' ? norm(args.consulta).trim() : ''
+      const talleres = await db.workshops()
+      const list = talleres
+        .filter((t) => !args.categoria || t.categoria === args.categoria)
+        .filter((t) => !q || norm(`${t.titulo} ${t.descripcion} ${t.grupos.map((g) => g.docente).join(' ')}`).includes(q))
+        .map((t) => ({
+          id: t.id,
+          taller: t.titulo,
+          categoria: t.categoria,
+          grupos: t.grupos
+            .filter((g) => g.estado === 'abierto' && Date.parse(g.inscripcion_abre) <= ahora && ahora < Date.parse(g.inscripcion_cierra) && g.vacantes > 0)
+            .map((g) => ({
+              grupo_id: g.id,
+              sede: g.sede,
+              modalidad: g.modalidad,
+              lugar: g.lugar,
+              docente: g.docente,
+              horario: horarioTexto(g.horarios),
+              inicia: g.inicio,
+              termina: g.fin,
+              vacantes: g.vacantes,
+            })),
+        }))
+        .filter((t) => t.grupos.length)
+        .slice(0, 8)
+      return list.length ? { talleres: list } : { talleres: [], nota: 'No hay talleres con grupos abiertos y vacantes con esas condiciones.' }
+    }
+
+    case 'mis_talleres': {
+      const rows = (await db.myWorkshopEnrollments()).filter((r) => r.estado === 'inscrita')
+      const list = rows.map((r) => ({
+        codigo: r.codigo,
+        taller: r.snapshot?.titulo ?? '',
+        sede: r.snapshot?.sede ?? '',
+        inicia: r.snapshot?.inicio ?? '',
+        termina: r.snapshot?.fin ?? '',
+      }))
+      return list.length ? { inscripciones: list } : { inscripciones: [], nota: 'No está inscrito en ningún taller.' }
+    }
+
+    case 'proponer_inscripcion_taller': {
+      const ahora = (ctx.deps.now ?? new Date()).getTime()
+      const talleres = await db.workshops()
+      const w = talleres.find((t) => t.grupos.some((g) => g.id === args.grupo_id))
+      const g = w?.grupos.find((x) => x.id === args.grupo_id)
+      if (!w || !g) return { ok: false, error: 'No encontré ese grupo. Usa buscar_talleres.' }
+      if (g.estado !== 'abierto' || ahora < Date.parse(g.inscripcion_abre) || ahora >= Date.parse(g.inscripcion_cierra)) {
+        return { ok: false, error: 'La inscripción a ese grupo no está abierta.' }
+      }
+      if (g.vacantes <= 0) return { ok: false, error: 'Ese grupo ya no tiene vacantes.' }
+      const mine = await db.myWorkshopEnrollments()
+      if (mine.some((r) => r.grupo_id === g.id && r.estado === 'inscrita')) {
+        return { ok: false, error: 'El alumno ya está inscrito en ese grupo.' }
+      }
+      ctx.proposal = {
+        kind: 'inscripcion_taller',
+        grupoId: g.id,
+        titulo: w.titulo,
+        version: w.version_terminos,
+        resumen: `Inscribirte en «${w.titulo}» · ${g.sede} (${g.modalidad}) · ${horarioTexto(g.horarios)} · del ${g.inicio} al ${g.fin}. Al confirmar aceptas los términos del taller y declaras: ${w.declaracion}`,
+      }
+      return { ok: true, mensaje: 'Propuesta lista. Menciona que al confirmar acepta los términos del taller y pide confirmación.' }
+    }
+
+    case 'buscar_ofertas': {
+      const q = typeof args.consulta === 'string' ? norm(args.consulta).trim() : ''
+      const ciudad = typeof args.ciudad === 'string' ? norm(args.ciudad).trim() : ''
+      const [ofertas, apps] = await Promise.all([db.jobOffers(), db.myApplications()])
+      const ya = new Set(apps.map((a) => a.oferta_id))
+      const list = ofertas
+        .filter((o) => !args.tipo || o.tipo === args.tipo)
+        .filter((o) => !ciudad || norm(o.ciudad).includes(ciudad))
+        .filter((o) => !q || norm(`${o.puesto} ${o.empresa} ${o.area}`).includes(q))
+        .slice(0, 8)
+        .map((o) => ({
+          id: o.id,
+          puesto: o.puesto,
+          empresa: o.empresa,
+          tipo: OFERTA_TIPO[o.tipo],
+          ciudad: o.ciudad,
+          area: o.area,
+          experiencia: o.experiencia || 'No especificada',
+          ya_postulaste: ya.has(o.id),
+        }))
+      return list.length ? { ofertas: list } : { ofertas: [], nota: 'No encontré ofertas con esas condiciones.' }
+    }
+
+    case 'mis_postulaciones': {
+      const [apps, ofertas] = await Promise.all([db.myApplications(), db.jobOffers()])
+      const list = apps.map((a) => ({
+        codigo: a.codigo,
+        oferta: ofertas.find((o) => o.id === a.oferta_id)?.puesto ?? a.oferta_id,
+        estado: a.estado.replace('_', ' '),
+      }))
+      return list.length ? { postulaciones: list } : { postulaciones: [], nota: 'No tiene postulaciones.' }
+    }
+
+    case 'proponer_postulacion': {
+      const [ofertas, apps, me] = await Promise.all([db.jobOffers(), db.myApplications(), db.me()])
+      const o = ofertas.find((x) => x.id === args.oferta_id)
+      if (!o) return { ok: false, error: 'No encontré esa oferta (o ya cerró). Usa buscar_ofertas.' }
+      if (apps.some((a) => a.oferta_id === o.id)) return { ok: false, error: 'El alumno ya postuló a esa oferta.' }
+      const nombre = me.nombre_completo ?? me.nombre
+      const correo = `${me.codigo.toLowerCase()}@utp.edu.pe`
+      ctx.proposal = {
+        kind: 'postulacion',
+        ofertaId: o.id,
+        titulo: o.puesto,
+        nombre,
+        correo,
+        resumen: `Postular a «${o.puesto}» en ${o.empresa} (${o.ciudad}) como ${nombre}, con el correo ${correo}.`,
+      }
+      return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
+    }
+
+    case 'info_tramite': {
+      const [tipos, cursos] = await Promise.all([db.procedureTypes(), db.courses()])
+      const t = tipos.find((x) => x.id === args.tramite_id)
+      if (!t) return { error: 'No encontré ese trámite. Usa buscar_tramites.' }
+      return {
+        tramite: t.titulo,
+        costo: t.costo > 0 ? `S/ ${t.costo}` : 'Gratis',
+        plazo: t.plazo,
+        campos: (t.campos ?? []).map((c) => ({
+          clave: c.key,
+          etiqueta: c.label,
+          tipo: c.type,
+          obligatorio: !!c.required,
+          ...(c.type === 'select' ? { opciones: c.options } : {}),
+          ...(c.type === 'curso' ? { opciones: cursos.courses.map((x) => ({ id: x.id, nombre: x.nombre })) } : {}),
+          ...(c.type === 'check' ? { nota: 'El alumno debe aceptarlo expresamente.' } : {}),
+        })),
+      }
+    }
+
+    case 'proponer_solicitud_tramite': {
+      const [tipos, cursos, mine] = await Promise.all([db.procedureTypes(), db.courses(), db.procedures()])
+      const t = tipos.find((x) => x.id === args.tramite_id)
+      if (!t) return { ok: false, error: 'No encontré ese trámite. Usa buscar_tramites.' }
+      if (mine.some((p) => p.tipo_id === t.id && p.estado === 'en_revision')) {
+        return { ok: false, error: 'Ya tiene una solicitud de este trámite en revisión.' }
+      }
+      let datos: Record<string, unknown> = {}
+      try {
+        const v = typeof args.datos_json === 'string' && args.datos_json.trim() ? JSON.parse(args.datos_json) : {}
+        if (v && typeof v === 'object' && !Array.isArray(v)) datos = v as Record<string, unknown>
+      } catch {
+        return { ok: false, error: 'datos_json no es un JSON válido.' }
+      }
+      const faltan: string[] = []
+      const invalidos: string[] = []
+      const detalle: Record<string, string> = {}
+      const lineas: string[] = []
+      for (const c of t.campos ?? []) {
+        const raw = String(datos[c.key] ?? '').trim()
+        if (!raw) {
+          if (c.required) faltan.push(c.label)
+          continue
+        }
+        if (c.type === 'select') {
+          const opt = (c.options ?? []).find((o) => norm(o) === norm(raw))
+          if (!opt) { invalidos.push(`${c.label} (opciones: ${(c.options ?? []).join(', ')})`); continue }
+          detalle[c.key] = opt
+          lineas.push(`${c.label}: ${opt}`)
+        } else if (c.type === 'curso') {
+          const found = pickCourses(cursos.courses, raw)[0]
+          if (!found) { invalidos.push(`${c.label} (cursos: ${cursos.courses.map((x) => x.nombre).join(', ')})`); continue }
+          detalle[c.key] = found.id
+          lineas.push(`${c.label}: ${found.nombre}`)
+        } else if (c.type === 'check') {
+          if (!['true', 'si', 'sí', 'acepto', '1'].includes(norm(raw))) { invalidos.push(c.label); continue }
+          detalle[c.key] = 'true'
+          lineas.push(`Aceptas: ${c.label}`)
+        } else {
+          const max = c.type === 'textarea' ? 400 : 120
+          if (raw.length > max) { invalidos.push(`${c.label} (máximo ${max} caracteres)`); continue }
+          detalle[c.key] = raw
+          lineas.push(`${c.label}: ${raw}`)
+        }
+      }
+      if (faltan.length || invalidos.length) return { ok: false, faltan, invalidos, nota: 'Pide al alumno solo lo que falta o corrige lo inválido.' }
+      ctx.proposal = {
+        kind: 'solicitud_tramite',
+        tipoId: t.id,
+        titulo: t.titulo,
+        detalle,
+        resumen: `Solicitar «${t.titulo}»${lineas.length ? ': ' + lineas.join(' · ') : ''}.`,
+      }
+      return { ok: true, mensaje: 'Propuesta lista. Pide confirmación.' }
+    }
+
+    case 'mis_notificaciones': {
+      const rows = await db.notifications()
+      return rows.length
+        ? { notificaciones: rows.slice(0, 8).map((n) => ({ titulo: n.titulo, detalle: n.cuerpo, sin_leer: !n.leida, cuando: n.created_at.slice(0, 10) })) }
+        : { notificaciones: [], nota: 'No tiene notificaciones.' }
+    }
+
     case 'proponer_reserva': {
       const { space_id, fecha, hora_inicio } = args
       if (typeof space_id !== 'string' || !isDate(fecha) || !isTime(hora_inicio)) {
@@ -830,7 +1385,9 @@ export function systemPrompt(me: { codigo: string; nombre: string; sede: string 
     '- También ayudas con la vida de estudiante: cursos que lleva, notas y cuánto necesita para aprobar, tareas pendientes y próximas evaluaciones (herramientas mis_cursos, mis_notas, tareas_pendientes y proximas_evaluaciones). Da cifras reales de las herramientas, con pocas palabras, y menciona primero lo más urgente.',
     '- También consultas el estado de sus trámites (mis_tramites), el costo y plazo de cada trámite (buscar_tramites), los datos de un curso, su horario de clases en vivo y el tema de la semana (info_curso) y los cupones de Beneficios+ (buscar_beneficios). Para generar un cupón o cancelar un trámite usa proponer_cupon o proponer_cancelar_tramite. No puedes crear solicitudes de trámites: indica que lo haga en la sección Trámites.',
     '- Habla como una persona: natural, cálida y directa, con frases cortas y conectores ("vale", "mira", "listo"). Evita sonar a lista o a formulario. Di las fechas como se dicen ("el jueves 27", "mañana"), no como códigos.',
-    '- Si piden algo fuera de reservas, grupos, actividades del campus, cursos, trámites, beneficios o ayuda de la app, di amablemente qué sí puedes hacer.',
+    '- Reserva de equipos (laptops, computadoras y tablets como iPad o Galaxy Tab): si piden "una tablet" o "una laptop" sin más datos, llama a buscar_equipos con el tipo, ofrece en una frase 2 o 3 opciones con su próxima disponibilidad y pregunta cuál, qué día y a qué hora. Cuando elijan, llama a buscar_equipos con esa fecha para ver las horas libres y propón con proponer_reserva_equipo (2 horas si no dicen otra duración; máximo 4). Si dan todo de una vez, busca y propón directo. Solo se puede tener una reserva de equipo activa; si ya tiene una, ofrece cancelarla con proponer_cancelacion_equipo.',
+    '- Talleres: busca con buscar_talleres, resume las opciones y propón la inscripción con proponer_inscripcion_taller; al confirmar el alumno acepta los términos del taller. Empleabilidad: busca con buscar_ofertas y propón con proponer_postulacion. Trámites: usa buscar_tramites, luego info_tramite para ver qué datos pide, pregunta al alumno lo que falte (de a una cosa) y propón con proponer_solicitud_tramite; las casillas de aceptación las debe aceptar el alumno de forma expresa.',
+    '- Si piden algo fuera de reservas de espacios y equipos, grupos, actividades del campus, cursos, trámites, talleres, empleabilidad, beneficios, notificaciones o ayuda de la app (por ejemplo pagos o el calendario, que aún no consultas), di amablemente qué sí puedes hacer.',
     '',
     'Reglas de la universidad:',
     `- Salas grupales: mínimo ${cfg.minMembers ?? 3} personas (incluido el alumno), cerradas los sábados. PCs y cubículos: 1 persona.`,
