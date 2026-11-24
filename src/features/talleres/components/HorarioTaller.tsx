@@ -6,15 +6,15 @@ const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', '
 export default function HorarioTaller({ horarios, compact = false }: { horarios: Horario[]; compact?: boolean }) {
   const ordenados = [...horarios].sort((a, b) => a.dia - b.dia || a.inicio.localeCompare(b.inicio))
   return (
-    <div className="space-y-3">
-      <div className="flex gap-1.5" aria-label="Días del taller">
+    <div className={compact ? 'space-y-2' : 'space-y-3'}>
+      <div className="flex gap-1" aria-label="Días del taller">
         {DIAS.map((dia, i) => {
           const activo = horarios.some((h) => h.dia === i + 1)
           return (
             <span
               key={dia}
               aria-label={`${dia}: ${activo ? 'con sesión' : 'sin sesión'}`}
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${activo ? 'bg-primary-soft text-primary' : 'bg-fill/5 text-ink-muted'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-[0.6875rem] font-semibold ${activo ? 'bg-primary-soft text-primary' : 'bg-fill/5 text-ink-muted'}`}
             >
               {dia[0]}
             </span>

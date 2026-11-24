@@ -22,29 +22,29 @@ export default function TallerCard({
   const query = params.toString()
   const link = `${tallerPath(taller)}${query ? `?${query}` : ''}`
   return (
-    <article className="rounded-card bg-card p-4 shadow-card">
+    <article className="rounded-card bg-card p-3.5 shadow-card">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-          <Icon name={taller.categoria === 'cultural' ? 'theater_comedy' : 'sports'} size={23} />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <Icon name={taller.categoria === 'cultural' ? 'theater_comedy' : 'sports'} size={20} />
         </span>
-        <h2 className="min-w-0 flex-1 text-base font-extrabold text-ink">{taller.titulo}</h2>
+        <h2 className="min-w-0 flex-1 text-sm font-bold text-ink">{taller.titulo}</h2>
       </div>
-      <p className="mb-3 mt-2 text-xs text-ink-muted">Inicia: {fechaTaller(primero.inicio)}</p>
+      <p className="mb-2 mt-1.5 text-[0.6875rem] text-ink-muted">Inicia: {fechaTaller(primero.inicio)}</p>
       <HorarioTaller horarios={primero.horarios} compact />
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <Badge tone={primero.modalidad === 'virtual' ? 'virtual' : 'presencial'}>
           {primero.modalidad === 'virtual' ? 'Virtual' : 'Presencial'}
         </Badge>
         <span className="text-xs text-ink-muted">{primero.sede}</span>
       </div>
-      <p className="mt-2 text-xs font-semibold text-ink">
+      <p className="mt-1.5 text-xs font-semibold text-ink">
         {grupos.length > 1 ? `${grupos.length} grupos · ` : ''}
         {vacantes > 0 ? `${vacantes} vacantes disponibles` : 'Sin vacantes abiertas'}
       </p>
       <Link
         to={link}
         aria-label={`Ver taller: ${taller.titulo}`}
-        className="mt-3 flex min-h-11 items-center justify-between text-sm font-semibold text-primary"
+        className="mt-1 flex min-h-11 items-center justify-between text-xs font-semibold text-primary"
       >
         Ver detalle y horarios
         <Icon name="chevron_right" size={20} />
