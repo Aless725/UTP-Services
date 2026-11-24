@@ -18,6 +18,7 @@
 --   7. Empleabilidad: ofertas laborales
 --   8. Empleabilidad: detalle de los programas
 --   9. Talleres culturales y deportivos
+--   10. Reserva de equipos: laptops, computadoras y tablets
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Reglas, sedes, espacios, cuentas demo, grupos, ciclo, cursos y matrícula
@@ -1426,3 +1427,26 @@ begin
   on conflict (grupo_id, dia, inicio, fin) do nothing;
 end $$;
 commit;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Reserva de equipos: laptops, computadoras y tablets
+-- ════════════════════════════════════════════════════════════════════════════
+
+insert into public.equipment (id, tipo, nombre, descripcion, campus_id, ubicacion, procesador, ram, almacenamiento, sistema, software, orden) values
+  ('dell-5420',    'laptop',      'Laptop Dell Latitude 5420',    'Equipo portátil para uso académico dentro del campus.',            'lima-centro', 'Pabellón A · Lab A301',      'Intel Core i5', '16 GB', '512 GB SSD', 'Windows 11', '{Microsoft 365,Visual Studio Code,Navegador}', 1),
+  ('lenovo-e14',   'laptop',      'Laptop Lenovo ThinkPad E14',   'Equipo portátil para uso académico dentro del campus.',            'lima-centro', 'Biblioteca · Piso 2',        'Intel Core i5', '16 GB', '512 GB SSD', 'Windows 11', '{Microsoft 365,Visual Studio Code,Navegador}', 2),
+  ('hp-probook',   'laptop',      'Laptop HP ProBook 450',        'Equipo portátil para trabajos y exposiciones dentro del campus.',  'lima-centro', 'Pabellón C · Lab C102',      'Intel Core i5', '8 GB',  '256 GB SSD', 'Windows 11', '{Microsoft 365,Navegador}', 3),
+  ('hp-elitedesk', 'computadora', 'Computadora HP EliteDesk',     'Computadora de escritorio para uso académico dentro del campus.',  'lima-centro', 'Pabellón B · Lab B205',      'Intel Core i7', '16 GB', '512 GB SSD', 'Windows 11', '{Microsoft 365,Visual Studio Code,Navegador}', 4),
+  ('imac-diseno',  'computadora', 'iMac 24" · Estación de diseño', 'Computadora para diseño y prototipado, con las herramientas del curso.', 'lima-centro', 'Pabellón C · Lab de Diseño C-204', 'Apple M3',   '16 GB', '512 GB SSD', 'macOS',      '{Figma,Adobe Creative Cloud,Navegador}', 5),
+  ('dell-optiplex','computadora', 'Computadora Dell OptiPlex 7010', 'Computadora de escritorio para laboratorios y prácticas.',        'lima-centro', 'Pabellón B · Lab B207',      'Intel Core i5', '16 GB', '512 GB SSD', 'Windows 11', '{Microsoft 365,Visual Studio Code,Navegador}', 6),
+  ('lenovo-v15',   'laptop',      'Laptop Lenovo V15',            'Equipo portátil para uso académico dentro del campus.',            'lima-norte',  'Edificio Principal · Lab N101', 'Intel Core i5', '8 GB',  '256 GB SSD', 'Windows 11', '{Microsoft 365,Navegador}', 7),
+  ('hp-prodesk',   'computadora', 'Computadora HP ProDesk',       'Computadora de escritorio para uso académico dentro del campus.',  'lima-norte',  'Edificio Principal · Lab N201', 'Intel Core i5', '16 GB', '512 GB SSD', 'Windows 11', '{Microsoft 365,Visual Studio Code,Navegador}', 8),
+  ('ipad-a16',     'tablet',      'iPad (A16) 11"',                'Tablet para lectura, apuntes y prototipos dentro del campus.',     'lima-centro', 'Biblioteca · Mostrador de préstamos', 'Apple A16', '6 GB',  '128 GB', 'iPadOS 18', '{Figma,Microsoft 365,Navegador}', 9),
+  ('ipad-pro-13',  'tablet',      'iPad Pro 13" (M4)',             'Tablet de alto rendimiento para diseño y prototipado.',            'lima-centro', 'Pabellón C · Lab de Diseño C-204', 'Apple M4', '8 GB',  '256 GB', 'iPadOS 18', '{Figma,Adobe Creative Cloud,Navegador}', 10),
+  ('galaxy-tab-s9','tablet',      'Samsung Galaxy Tab S9 FE',      'Tablet Android con lápiz para apuntes y lectura dentro del campus.', 'lima-centro', 'Biblioteca · Mostrador de préstamos', 'Exynos 1380', '6 GB', '128 GB', 'Android 14', '{Microsoft 365,Figma,Navegador}', 11),
+  ('galaxy-tab-a9','tablet',      'Samsung Galaxy Tab A9+',        'Tablet Android para lectura y consulta dentro del campus.',        'lima-norte',  'Edificio Principal · Biblioteca', 'Snapdragon 695', '4 GB', '64 GB', 'Android 14', '{Microsoft 365,Navegador}', 12)
+on conflict (id) do update set
+  tipo = excluded.tipo, nombre = excluded.nombre, descripcion = excluded.descripcion, campus_id = excluded.campus_id,
+  ubicacion = excluded.ubicacion, procesador = excluded.procesador, ram = excluded.ram, almacenamiento = excluded.almacenamiento,
+  sistema = excluded.sistema, software = excluded.software, orden = excluded.orden;
