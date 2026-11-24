@@ -34,7 +34,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Beneficios+: cupones por categoría (Prime, Gastronomía, Moda y estilo, Entretenimiento, Educación e idiomas), Refiere y gana, Opina, Ponte al día y Trivia | Listo |
 | Pagos: detalle de cada cuota, historial de pagos y constancias en PDF | Listo |
 | Biblioteca | Pendiente (a cargo de otro integrante del equipo) |
-| Reserva de equipos | Pendiente (a cargo de otro integrante del equipo) |
+| Reserva de equipos: laptops, computadoras y tablets (iPad y Galaxy Tab), con horario, QR, cancelación y reglas en el servidor | Listo |
 | Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
 | Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
 
@@ -110,6 +110,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
 - **Beneficios+** (menú *Más de UTP+ → Beneficios*): destacados, catálogo con búsqueda y categorías, detalle con condiciones, cómo usarlo y dónde, y cupón con **QR real** (uno por beneficio, guardado en el dispositivo). Incluye *Refiere y gana* (código personal para ganar S/ 50), *Opina*, *Ponte al día* y una *Trivia*; *Actualízate* y *Capacítate* figuran como «Pronto». Los convenios y montos son de demostración.
 - **Pagos:** al tocar una cuota se ve su detalle (fecha, N.º de operación y desglose) y se descarga su comprobante; *Historial y constancias* lista los pagos y descarga la constancia de pagos y la de no adeudo. Los PDF son de demostración.
+- **Reserva de equipos** (menú *Más de UTP+ → Reserva de equipos*): catálogo de laptops, computadoras y tablets (iPad y Samsung Galaxy Tab) con filtro por tipo y su próxima disponibilidad, detalle con ubicación, especificaciones y programas instalados, y una sola pantalla para elegir día, duración (2 o 4 horas) y horario. Al confirmar se genera un código `EQ-AAAA-NNNN` con **QR**; en *Mis reservas de equipos* se ven las próximas, pasadas y canceladas. Reglas aplicadas en el servidor: lunes a viernes de 08:00 a 20:00, hasta 30 días por adelantado, máximo 4 horas, una reserva activa por alumno, sin dobles reservas del mismo equipo y cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar).
 - **Trámites** (menú *Más de UTP+ → Trámites*): catálogo de 26 trámites en *Autogestionables* y *SAE en línea*, con búsqueda. Cada uno muestra costo, plazo y modalidad, y su formulario se arma con los campos que define en la base de datos (selecciones, texto, curso de tu matrícula, aceptaciones). El servidor valida los datos y evita solicitudes repetidas en revisión. En **Mis solicitudes** ves el estado y el historial de cada una y puedes cancelarla mientras esté en revisión. Los costos y plazos son de ejemplo.
 - **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo, confirmar una actividad o enviar una solicitud de trámite. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
 - **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. También se le puede **hablar**: el micrófono graba (hasta 30 s), el servidor transcribe y la respuesta se lee en voz alta (se activa sola la primera vez que usas la voz y se puede silenciar). Consulta también tus cursos (docente, clases en vivo y tema de la semana), notas (cuánto necesitas para aprobar), tareas pendientes, el estado de tus trámites y los cupones de Beneficios+, y propone generar un cupón o cancelar una solicitud. La voz de respuesta es la de Gemini (con la del navegador como respaldo). Todo lo que hace el asistente también se puede hacer tocando.
@@ -158,6 +159,7 @@ src/
 │  ├─ tramites/    # catálogo, solicitud, seguimiento y detalle
 │  ├─ empleabilidad/  # programas, ofertas, postulación y seguimiento
 │  ├─ talleres/   # catálogos, grupos y horarios, inscripción y Mis talleres
+│  ├─ equipos/    # reserva de laptops, computadoras y tablets (catálogo, reserva, QR y Mis reservas)
 │  ├─ support/     # asistente de IA (chat, voz y confirmación de acciones)
 │  └─ more/        # menú Más de UTP+
 ├─ hooks/  lib/  types/
@@ -180,7 +182,7 @@ El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subir
 
 ## Próximos pasos
 
-1. **Biblioteca** (catálogo, préstamos y biblioteca virtual) y **Reserva de equipos**: los desarrolla otro integrante del equipo y se integrarán después.
+1. **Biblioteca** (catálogo, préstamos y biblioteca virtual): la desarrolla otro integrante del equipo y se integrará después.
 2. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
 3. Guardar los cupones y referidos en Supabase.
 4. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
