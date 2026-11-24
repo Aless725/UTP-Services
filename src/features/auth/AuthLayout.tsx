@@ -18,10 +18,11 @@ export default function AuthLayout({ children, back }: AuthLayoutProps) {
         </div>
       )}
       <div className="flex h-full flex-col overflow-y-auto px-6 pb-8 pt-24">
-        <div className="flex justify-center">
+        <div className="flex animate-rise justify-center">
           <Logo size="md" />
         </div>
         <div className="mt-16 flex flex-1 flex-col">{children}</div>
+        <p className="pt-8 text-center text-[0.6875rem] text-ink-faint">UTP+ Service · Servicios para alumnos UTP</p>
       </div>
     </div>
   )
