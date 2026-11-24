@@ -60,7 +60,8 @@ async function fetchCourses(): Promise<CoursesData> {
     ? {
         nombre: t.nombre,
         estado: t.estado,
-        semanaActual: t.semana_actual,
+        // La semana sale de la fecha de hoy y el inicio del ciclo: así no se desfasa con el paso de los días.
+        semanaActual: semanaDelCiclo(t.inicio, t.semanas_total, t.semana_actual),
         semanasTotal: t.semanas_total,
         inicio: longDate(t.inicio),
         fin: longDate(t.fin),
@@ -98,6 +99,14 @@ async function fetchCourses(): Promise<CoursesData> {
   })).filter((g) => g.items.length > 0)
 
   return { courses, cycle, summary, academicInfo, progress }
+}
+
+/** Semana del ciclo (1 a total) según la fecha de hoy; si la fecha no es válida usa la guardada en la base. */
+export function semanaDelCiclo(inicio: string, total: number, respaldo: number): number {
+  const start = new Date(`${inicio}T00:00:00`)
+  if (Number.isNaN(start.getTime())) return respaldo
+  const dias = Math.floor((Date.now() - start.getTime()) / 86_400_000)
+  return Math.min(total, Math.max(1, Math.floor(dias / 7) + 1))
 }
 
 /** Cursos matriculados, ciclo y avance del alumno (Supabase, con caché de 5 minutos). */

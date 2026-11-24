@@ -26,12 +26,15 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | Anuncios del campus (campañas y actividades, con confirmación de asistencia) | Listo |
 | Notificaciones (campanita con insignia y avisos automáticos) y pantalla de correo | Listo |
 | Trámites: 26 trámites autogestionables y SAE, solicitud, seguimiento y cancelación | Listo |
-| Empleabilidad: detalle y postulación a programas, bolsa de trabajo, búsqueda y filtros, seguimiento unificado | Listo (requiere migraciones 0011–0012 y seeds de empleabilidad) |
-| Talleres culturales y deportivos: catálogo, grupos y horarios, inscripción y Mis talleres | Listo en el código (requiere migración 0013 y seed de talleres) |
-| Asistente de Soporte con IA por **texto y voz** (Gemini): consulta espacios, cursos, notas y tareas, y propone reservas, grupos y asistencias con confirmación | Listo |
+| Empleabilidad: detalle y postulación a programas, bolsa de trabajo, búsqueda y filtros, seguimiento unificado | Listo |
+| Talleres culturales y deportivos: catálogo, grupos y horarios, inscripción y Mis talleres | Listo |
+| Asistente de Soporte con IA por **texto y voz natural** (Gemini): consulta espacios, cursos, notas, tareas, trámites y cupones, y propone reservas, grupos, asistencias, cupones y cancelaciones con confirmación | Listo |
 | Backend en Supabase con RLS y reglas en el servidor | Listo |
 | App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, iPad, plegables y doble pantalla) | Listo |
-| Biblioteca | Pendiente |
+| Beneficios+: cupones por categoría (Prime, Gastronomía, Moda y estilo, Entretenimiento, Educación e idiomas), Refiere y gana, Opina, Ponte al día y Trivia | Listo |
+| Pagos: detalle de cada cuota, historial de pagos y constancias en PDF | Listo |
+| Biblioteca | Pendiente (a cargo de otro integrante del equipo) |
+| Reserva de equipos | Pendiente (a cargo de otro integrante del equipo) |
 | Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
 | Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
 
@@ -72,7 +75,7 @@ npm run typecheck   # revisa los tipos de TypeScript
 ### Backend (Supabase)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) y desactiva **Confirm email** en *Authentication → Sign In / Providers → Email*.
-2. En el **SQL Editor** ejecuta, en orden: las migraciones `0001` a `0013` de `supabase/migrations/`, luego los seeds `seed.sql`, `seed_contenido.sql`, `seed_anuncios.sql`, `seed_notificaciones.sql`, `seed_semana16.sql`, `seed_tramites.sql`, `seed_empleabilidad.sql`, `seed_programas_empleabilidad.sql` y `seed_talleres.sql` (catálogos y las 3 cuentas de demostración). Si ya tienes el backend configurado hasta `0012`, ejecuta solo `0013_talleres.sql` y `seed_talleres.sql`. Estos archivos deben aplicarse en tu proyecto Supabase; tenerlos en el repositorio no modifica la base remota. La guía completa está en [`docs/backend.md`](docs/backend.md).
+2. En el **SQL Editor** ejecuta, en este orden, dos archivos: `supabase/schema.sql` (todo el esquema) y `supabase/seed.sql` (datos de demostración: las 3 cuentas, el ciclo hasta el 18 de diciembre y sus 5 cursos, trámites, empleabilidad y talleres). Se pueden repetir sin duplicar datos y renuevan las fechas relativas a hoy. Tenerlos en el repositorio no modifica la base remota. La guía completa está en [`docs/backend.md`](docs/backend.md).
 3. Para el asistente, crea una llave en [Google AI Studio](https://aistudio.google.com), cárgala como secreto `GEMINI_API_KEY` (*Edge Functions → Secrets*) y despliega la función: `npx supabase functions deploy agent --project-ref <ref-del-proyecto> --use-api`. La llave nunca va en el frontend ni en el repositorio.
 4. Copia `.env.example` a `.env` y completa la URL del proyecto y la llave pública (*publishable* o *anon*):
 
@@ -103,8 +106,10 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Reserva de espacios** (menú *Más de UTP+ → Espacios*): buscar y filtrar salas grupales, PCs de biblioteca y cubículos por fecha y sede; elegir horario según la disponibilidad; agregar integrantes por código de alumno; confirmar con las normas; recibir un código `RES-AAAA-NNNN` con **QR real**; y ver, cancelar o descargar al calendario desde *Mis reservas*.
   - Reglas aplicadas: mínimo 3 integrantes en salas, máximo 2 horas, una reserva activa por tipo de espacio, sin dobles reservas, cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar) e ingreso con QR hasta 15 minutos después del inicio.
   - Si el horario se ocupa mientras se reserva, se sugieren horarios cercanos.
-- **Cursos:** lista agrupada con la semana del ciclo, el promedio de cada curso y las tareas pendientes, y avance de malla con la información académica plegada. Dentro de un curso hay tres secciones a la vista (**Resumen**, **Notas** y **Tareas**) y un botón **⋯** con Contenido, Foros, Anuncios, Zoom y Sílabo. El resumen muestra la semana, el promedio, lo que viene (tareas y evaluaciones) y atajos para repasar (reservar una sala, crear un grupo del curso o preguntarle al asistente). Notas reúne tu nota acumulada, los filtros Todas, Calificadas y Sin calificar, y una calculadora plegada de cuánto necesitas para aprobar.
+- **Cursos:** el ciclo de demostración (2026-2) termina el viernes 18 de diciembre e incluye 5 cursos, entre ellos Herramientas de Prototipado (con Figma); la semana actual se calcula con la fecha de hoy. Lista agrupada con la semana del ciclo, el promedio de cada curso y las tareas pendientes, y avance de malla con la información académica plegada. Dentro de un curso hay tres secciones a la vista (**Resumen**, **Notas** y **Tareas**) y un botón **⋯** con Contenido, Foros, Anuncios, Zoom y Sílabo. El resumen muestra la semana, el promedio, lo que viene (tareas y evaluaciones) y atajos para repasar (reservar una sala, crear un grupo del curso o preguntarle al asistente). Notas reúne tu nota acumulada, los filtros Todas, Calificadas y Sin calificar, y una calculadora plegada de cuánto necesitas para aprobar.
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
+- **Beneficios+** (menú *Más de UTP+ → Beneficios*): destacados, catálogo con búsqueda y categorías, detalle con condiciones, cómo usarlo y dónde, y cupón con **QR real** (uno por beneficio, guardado en el dispositivo). Incluye *Refiere y gana* (código personal para ganar S/ 50), *Opina*, *Ponte al día* y una *Trivia*; *Actualízate* y *Capacítate* figuran como «Pronto». Los convenios y montos son de demostración.
+- **Pagos:** al tocar una cuota se ve su detalle (fecha, N.º de operación y desglose) y se descarga su comprobante; *Historial y constancias* lista los pagos y descarga la constancia de pagos y la de no adeudo. Los PDF son de demostración.
 - **Trámites** (menú *Más de UTP+ → Trámites*): catálogo de 26 trámites en *Autogestionables* y *SAE en línea*, con búsqueda. Cada uno muestra costo, plazo y modalidad, y su formulario se arma con los campos que define en la base de datos (selecciones, texto, curso de tu matrícula, aceptaciones). El servidor valida los datos y evita solicitudes repetidas en revisión. En **Mis solicitudes** ves el estado y el historial de cada una y puedes cancelarla mientras esté en revisión. Los costos y plazos son de ejemplo.
 - **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo, confirmar una actividad o enviar una solicitud de trámite. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
 - **Soporte (asistente UTP+):** conversación en lenguaje natural (*«reserva una sala para mañana a las 3»*). El asistente consulta datos reales, pregunta lo que falte y propone la acción con una tarjeta **Confirmar / Cambiar**; solo al confirmar se ejecuta, con las mismas reglas del servidor. También se le puede **hablar**: el micrófono graba (hasta 30 s), el servidor transcribe y la respuesta se lee en voz alta (se activa sola la primera vez que usas la voz y se puede silenciar). Consulta también tus cursos (docente, clases en vivo y tema de la semana), notas (cuánto necesitas para aprobar), tareas pendientes, el estado de tus trámites y los cupones de Beneficios+, y propone generar un cupón o cancelar una solicitud. La voz de respuesta es la de Gemini (con la del navegador como respaldo). Todo lo que hace el asistente también se puede hacer tocando.
@@ -158,7 +163,7 @@ src/
 ├─ hooks/  lib/  types/
 public/             # manifiesto e íconos de la app instalable
 docs/               # guía del backend, enunciado del curso y plantillas de usabilidad
-supabase/           # migraciones SQL, seeds de demostración y la función `agent` (asistente)
+supabase/           # schema.sql (esquema), seed.sql (datos de demostración) y la función `agent` (asistente)
 ```
 
 ## Despliegue
@@ -175,7 +180,7 @@ El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subir
 
 ## Próximos pasos
 
-1. Biblioteca (catálogo, préstamos y biblioteca virtual).
+1. **Biblioteca** (catálogo, préstamos y biblioteca virtual) y **Reserva de equipos**: los desarrolla otro integrante del equipo y se integrarán después.
 2. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
 3. Guardar los cupones y referidos en Supabase.
 4. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
