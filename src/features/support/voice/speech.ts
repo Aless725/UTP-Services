@@ -34,6 +34,42 @@ export function saveVoicePref(on: boolean): void {
   }
 }
 
+/* ---------- Voz del modelo (simulación) ---------- */
+
+export interface VozModelo {
+  id: string
+  nombre: string
+  descripcion: string
+  pitch: number
+  rate: number
+}
+
+/** Voces de demostración: cambian el tono y la velocidad de la voz del navegador. La voz natural de Gemini la define el servidor. */
+export const VOCES_MODELO: VozModelo[] = [
+  { id: 'lucia', nombre: 'Lucía', descripcion: 'Cálida y cercana', pitch: 1.15, rate: 1.0 },
+  { id: 'mateo', nombre: 'Mateo', descripcion: 'Tranquilo y claro', pitch: 0.9, rate: 0.95 },
+  { id: 'valeria', nombre: 'Valeria', descripcion: 'Enérgica y ágil', pitch: 1.05, rate: 1.12 },
+  { id: 'diego', nombre: 'Diego', descripcion: 'Grave y pausado', pitch: 0.7, rate: 0.9 },
+]
+const MODEL_KEY = 'utp.asistente.voz.modelo'
+
+export function readVozModelo(): string {
+  try {
+    const id = localStorage.getItem(MODEL_KEY)
+    return VOCES_MODELO.some((v) => v.id === id) ? (id as string) : VOCES_MODELO[0].id
+  } catch {
+    return VOCES_MODELO[0].id
+  }
+}
+
+export function saveVozModelo(id: string): void {
+  try {
+    localStorage.setItem(MODEL_KEY, id)
+  } catch {
+    /* noop */
+  }
+}
+
 /** Elige la mejor voz en español disponible (prioriza Perú, Latinoamérica y luego España). */
 function pickVoice(): SpeechSynthesisVoice | undefined {
   const voices = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('es'))
@@ -100,7 +136,9 @@ function speakBrowser(text: string, onEnd?: () => void): void {
     u.voice = v
     u.lang = v.lang
   }
-  u.rate = 1.02
+  const modelo = VOCES_MODELO.find((v) => v.id === readVozModelo())
+  u.rate = modelo?.rate ?? 1.02
+  u.pitch = modelo?.pitch ?? 1
   u.onend = () => onEnd?.()
   u.onerror = () => onEnd?.()
   window.speechSynthesis.speak(u)
@@ -164,4 +202,22 @@ export function stopSpeaking(): void {
   }
   source = null
   if (speechSupported()) window.speechSynthesis.cancel()
+}
+
+/** Muestra de una voz del modelo con la voz del navegador (si no hay, no hace nada). */
+export function previewVoz(v: VozModelo, onEnd?: () => void): void {
+  stopSpeaking()
+  if (!speechSupported()) return onEnd?.()
+  const u = new SpeechSynthesisUtterance(`Hola, soy ${v.nombre}, tu asistente de UTP+.`)
+  u.lang = 'es-PE'
+  const voz = pickVoice()
+  if (voz) {
+    u.voice = voz
+    u.lang = voz.lang
+  }
+  u.pitch = v.pitch
+  u.rate = v.rate
+  u.onend = () => onEnd?.()
+  u.onerror = () => onEnd?.()
+  window.speechSynthesis.speak(u)
 }
