@@ -51,6 +51,11 @@ import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
 import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
 import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
 import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
+import EquiposPage from '@/features/equipos/EquiposPage'
+import EquipoDetailPage from '@/features/equipos/EquipoDetailPage'
+import ReservarEquipoPage from '@/features/equipos/ReservarEquipoPage'
+import ReservaEquipoPage from '@/features/equipos/ReservaEquipoPage'
+import MisReservasEquiposPage from '@/features/equipos/MisReservasEquiposPage'
 import HistorialPage from '@/features/payments/HistorialPage'
 import MisCuponesPage from '@/features/beneficios/MisCuponesPage'
 import ReferirPage from '@/features/beneficios/ReferirPage'
@@ -108,6 +113,10 @@ const detailRoutes = (
     <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
     <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
     <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
+    <Route path="/equipos/mis" element={<MisReservasEquiposPage />} />
+    <Route path="/equipos/reserva/:codigo" element={<ReservaEquipoPage />} />
+    <Route path="/equipos/:id" element={<EquipoDetailPage />} />
+    <Route path="/equipos/:id/reservar" element={<ReservarEquipoPage />} />
     <Route path="/pagos/historial" element={<HistorialPage />} />
     <Route path="/mas/historial" element={<Navigate to="/pagos/historial" replace />} />
     <Route path="/mas/anuncios" element={<Navigate to="/anuncios" replace />} />
@@ -115,6 +124,7 @@ const detailRoutes = (
     <Route path="/mas/tramites" element={<Navigate to="/tramites" replace />} />
     <Route path="/mas/empleabilidad" element={<Navigate to="/empleabilidad" replace />} />
     <Route path="/mas/talleres" element={<Navigate to="/talleres" replace />} />
+    <Route path="/mas/reserva-de-equipos" element={<Navigate to="/equipos" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -156,6 +166,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/empleabilidad/programas" element={<ProgramasPage />} />
         <Route path="/empleabilidad/ofertas" element={<OfertasPage />} />
         <Route path="/empleabilidad/postulaciones" element={<MisPostulacionesPage />} />
+        <Route path="/equipos" element={<EquiposPage />} />
         <Route path="/talleres" element={<TalleresPage />} />
         <Route path="/talleres/mis" element={<MisTalleresPage />} />
         <Route path="/talleres/:categoria" element={<CatalogoTalleresPage />} />
