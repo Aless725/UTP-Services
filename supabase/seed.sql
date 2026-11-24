@@ -1487,3 +1487,17 @@ insert into public.library_books (id, titulo, autor, anio, idioma, tema, descrip
 on conflict (id) do update set
   titulo = excluded.titulo, autor = excluded.autor, anio = excluded.anio, idioma = excluded.idioma, tema = excluded.tema,
   descripcion = excluded.descripcion, cursos = excluded.cursos, enlaces = excluded.enlaces, licencia = excluded.licencia, orden = excluded.orden;
+
+
+-- Copias impresas por sede (demo): Lima Centro siempre tiene de 1 a 3 copias; en las otras sedes
+-- algunos libros no están, otros están agotados y el resto tiene 1 o 2 copias.
+insert into public.library_stock (book_id, campus_id, copias)
+select b.id, c.id,
+  case
+    when c.id = 'lima-centro' then 1 + (abs(hashtext(b.id)) % 3)
+    else greatest((abs(hashtext(b.id || c.id)) % 5) - 1, 0)
+  end
+from public.library_books b
+cross join public.campuses c
+where c.id = 'lima-centro' or (abs(hashtext(b.id || c.id)) % 5) <> 0
+on conflict (book_id, campus_id) do update set copias = excluded.copias;

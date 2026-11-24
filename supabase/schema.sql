@@ -19,6 +19,7 @@
 --   13. Talleres, grupos, horarios e inscripciones
 --   14. Reserva de equipos (laptops, computadoras y tablets)
 --   15. Biblioteca digital (libros gratuitos en PDF y EPUB)
+--   16. Reserva presencial de libros en las sedes
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1972,3 +1973,198 @@ create policy "libros_leer" on public.library_books for select to authenticated 
 
 revoke all on public.library_books from anon;
 revoke insert, update, delete on public.library_books from authenticated;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 0016 · Reserva presencial de libros en las sedes
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Los libros digitales se descargan siempre. Si además hay copias impresas en una sede, el alumno puede
+-- reservar una y recogerla. Reglas (validadas en el servidor): se recoge entre hoy y 3 días después, de lunes
+-- a sábado, de 08:00 a 20:00; hasta 2 reservas activas; una por libro; las copias se descuentan por sede.
+-- Cancelar es gratis en cualquier momento. Una reserva no recogida vence al terminar el día de recojo.
+
+create table if not exists public.library_stock (
+  book_id   text not null references public.library_books(id) on delete cascade,
+  campus_id text not null references public.campuses(id),
+  copias    int  not null default 0 check (copias >= 0),
+  primary key (book_id, campus_id)
+);
+
+create sequence if not exists public.library_reservation_seq start 100;
+
+create table if not exists public.library_reservations (
+  id           uuid primary key default gen_random_uuid(),
+  codigo       text not null unique,
+  book_id      text not null references public.library_books(id),
+  campus_id    text not null references public.campuses(id),
+  user_id      uuid not null references public.profiles(id) on delete cascade,
+  recojo       date not null,
+  estado       text not null default 'reservada' check (estado in ('reservada', 'cancelada')),
+  created_at   timestamptz not null default now(),
+  cancelada_en timestamptz
+);
+create index if not exists library_reservations_user_idx on public.library_reservations (user_id, recojo);
+create index if not exists library_reservations_stock_idx on public.library_reservations (book_id, campus_id, recojo);
+
+alter table public.library_stock        enable row level security;
+alter table public.library_reservations enable row level security;
+
+drop policy if exists "libros_stock_leer" on public.library_stock;
+create policy "libros_stock_leer" on public.library_stock for select to authenticated using (true);
+drop policy if exists "libros_reservas_leer" on public.library_reservations;
+create policy "libros_reservas_leer" on public.library_reservations for select to authenticated using (user_id = auth.uid());
+
+revoke all on public.library_stock, public.library_reservations from anon;
+revoke insert, update, delete on public.library_stock, public.library_reservations from authenticated;
+
+-- Copias por sede y cuántas quedan libres (sin datos de quién reservó).
+create or replace function public.libros_disponibilidad()
+returns table (libro_id text, campus_id text, sede text, copias int, libres int)
+language sql stable security definer set search_path = public as $$
+  select
+    s.book_id, s.campus_id, c.nombre, s.copias,
+    greatest(s.copias - (
+      select count(*)::int from public.library_reservations r
+      where r.book_id = s.book_id and r.campus_id = s.campus_id
+        and r.estado = 'reservada' and r.recojo >= (now() at time zone 'America/Lima')::date
+    ), 0)
+  from public.library_stock s
+  join public.campuses c on c.id = s.campus_id
+  join public.library_books b on b.id = s.book_id and b.activo
+  order by c.nombre
+$$;
+
+create or replace function public.mis_reservas_libros()
+returns table (
+  id uuid, codigo text, libro_id text, campus_id text, sede text, recojo date,
+  estado text, creada_en timestamptz, cancelada_en timestamptz
+)
+language sql stable security definer set search_path = public as $$
+  select r.id, r.codigo, r.book_id, r.campus_id, c.nombre, r.recojo, r.estado, r.created_at, r.cancelada_en
+  from public.library_reservations r
+  join public.campuses c on c.id = r.campus_id
+  where r.user_id = auth.uid()
+  order by r.recojo, r.created_at
+$$;
+
+create or replace function public.reservar_libro(p_libro text, p_sede text, p_recojo date)
+returns public.library_reservations
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_hoy   date := (now() at time zone 'America/Lima')::date;
+  v_hora  time := (now() at time zone 'America/Lima')::time;
+  v_stock public.library_stock%rowtype;
+  v_res   public.library_reservations%rowtype;
+begin
+  if v_uid is null then
+    raise exception 'Debes iniciar sesión.' using errcode = 'P0001', hint = 'auth';
+  end if;
+
+  -- Bloquea la fila de copias para que dos alumnos no se lleven la última a la vez.
+  select s.* into v_stock from public.library_stock s
+  join public.library_books b on b.id = s.book_id and b.activo
+  where s.book_id = p_libro and s.campus_id = p_sede for update of s;
+  if not found then
+    raise exception 'Ese libro no está disponible en la sede elegida.' using errcode = 'P0001', hint = 'unavailable';
+  end if;
+
+  if exists (select 1 from public.penalties where user_id = v_uid and hasta > now()) then
+    raise exception 'Tienes una penalidad activa y no puedes reservar por ahora.' using errcode = 'P0001', hint = 'penalty';
+  end if;
+
+  if p_recojo < v_hoy or p_recojo > v_hoy + 3 then
+    raise exception 'Puedes elegir recoger el libro desde hoy hasta dentro de 3 días.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  if extract(dow from p_recojo) = 0 then
+    raise exception 'La biblioteca no atiende los domingos.' using errcode = 'P0001', hint = 'closed';
+  end if;
+  if p_recojo = v_hoy and v_hora >= time '19:00' then
+    raise exception 'Ya es tarde para recoger hoy. Elige otro día.' using errcode = 'P0001', hint = 'past';
+  end if;
+
+  if exists (
+    select 1 from public.library_reservations r
+    where r.user_id = v_uid and r.book_id = p_libro and r.estado = 'reservada' and r.recojo >= v_hoy
+  ) then
+    raise exception 'Ya reservaste este libro.' using errcode = 'P0001', hint = 'duplicate';
+  end if;
+  if (
+    select count(*) from public.library_reservations r
+    where r.user_id = v_uid and r.estado = 'reservada' and r.recojo >= v_hoy
+  ) >= 2 then
+    raise exception 'Ya tienes 2 libros reservados. Recoge o cancela uno para reservar otro.'
+      using errcode = 'P0001', hint = 'active_exists';
+  end if;
+
+  if v_stock.copias - (
+    select count(*) from public.library_reservations r
+    where r.book_id = p_libro and r.campus_id = p_sede and r.estado = 'reservada' and r.recojo >= v_hoy
+  ) <= 0 then
+    raise exception 'No quedan copias libres en esa sede.' using errcode = 'P0001', hint = 'full';
+  end if;
+
+  insert into public.library_reservations (codigo, book_id, campus_id, user_id, recojo)
+  values (
+    'LB-' || to_char(v_hoy, 'YYYY') || '-' || lpad(nextval('public.library_reservation_seq')::text, 4, '0'),
+    p_libro, p_sede, v_uid, p_recojo
+  )
+  returning * into v_res;
+  return v_res;
+end $$;
+
+create or replace function public.cancelar_reserva_libro(p_codigo text)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_res public.library_reservations%rowtype;
+begin
+  select * into v_res from public.library_reservations where codigo = p_codigo and user_id = auth.uid() for update;
+  if not found then
+    raise exception 'No encontramos esa reserva.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  if v_res.estado <> 'reservada' or v_res.recojo < (now() at time zone 'America/Lima')::date then
+    raise exception 'Esa reserva ya no se puede cancelar.' using errcode = 'P0001', hint = 'invalid';
+  end if;
+  update public.library_reservations set estado = 'cancelada', cancelada_en = now() where id = v_res.id;
+  return true;
+end $$;
+
+-- Avisos en el centro de notificaciones.
+create or replace function public.trg_notif_libro()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_titulo text;
+  v_sede   text;
+  v_cuando text;
+begin
+  select titulo into v_titulo from public.library_books where id = new.book_id;
+  select nombre into v_sede from public.campuses where id = new.campus_id;
+  v_cuando := to_char(new.recojo, 'DD/MM');
+  if tg_op = 'INSERT' then
+    perform public.notificar(new.user_id, 'reserva', 'Libro reservado',
+      coalesce(v_titulo, 'Libro') || ' · ' || coalesce(v_sede, 'Sede') || ' · recoge el ' || v_cuando,
+      '/biblioteca/reserva/' || new.codigo);
+  elsif tg_op = 'UPDATE' and old.estado = 'reservada' and new.estado = 'cancelada' then
+    perform public.notificar(new.user_id, 'reserva', 'Reserva de libro cancelada',
+      new.codigo || ' · ' || coalesce(v_titulo, 'Libro'),
+      '/biblioteca/mis');
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_libro_notif on public.library_reservations;
+create trigger trg_libro_notif
+  after insert or update of estado on public.library_reservations
+  for each row execute function public.trg_notif_libro();
+
+revoke execute on function public.libros_disponibilidad()                      from public, anon;
+revoke execute on function public.mis_reservas_libros()                        from public, anon;
+revoke execute on function public.reservar_libro(text, text, date)             from public, anon;
+revoke execute on function public.cancelar_reserva_libro(text)                 from public, anon;
+revoke execute on function public.trg_notif_libro()                            from public, anon, authenticated;
+grant  execute on function public.libros_disponibilidad()                      to authenticated;
+grant  execute on function public.mis_reservas_libros()                        to authenticated;
+grant  execute on function public.reservar_libro(text, text, date)             to authenticated;
+grant  execute on function public.cancelar_reserva_libro(text)                 to authenticated;
