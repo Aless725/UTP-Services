@@ -55,7 +55,7 @@ export default function SeguimientoPage() {
         </div>
       ) : (
         <>
-          <div role="tablist" aria-label="Filtrar solicitudes" className="mt-4 flex gap-2 px-5">
+          <div role="tablist" aria-label="Filtrar solicitudes" className="mt-4 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none]">
             <Chip active={filtro === 'todas'} onClick={() => setFiltro('todas')}>{`Todas (${all.length})`}</Chip>
             <Chip active={filtro === 'en_curso'} onClick={() => setFiltro('en_curso')}>{`En curso (${enCurso.length})`}</Chip>
             <Chip active={filtro === 'finalizadas'} onClick={() => setFiltro('finalizadas')}>{`Finalizadas (${finalizadas.length})`}</Chip>

@@ -9,7 +9,7 @@ export interface MasterLocation {
 }
 
 const APP_PATH =
-  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios)(\/|$)/
+  /^\/(inicio|calendario|cursos|pagos|grupos|perfil|mas|reservas|anuncios|soporte|notificaciones|correo|tramites|beneficios|empleabilidad|talleres)(\/|$)/
 const DETAIL_PATH = [
   /^\/cursos\/[^/]+/,
   /^\/grupos\/[^/]+/,
@@ -20,6 +20,8 @@ const DETAIL_PATH = [
   /^\/tramites\/[^/]+/,
   /^\/pagos\/[^/]+/,
   /^\/beneficios\/[^/]+/,
+  /^\/empleabilidad\/(ofertas|programas|postulaciones)\/[^/]+/,
+  /^\/talleres\/(inscripcion|culturales|deportivos)\/[^/]+/,
 ]
 
 /** ¿Es una pantalla de la app (con sesión), no del acceso ni del onboarding? */
@@ -29,7 +31,19 @@ export const isAppPath = (p: string) => APP_PATH.test(p)
 export const isDetailPath = (p: string) => DETAIL_PATH.some((re) => re.test(p))
 
 /** Panel izquierdo que corresponde a un detalle. */
-export function masterFor(detail: string, last: MasterLocation | null): MasterLocation {
+export function masterFor(detail: string, last: MasterLocation | null, search = ''): MasterLocation {
+  if (/^\/talleres\/inscripcion\//.test(detail)) return { pathname: '/talleres/mis', search: '' }
+  const taller = detail.match(/^\/talleres\/(culturales|deportivos)\//)
+  if (taller) {
+    const params = new URLSearchParams(search)
+    params.delete('grupo')
+    return { pathname: `/talleres/${taller[1]}`, search: params.size ? `?${params}` : '' }
+  }
+  if (/^\/empleabilidad\/programas\//.test(detail)) return { pathname: '/empleabilidad/programas', search: '' }
+  if (/^\/empleabilidad\/ofertas\//.test(detail)) {
+    return { pathname: '/empleabilidad/ofertas', search }
+  }
+  if (/^\/empleabilidad\/postulaciones\//.test(detail)) return { pathname: '/empleabilidad/postulaciones', search: '' }
   if (/^\/grupos/.test(detail)) {
     // Conserva la pestaña (Explorar / Mis grupos) si la lista ya estaba abierta.
     return { pathname: '/grupos', search: last?.pathname === '/grupos' ? last.search : '' }

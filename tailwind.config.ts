@@ -6,9 +6,14 @@ const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
-    // Celular en horizontal: poca altura.
-    screens: { short: { raw: '(orientation: landscape) and (max-height: 500px)' } },
     extend: {
+      // Se agregan a los puntos de quiebre de siempre (sm, md, lg…), no los reemplazan.
+      screens: {
+        // Celular en horizontal: poca altura.
+        short: { raw: '(orientation: landscape) and (max-height: 500px)' },
+        // iPad grande.
+        tablet: '1100px',
+      },
       colors: {
         primary: {
           DEFAULT: v('primary'),

@@ -19,7 +19,7 @@ export default function BackButton({ to, state, onDark, label = 'Volver' }: Back
       type="button"
       onClick={() => (to ? navigate(to, { state }) : navigate(-1))}
       aria-label={label}
-      className={`pressable flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+      className={`pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
         onDark ? 'bg-white/10 text-white' : 'bg-card text-ink shadow-card'
       }`}
     >

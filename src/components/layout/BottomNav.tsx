@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import PlusIcon from '@/components/ui/PlusIcon'
-import { activeOf as isActiveTab, tabs } from './navTabs'
+import { MORE_ACTIVE_RING, activeOf as isActiveTab, isMoreRoute, tabs } from './navTabs'
 
 interface BottomNavProps {
   moreOpen: boolean
@@ -11,8 +11,10 @@ interface BottomNavProps {
 /** Barra inferior flotante con acceso a "Más de UTP+". */
 export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
   const { pathname } = useLocation()
+  // Dentro de un módulo de "Más" ninguna pestaña queda marcada: el aro del "+" indica dónde estamos.
+  const inMore = isMoreRoute(pathname)
   // En "Mi Perfil" la pestaña activa es Inicio, desde donde se accede.
-  const activeOf = (to: string, isActive: boolean) => isActiveTab(to, isActive, pathname)
+  const activeOf = (to: string, isActive: boolean) => !inMore && isActiveTab(to, isActive, pathname)
   return (
     <nav
       aria-label="Navegación principal"
@@ -51,7 +53,10 @@ export default function BottomNav({ moreOpen, onToggleMore }: BottomNavProps) {
         aria-label="Más de UTP+"
         aria-expanded={moreOpen}
         aria-haspopup="dialog"
-        className="pressable ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+        aria-current={inMore ? 'true' : undefined}
+        className={`pressable ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white transition-shadow duration-300 ease-smooth ${
+          inMore ? MORE_ACTIVE_RING : ''
+        }`}
       >
         <span className={`transition-transform duration-300 ease-out ${moreOpen ? 'rotate-45' : ''}`}>
           <PlusIcon size={24} />
