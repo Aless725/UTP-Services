@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { DockContext } from '@/components/layout/DockContext'
 import BackButton from '@/components/ui/BackButton'
 import Icon from '@/components/ui/Icon'
+import Presence from '@/components/ui/Presence'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useAttendance } from '@/features/announcements/announcementsData'
 import {
@@ -13,29 +14,28 @@ import {
   assistantErrorText,
   executeProposal,
   type ChatMsg,
-  type Proposal,
   type VoiceClip,
 } from './assistantApi'
-import ProposalCard, { type ProposalState } from './ProposalCard'
+import { PanelCuenta, PanelHistorial } from './AsistentePaneles'
+import type { Conversation, Msg } from './chatTypes'
+import {
+  clearHistory,
+  deleteConversation,
+  loadHistory,
+  readSaveHistoryPref,
+  reopen,
+  saveConversation,
+  saveSaveHistoryPref,
+} from './history'
+import ProposalCard from './ProposalCard'
 import { MAX_RECORDING_MS, MIN_RECORDING_MS, MicError, VoiceRecorder, micErrorText, voiceSupported } from './voice/recorder'
-import { hasVoicePref, readVoicePref, saveVoicePref, speak, speechSupported, stopSpeaking, unlockSpeech } from './voice/speech'
-
-interface Msg {
-  id: string
-  role: 'user' | 'assistant'
-  text: string
-  proposal?: Proposal
-  pstate?: ProposalState
-  link?: { to: string; label: string }
-  /** Mensaje de error del asistente: no se envía como contexto. */
-  error?: boolean
-  /** El alumno lo dijo con la voz. */
-  voice?: boolean
-}
+import { hasVoicePref, readVoicePref, saveVoicePref, speak, stopSpeaking, unlockSpeech } from './voice/speech'
+import { useProfile } from '@/features/profile/profileData'
 
 type Mode = 'idle' | 'recording'
 
 const STORE = 'utp.asistente'
+const STORE_ID = 'utp.asistente.id'
 const SUGGESTIONS = [
   'Reservar una sala para mañana',
   '¿Qué tareas tengo pendientes?',
@@ -45,6 +45,16 @@ const SUGGESTIONS = [
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
+
+function loadId(): string {
+  try {
+    const id = sessionStorage.getItem(STORE_ID)
+    if (id) return id
+  } catch {
+    /* sin almacenamiento */
+  }
+  return uid()
+}
 
 function load(): Msg[] {
   try {
@@ -66,7 +76,13 @@ export default function SupportPage() {
   const attend = useAttendance()
   const qc = useQueryClient()
   const dock = useContext(DockContext)
+  const codigo = session?.codigo ?? ''
+  const { avatar } = useProfile(codigo)
   const [msgs, setMsgs] = useState<Msg[]>(load)
+  const [chatId, setChatId] = useState(loadId)
+  const [guardar, setGuardar] = useState(readSaveHistoryPref)
+  const [panel, setPanel] = useState<'historial' | 'cuenta' | null>(null)
+  const [chats, setChats] = useState<Conversation[]>([])
   const [text, setText] = useState('')
   const [thinking, setThinking] = useState(false)
   const [mode, setMode] = useState<Mode>('idle')
@@ -81,11 +97,13 @@ export default function SupportPage() {
   useEffect(() => {
     try {
       sessionStorage.setItem(STORE, JSON.stringify(msgs))
+      sessionStorage.setItem(STORE_ID, chatId)
     } catch {
       /* sin almacenamiento */
     }
+    if (guardar) saveConversation(codigo, chatId, msgs)
     end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
-  }, [msgs, thinking])
+  }, [msgs, thinking, chatId, guardar, codigo])
 
   // El cuadro crece con lo escrito (hasta 4 líneas).
   useEffect(() => {
@@ -220,11 +238,21 @@ export default function SupportPage() {
     return () => clearInterval(t)
   }, [mode, finishRecording])
 
-  const toggleSpeak = () => {
-    const on = !speakOn
+  const setHablar = (on: boolean) => {
     setSpeakOn(on)
     saveVoicePref(on)
     if (!on) stopSpeaking()
+  }
+
+  const setGuardarHistorial = (on: boolean) => {
+    setGuardar(on)
+    saveSaveHistoryPref(on)
+    if (on) saveConversation(codigo, chatId, msgs)
+  }
+
+  const abrirHistorial = () => {
+    setChats(loadHistory(codigo))
+    setPanel('historial')
   }
 
   const confirm = async (m: Msg) => {
@@ -251,10 +279,20 @@ export default function SupportPage() {
     input.current?.focus()
   }
 
+  /** Empieza un chat nuevo; el anterior queda en el historial. */
   const reset = () => {
     stopSpeaking()
+    setChatId(uid())
     setMsgs([])
     setText('')
+  }
+
+  const abrirChat = (c: Conversation) => {
+    stopSpeaking()
+    setChatId(c.id)
+    setMsgs(reopen(c.msgs))
+    setText('')
+    setPanel(null)
   }
 
   const empty = msgs.length === 0
@@ -265,29 +303,36 @@ export default function SupportPage() {
       <h1 className="sr-only">Soporte: asistente de UTP+</h1>
 
       <header className="flex items-center justify-between">
-        <BackButton to="/inicio" label="Volver al inicio" />
         <div className="flex items-center gap-2">
-          {speechSupported() && (
-            <button
-              type="button"
-              onClick={toggleSpeak}
-              aria-pressed={speakOn}
-              aria-label={speakOn ? 'Silenciar las respuestas en voz alta' : 'Activar las respuestas en voz alta'}
-              className="pressable flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-card"
-            >
-              <Icon name={speakOn ? 'volume_up' : 'volume_off'} size={20} />
-            </button>
-          )}
+          <BackButton to="/inicio" label="Volver al inicio" />
+          <button
+            type="button"
+            onClick={abrirHistorial}
+            aria-label="Ver chats anteriores"
+            className="pressable flex h-11 w-11 items-center justify-center rounded-full bg-card text-ink shadow-card"
+          >
+            <Icon name="history" size={22} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
           {!empty && (
             <button
               type="button"
               onClick={reset}
               aria-label="Nueva conversación"
-              className="pressable flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-card"
+              className="pressable flex h-11 w-11 items-center justify-center rounded-full bg-card text-ink shadow-card"
             >
               <Icon name="edit_square" size={20} />
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setPanel('cuenta')}
+            aria-label="Mi cuenta"
+            className="pressable flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-card text-ink shadow-card"
+          >
+            {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <Icon name="person" size={22} />}
+          </button>
         </div>
       </header>
 
@@ -366,6 +411,38 @@ export default function SupportPage() {
       )}
       {/* Al desplazarse al final se deja el espacio de la barra inferior. */}
       <div ref={end} aria-hidden="true" className="h-px scroll-mb-[var(--dock-chat)]" />
+
+      <Presence show={panel === 'historial'}>
+        <PanelHistorial
+          chats={chats}
+          actualId={chatId}
+          onAbrir={abrirChat}
+          onBorrar={(c) => {
+            deleteConversation(codigo, c.id)
+            setChats(loadHistory(codigo))
+            if (c.id === chatId) reset()
+          }}
+          onNuevo={() => {
+            reset()
+            setPanel(null)
+          }}
+          onClose={() => setPanel(null)}
+        />
+      </Presence>
+      <Presence show={panel === 'cuenta'}>
+        <PanelCuenta
+          hablar={speakOn}
+          onHablar={setHablar}
+          guardar={guardar}
+          onGuardar={setGuardarHistorial}
+          onBorrarTodo={() => {
+            clearHistory(codigo)
+            setChats([])
+          }}
+          onElegir={(t) => void send(t)}
+          onClose={() => setPanel(null)}
+        />
+      </Presence>
 
       {dock &&
         createPortal(
