@@ -244,9 +244,16 @@ function makeDb(sb: ReturnType<typeof createClient>): Db {
         terms: unknown
       }[]
       const one = (x: unknown) => (Array.isArray(x) ? x[0] : x) ?? null
+      const term = one(rows[0]?.terms) as { inicio?: string; semanas_total?: number; semana_actual?: number } | null
+      // La semana sale de la fecha de hoy (hora de Lima) y el inicio del ciclo, no del valor guardado.
+      if (term?.inicio && term.semanas_total) {
+        const hoy = new Date(Date.now() - 5 * 3_600_000).toISOString().slice(0, 10)
+        const dias = Math.floor((Date.parse(hoy) - Date.parse(term.inicio)) / 86_400_000)
+        term.semana_actual = Math.min(term.semanas_total, Math.max(1, Math.floor(dias / 7) + 1))
+      }
       return {
         courses: rows.map((r) => one(r.courses)).filter(Boolean) as never,
-        term: one(rows[0]?.terms) as never,
+        term: term as never,
       }
     },
     async evaluations(ids) {

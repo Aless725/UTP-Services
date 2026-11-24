@@ -1,3 +1,5 @@
+import { toISO } from '@/lib/date'
+
 export type EventKind = 'clase' | 'tutoria' | 'actividad'
 export type Modalidad = 'Presencial' | 'Virtual'
 
@@ -28,10 +30,14 @@ const clase = (
   modalidad: Modalidad,
 ): CalEvent => ({ id, kind: 'clase', title, start, end, place, modalidad })
 
+/** Ciclo 2026-2: las clases solo existen entre el inicio y el fin del ciclo (viernes 18 de diciembre). */
+const CICLO = { inicio: '2026-08-17', fin: '2026-12-18' }
+
 /** Horario semanal de demostración (clave = Date.getDay(); 0 = domingo). */
 const WEEKLY: Record<number, CalEvent[]> = {
   1: [
     clase('gti-lun', 'Gestión del Servicio TI', '08:00', '09:30', 'Aula B-204', 'Presencial'),
+    clase('hpr-lun', 'Herramientas de Prototipado', '10:30', '12:00', 'Lab. de Diseño C-204', 'Presencial'),
     {
       id: 'tut-calc',
       kind: 'tutoria',
@@ -54,6 +60,7 @@ const WEEKLY: Record<number, CalEvent[]> = {
   2: [clase('ihm-mar', 'Interacción Hombre Máquina', '10:30', '12:00', 'Aula Virtual · Zoom', 'Virtual')],
   3: [
     clase('dwi-mie', 'Desarrollo Web Integrado', '08:00', '10:00', 'Aula 301', 'Presencial'),
+    clase('hpr-mie', 'Herramientas de Prototipado', '10:30', '12:00', 'Lab. de Diseño C-204', 'Presencial'),
     clase('ci2-mie', 'Curso Integrador II', '14:00', '16:00', 'Aula 105', 'Presencial'),
   ],
   4: [
@@ -75,6 +82,8 @@ const WEEKLY: Record<number, CalEvent[]> = {
 }
 
 export function eventsFor(date: Date): CalEvent[] {
+  const iso = toISO(date)
+  if (iso < CICLO.inicio || iso > CICLO.fin) return []
   return WEEKLY[date.getDay()] ?? []
 }
 
