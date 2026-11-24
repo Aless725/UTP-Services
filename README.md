@@ -33,7 +33,7 @@ Los servicios universitarios están repartidos en varios portales, con flujos la
 | App instalable en la pantalla de inicio (manifiesto e íconos) y diseño adaptable (celular vertical y horizontal, iPad, plegables y doble pantalla) | Listo |
 | Beneficios+: cupones por categoría (Prime, Gastronomía, Moda y estilo, Entretenimiento, Educación e idiomas), Refiere y gana, Opina, Ponte al día y Trivia | Listo |
 | Pagos: detalle de cada cuota, historial de pagos y constancias en PDF | Listo |
-| Biblioteca | Pendiente (a cargo de otro integrante del equipo) |
+| Biblioteca: 24 libros gratuitos reales en PDF y EPUB (español e inglés), recomendados por curso y reserva de copias impresas en las sedes | Listo |
 | Reserva de equipos: laptops, computadoras y tablets (iPad y Galaxy Tab), con horario, QR, cancelación y reglas en el servidor | Listo |
 | Modo sin conexión (abre sin internet y muestra los últimos datos guardados) | Listo |
 | Actualización automática de la PWA (aviso de nueva versión) | Pendiente |
@@ -110,6 +110,7 @@ Escribe solo el código, sin `@utp.edu.pe`. Si usas **¿Olvidaste tu contraseña
 - **Anuncios del campus:** desde *Inicio → Anuncios* o *Ver todos*. Lista con filtros por categoría, detalle con fecha, lugar y cupos, confirmación de asistencia (el servidor valida cupos y fecha), descarga al calendario y enlace para compartir.
 - **Beneficios+** (menú *Más de UTP+ → Beneficios*): destacados, catálogo con búsqueda y categorías, detalle con condiciones, cómo usarlo y dónde, y cupón con **QR real** (uno por beneficio, guardado en el dispositivo). Incluye *Refiere y gana* (código personal para ganar S/ 50), *Opina*, *Ponte al día* y una *Trivia*; *Actualízate* y *Capacítate* figuran como «Pronto». Los convenios y montos son de demostración.
 - **Pagos:** al tocar una cuota se ve su detalle (fecha, N.º de operación y desglose) y se descarga su comprobante; *Historial y constancias* lista los pagos y descarga la constancia de pagos y la de no adeudo. Los PDF son de demostración.
+- **Biblioteca** (menú *Más de UTP+ → Biblioteca* o *Inicio → Biblioteca*): catálogo de libros de acceso libre tomados de las listas de [Free Programming Books](https://github.com/EbookFoundation/free-programming-books) (EbookFoundation). Busca por título, autor o tema; filtra por idioma (español o inglés), formato (PDF o EPUB) y tema; y recomienda primero los libros de los cursos en los que estás matriculado, con una pestaña por curso. Al tocar un libro se ve una breve descripción, para qué cursos sirve y los botones para descargarlo o leerlo en línea (se abre el sitio de la fuente; la app no guarda archivos). La lista se muestra de a 6 libros, con páginas. Los libros que además tienen copia impresa se pueden reservar para recogerlos en una sede (de hoy a 3 días después, de lunes a sábado, hasta 2 libros a la vez, con código QR y cancelación sin penalidad), y se ven en *Mis reservas de libros*. El asistente también puede recomendar libros.
 - **Reserva de equipos** (menú *Más de UTP+ → Reserva de equipos*): catálogo de laptops, computadoras y tablets (iPad y Samsung Galaxy Tab) con filtro por tipo y su próxima disponibilidad, detalle con ubicación, especificaciones y programas instalados, y una sola pantalla para elegir día, duración (2 o 4 horas) y horario. Al confirmar se genera un código `EQ-AAAA-NNNN` con **QR**; en *Mis reservas de equipos* se ven las próximas, pasadas y canceladas. Reglas aplicadas en el servidor: lunes a viernes de 08:00 a 20:00, hasta 30 días por adelantado, máximo 4 horas, una reserva activa por alumno, sin dobles reservas del mismo equipo y cancelación sin penalidad hasta 1 hora antes (después, 7 días sin reservar).
 - **Trámites** (menú *Más de UTP+ → Trámites*): catálogo de 26 trámites en *Autogestionables* y *SAE en línea*, con búsqueda. Cada uno muestra costo, plazo y modalidad, y su formulario se arma con los campos que define en la base de datos (selecciones, texto, curso de tu matrícula, aceptaciones). El servidor valida los datos y evita solicitudes repetidas en revisión. En **Mis solicitudes** ves el estado y el historial de cada una y puedes cancelarla mientras esté en revisión. Los costos y plazos son de ejemplo.
 - **Notificaciones y correo:** en el inicio, la campanita muestra cuántas notificaciones tienes sin leer y abre el centro de notificaciones (agrupadas por día, con filtro de sin leer y acceso directo a cada pantalla). Se crean solas al reservar, unirte a un grupo, confirmar una actividad o enviar una solicitud de trámite. El botón de correo abre una pantalla con tu correo institucional y accesos a Outlook y Microsoft 365, que se abren fuera de la app.
@@ -160,11 +161,12 @@ src/
 │  ├─ empleabilidad/  # programas, ofertas, postulación y seguimiento
 │  ├─ talleres/   # catálogos, grupos y horarios, inscripción y Mis talleres
 │  ├─ equipos/    # reserva de laptops, computadoras y tablets (catálogo, reserva, QR y Mis reservas)
+│  ├─ biblioteca/ # libros gratuitos (catálogo con filtros, recomendados por curso y detalle)
 │  ├─ support/     # asistente de IA (chat, voz y confirmación de acciones)
 │  └─ more/        # menú Más de UTP+
 ├─ hooks/  lib/  types/
 public/             # manifiesto e íconos de la app instalable
-docs/               # guía del backend, enunciado del curso y plantillas de usabilidad
+docs/               # guía del backend
 supabase/           # schema.sql (esquema), seed.sql (datos de demostración) y la función `agent` (asistente)
 ```
 
@@ -182,14 +184,11 @@ El resto de las ramas (`feat/*`, `fix/*`, `docs/*`…) no se despliegan al subir
 
 ## Próximos pasos
 
-1. **Biblioteca** (catálogo, préstamos y biblioteca virtual): la desarrolla otro integrante del equipo y se integrará después.
-2. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
-3. Guardar los cupones y referidos en Supabase.
-4. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
-5. Guion de demo y resultados de las pruebas de usabilidad (la guía ya está en `docs/usabilidad/`).
+1. Conversar en tiempo real con la API Live de Gemini y la actualización automática de la PWA.
+2. Guardar los cupones y referidos en Supabase.
+3. Tiempo real en la disponibilidad, y calendario, pagos y foto de perfil en Supabase.
+4. Guion de demo y pruebas de usabilidad con alumnos.
 
 ## Documentación
 
 - Backend (modelo de datos, seguridad y funciones): [`docs/backend.md`](docs/backend.md)
-- Enunciado del curso: [`docs/requerimientos.md`](docs/requerimientos.md)
-- Evaluación de usabilidad (guía de evaluación heurística, pruebas con usuarios, SUS, accesibilidad y pruebas de funcionamiento): [`docs/usabilidad/`](docs/usabilidad/README.md)

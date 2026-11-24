@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '@/components/layout/PageHeader'
 import Badge from '@/components/ui/Badge'
 import Icon from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/Toast'
 import { useCourseList } from '@/features/courses/useCourses'
-import { addDays, longDay, monthYear, sameDay, startOfDay } from '@/lib/date'
-import { eventsFor, hasHighlights, kindLabel, type CalEvent, type EventKind } from './calendarData'
+import { addDays, longDay, monthYear, sameDay, startOfDay, toISO } from '@/lib/date'
+import { FIN_CICLO, eventsFor, hasHighlights, kindLabel, type CalEvent, type EventKind } from './calendarData'
 
 const FILTERS: { value: 'todo' | EventKind; label: string }[] = [
   { value: 'todo', label: 'Todo' },
@@ -37,11 +37,6 @@ export default function CalendarPage() {
 
   const courses = useCourseList()
   const grid = useMemo(() => buildGrid(month), [month])
-  const events = useMemo(
-    () => eventsFor(selected).filter((e) => filter === 'todo' || e.kind === filter),
-    [selected, filter],
-  )
-
   // Las clases abren el detalle de su curso; el resto de actividades aún no tiene detalle.
   const openEvent = (e: CalEvent) => {
     const course = e.kind === 'clase' ? courses.find((c) => c.nombre === e.title) : undefined
@@ -166,28 +161,7 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      <section className="mx-5 mt-5" aria-live="polite">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-bold text-ink">{longDay(selected)}</h2>
-          <span className="text-xs font-medium text-primary">
-            {events.length} {events.length === 1 ? 'actividad' : 'actividades'}
-          </span>
-        </div>
-
-        {events.length === 0 ? (
-          <div key={selected.toISOString() + filter} className="animate-rise mt-4 flex flex-col items-center rounded-card bg-card py-10 text-center shadow-card">
-            <Icon name="event_available" size={32} className="text-ink-faint" />
-            <p className="mt-2 text-sm font-medium text-ink">Sin actividades</p>
-            <p className="text-xs text-ink-muted">Disfruta tu tiempo libre.</p>
-          </div>
-        ) : (
-          <ul key={selected.toISOString() + filter} className="stagger mt-3 space-y-3">
-            {events.map((e) => (
-              <EventRow key={e.id} event={e} onOpen={() => openEvent(e)} />
-            ))}
-          </ul>
-        )}
-      </section>
+      <Agenda key={`${toISO(selected)}|${filter}`} desde={selected} filter={filter} onOpen={openEvent} />
     </>
   )
 }
@@ -220,5 +194,88 @@ function EventRow({ event: e, onOpen }: { event: CalEvent; onOpen: () => void })
         <Icon name="chevron_right" size={20} className="text-ink-muted" />
       </button>
     </li>
+  )
+}
+
+const DIAS_POR_TANDA = 7
+
+/**
+ * Agenda continua: muestra los días desde el elegido y carga más a medida que se baja,
+ * hasta el último día del ciclo.
+ */
+function Agenda({ desde, filter, onOpen }: { desde: Date; filter: 'todo' | EventKind; onOpen: (e: CalEvent) => void }) {
+  const [dias, setDias] = useState(DIAS_POR_TANDA)
+  const fin = useMemo(() => startOfDay(new Date(`${FIN_CICLO}T00:00:00`)), [])
+  const total = Math.max(0, Math.round((fin.getTime() - desde.getTime()) / 86_400_000) + 1)
+  const terminado = dias >= total
+  const centinela = useRef<HTMLDivElement>(null)
+
+  const grupos = useMemo(() => {
+    const out: { fecha: Date; events: CalEvent[] }[] = []
+    for (let i = 0; i < Math.min(dias, total); i++) {
+      const fecha = addDays(desde, i)
+      const events = eventsFor(fecha).filter((e) => filter === 'todo' || e.kind === filter)
+      if (events.length > 0) out.push({ fecha, events })
+    }
+    return out
+  }, [desde, filter, dias, total])
+
+  // Al llegar al final de lo cargado se suman otros 7 días (se repite hasta llenar la pantalla o acabar el ciclo).
+  useEffect(() => {
+    const el = centinela.current
+    if (!el || terminado) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setDias(total)
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setDias((n) => n + DIAS_POR_TANDA)
+      },
+      { rootMargin: '200px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [dias, terminado, total])
+
+  const primeroEsElElegido = grupos[0] && sameDay(grupos[0].fecha, desde)
+
+  return (
+    <section className="mx-5 mt-5 pb-4" aria-label="Agenda" aria-live="polite">
+      <h2 className="text-sm font-bold text-ink">Agenda</h2>
+
+      {!primeroEsElElegido && (
+        <div className="animate-rise mt-3 flex items-center gap-3 rounded-card bg-card px-4 py-3 shadow-card">
+          <Icon name="event_available" size={22} className="shrink-0 text-ink-faint" />
+          <div>
+            <p className="text-xs font-bold text-ink">{longDay(desde)}</p>
+            <p className="text-[0.6875rem] text-ink-muted">Sin actividades. Disfruta tu tiempo libre.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="stagger mt-3 space-y-5">
+        {grupos.map((g) => (
+          <div key={toISO(g.fecha)}>
+            <h3 className="mb-2 text-xs font-bold text-ink-muted">{longDay(g.fecha)}</h3>
+            <ul className="space-y-3">
+              {g.events.map((e) => (
+                <EventRow key={e.id} event={e} onOpen={() => onOpen(e)} />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {terminado ? (
+        <p className="mt-5 text-center text-[0.6875rem] text-ink-faint">
+          {grupos.length === 0 ? 'No hay actividades en este filtro.' : 'Fin del ciclo 2026-2.'}
+        </p>
+      ) : (
+        <div ref={centinela} role="status" aria-label="Cargando más días" className="mt-5 flex justify-center py-3">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-fill/10 border-t-primary" />
+        </div>
+      )}
+    </section>
   )
 }

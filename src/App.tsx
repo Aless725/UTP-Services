@@ -51,6 +51,10 @@ import BeneficiosPage from '@/features/beneficios/BeneficiosPage'
 import CatalogoBeneficiosPage from '@/features/beneficios/CatalogoBeneficiosPage'
 import DetalleBeneficioPage from '@/features/beneficios/DetalleBeneficioPage'
 import CuponGeneradoPage from '@/features/beneficios/CuponGeneradoPage'
+import BibliotecaPage from '@/features/biblioteca/BibliotecaPage'
+import LibroDetailPage from '@/features/biblioteca/LibroDetailPage'
+import MisReservasLibrosPage from '@/features/biblioteca/MisReservasLibrosPage'
+import ReservaLibroPage from '@/features/biblioteca/ReservaLibroPage'
 import EquiposPage from '@/features/equipos/EquiposPage'
 import EquipoDetailPage from '@/features/equipos/EquipoDetailPage'
 import ReservarEquipoPage from '@/features/equipos/ReservarEquipoPage'
@@ -113,6 +117,9 @@ const detailRoutes = (
     <Route path="/beneficios/ponte-al-dia" element={<PonteAlDiaPage />} />
     <Route path="/beneficios/:id" element={<DetalleBeneficioPage />} />
     <Route path="/beneficios/:id/cupon" element={<CuponGeneradoPage />} />
+    <Route path="/biblioteca/mis" element={<MisReservasLibrosPage />} />
+    <Route path="/biblioteca/reserva/:codigo" element={<ReservaLibroPage />} />
+    <Route path="/biblioteca/:id" element={<LibroDetailPage />} />
     <Route path="/equipos/mis" element={<MisReservasEquiposPage />} />
     <Route path="/equipos/reserva/:codigo" element={<ReservaEquipoPage />} />
     <Route path="/equipos/:id" element={<EquipoDetailPage />} />
@@ -125,6 +132,7 @@ const detailRoutes = (
     <Route path="/mas/empleabilidad" element={<Navigate to="/empleabilidad" replace />} />
     <Route path="/mas/talleres" element={<Navigate to="/talleres" replace />} />
     <Route path="/mas/reserva-de-equipos" element={<Navigate to="/equipos" replace />} />
+    <Route path="/mas/biblioteca" element={<Navigate to="/biblioteca" replace />} />
     <Route path="/mas/:slug" element={<ComingSoonPage />} />
   </>
 )
@@ -166,6 +174,7 @@ function AppRoutes({ location }: { location?: Partial<Location> }) {
         <Route path="/empleabilidad/programas" element={<ProgramasPage />} />
         <Route path="/empleabilidad/ofertas" element={<OfertasPage />} />
         <Route path="/empleabilidad/postulaciones" element={<MisPostulacionesPage />} />
+        <Route path="/biblioteca" element={<BibliotecaPage />} />
         <Route path="/equipos" element={<EquiposPage />} />
         <Route path="/talleres" element={<TalleresPage />} />
         <Route path="/talleres/mis" element={<MisTalleresPage />} />

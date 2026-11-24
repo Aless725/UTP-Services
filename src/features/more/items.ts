@@ -10,7 +10,7 @@ export interface MoreItem {
 export const moreItems: MoreItem[] = [
   { slug: 'tramites', label: 'Trámites', icon: 'description', to: '/tramites' },
   { slug: 'talleres', label: 'Talleres', icon: 'event_note', to: '/talleres' },
-  { slug: 'biblioteca', label: 'Biblioteca', icon: 'menu_book' },
+  { slug: 'biblioteca', label: 'Biblioteca', icon: 'menu_book', to: '/biblioteca' },
   { slug: 'reserva-de-equipos', label: 'Reserva de equipos', icon: 'event_available', to: '/equipos' },
   { slug: 'empleabilidad', label: 'Empleabilidad', icon: 'work', to: '/empleabilidad' },
   { slug: 'grupos', label: 'Grupos', icon: 'group', to: '/grupos' },
