@@ -8,7 +8,7 @@ import { useOnline } from '@/lib/online'
 import { TallerError } from '../talleresData'
 
 export const tallerLink =
-  'pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-semibold text-white active:bg-primary-dark'
+  'pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white active:bg-primary-dark'
 
 /** Solo un error de autenticación confirmado lleva a renovar la sesión; una caída de red no lo hace. */
 export function useTallerSession(error: unknown) {
@@ -45,11 +45,11 @@ export default function TalleresState({
   secondary?: ReactNode
 }) {
   return (
-    <section className="rounded-card bg-card p-5 shadow-card">
-      <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-        <Icon name={icon} size={28} />
+    <section className="rounded-card bg-card p-4 shadow-card">
+      <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
+        <Icon name={icon} size={22} />
       </span>
-      <h2 className="text-lg font-extrabold leading-snug text-ink">{title}</h2>
+      <h2 className="text-sm font-bold leading-snug text-ink">{title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">{description}</p>
       {action &&
         (to ? (

@@ -127,7 +127,7 @@ export default function TallerDetailPage() {
           ) : (
             <>
               <section className="rounded-card bg-card p-4 shadow-card">
-                <h2 className="text-lg font-extrabold text-ink">{t.titulo}</h2>
+                <h2 className="text-sm font-bold text-ink">{t.titulo}</h2>
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">{t.descripcion}</p>
               </section>
               {t.grupos.length > 1 && (
@@ -140,7 +140,7 @@ export default function TallerDetailPage() {
                     value={grupo?.id ?? ''}
                     disabled={inscribir.isPending}
                     onChange={(e) => cambiarGrupo(e.target.value)}
-                    className="min-h-12 w-full rounded-card bg-card px-3 text-sm text-ink focus:ring-2 focus:ring-primary"
+                    className="min-h-11 w-full rounded-card bg-card px-3 text-xs text-ink focus:ring-2 focus:ring-primary"
                   >
                     <option value="" disabled>
                       Selecciona un grupo
@@ -189,7 +189,7 @@ export default function TallerDetailPage() {
                     </dl>
                   </section>
                   <section aria-labelledby="horario-taller" className="rounded-card bg-card p-4 shadow-card">
-                    <h2 id="horario-taller" className="mb-3 text-base font-bold text-ink">
+                    <h2 id="horario-taller" className="mb-3 text-sm font-bold text-ink">
                       Horarios del taller
                     </h2>
                     <HorarioTaller horarios={grupo.horarios} />
@@ -247,7 +247,7 @@ export default function TallerDetailPage() {
                         </div>
                       )}
                       <section className="rounded-card bg-card p-4 shadow-card">
-                        <h2 className="text-base font-bold text-ink">Términos del taller</h2>
+                        <h2 className="text-sm font-bold text-ink">Términos del taller</h2>
                         <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">{t.terminos}</p>
                       </section>
                       {puedeInscribir && (

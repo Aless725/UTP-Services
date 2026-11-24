@@ -31,11 +31,11 @@ export default function InscripcionPage() {
           ) : (
             <>
               {i.estado === 'inscrita' && (
-                <section role="status" className="rounded-card bg-card p-5 shadow-card">
-                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-success-soft text-success">
-                    <Icon name="check_circle" size={30} />
+                <section role="status" className="rounded-card bg-card p-4 shadow-card">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-success-soft text-success">
+                    <Icon name="check_circle" size={22} />
                   </span>
-                  <h2 className="mt-3 text-lg font-extrabold text-ink">Tu inscripción quedó registrada</h2>
+                  <h2 className="mt-3 text-sm font-bold text-ink">Tu inscripción quedó registrada</h2>
                   <p className="mt-2 text-sm leading-relaxed text-ink-muted">
                     Tu vacante en {s.titulo} está confirmada. Los horarios y próximos pasos están disponibles aquí y en
                     Mis talleres.
@@ -44,7 +44,7 @@ export default function InscripcionPage() {
               )}
               <section aria-label="Datos de tu inscripción" className="rounded-card bg-card p-4 shadow-card">
                 <p className="text-xs font-semibold text-primary">{CATEGORIAS_TALLER[s.categoria].label}</p>
-                <h2 className="mb-3 mt-1 text-lg font-bold text-ink">{s.titulo}</h2>
+                <h2 className="mb-3 mt-1 text-sm font-bold text-ink">{s.titulo}</h2>
                 <EstadoInscripcion estado={i.estado} />
                 <dl className="mt-4 space-y-3 border-t border-fill/5 pt-3">
                   {[
@@ -65,11 +65,11 @@ export default function InscripcionPage() {
                 </dl>
               </section>
               <section className="rounded-card bg-card p-4 shadow-card">
-                <h2 className="mb-3 text-base font-bold text-ink">Tus horarios</h2>
+                <h2 className="mb-3 text-sm font-bold text-ink">Tus horarios</h2>
                 <HorarioTaller horarios={s.horarios} />
               </section>
               <section className="rounded-card bg-card p-4 shadow-card">
-                <h2 className="text-base font-bold text-ink">Términos aceptados</h2>
+                <h2 className="text-sm font-bold text-ink">Términos aceptados</h2>
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-muted">{s.terminos}</p>
                 <p className="mt-3 text-sm leading-relaxed text-ink-muted">{s.declaracion}</p>
                 <p className="mt-3 text-xs text-ink-muted">
