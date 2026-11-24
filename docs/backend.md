@@ -96,6 +96,15 @@ Los estados son `enviada`, `en_revision`, `seleccionada` y `no_seleccionada`. Lo
 
 En el frontend, los hooks se concentran en `src/features/empleabilidad/empleabilidadData.ts`. El catálogo se recupera en páginas de 100 filas con orden estable y se filtra localmente por texto (sin distinguir tildes), tipo y ciudad. La URL conserva la búsqueda entre listado, detalle y formulario, incluidos los dos paneles y los enlaces directos. Las consultas personales incluyen el código del alumno en su clave; la caché existente se limpia al cerrar sesión y permite leer los datos consultados sin conexión. El envío requiere internet y no tiene reintentos automáticos.
 
+**Reserva de equipos**
+
+| Tabla | Para qué sirve |
+|---|---|
+| `equipment` | Catálogo de laptops, computadoras y tablets (`laptop`, `computadora` o `tablet`): tipo, sede, ubicación, especificaciones y programas instalados. Solo lectura para el alumno. |
+| `equipment_reservations` | Reservas con código `EQ-AAAA-NNNN`, equipo, horario y estado (`confirmada` o `cancelada`). Una restricción de exclusión (`btree_gist`) impide dos reservas que se crucen en el mismo equipo. Solo se crean y cancelan con funciones. |
+
+`reservar_equipo(equipo, fecha, inicio, fin)` valida en el servidor: sesión, equipo activo, penalidad vigente, horario válido, máximo 4 horas, hasta 30 días por adelantado, solo de lunes a viernes de 08:00 a 20:00, que no haya pasado, una reserva activa por alumno y conflictos (`hint`: `auth`, `unavailable`, `penalty`, `invalid`, `duration`, `closed`, `past`, `active_exists`, `conflict`). `cancelar_reserva_equipo(codigo)` devuelve `true` si fue sin penalidad; con menos de 1 hora de anticipación registra la misma penalidad de 7 días de las reservas de espacios. `equipos_ocupacion(desde, hasta)` devuelve solo las franjas ocupadas, sin datos de quién reservó, y `mis_reservas_equipos()` las reservas del alumno con hora de Lima. Un disparador avisa en el centro de notificaciones.
+
 **Talleres**
 
 | Tabla | Para qué sirve |
@@ -155,6 +164,9 @@ Para validar cambios del servidor se pueden ejecutar comprobaciones SQL temporal
 | `cancelar_tramite(codigo)` | Cancela una solicitud propia que siga en revisión. |
 | `postular_oferta(oferta_id, nombre_contacto, correo_contacto)` | Valida sesión, oferta y contacto; registra una postulación privada con aviso. Devuelve el registro anterior si ya se había enviado. |
 | `postular_programa(programa_id, nombre_contacto, correo_contacto, campus, ciclo, acepta_requisitos)` | Valida sesión, programa activo, contacto institucional y campos; obtiene el código desde el perfil y registra la postulación en el mismo historial con aviso, sin duplicados. |
+| `reservar_equipo(equipo, fecha, inicio, fin)` | Reserva una laptop, computadora o tablet validando horario, duración, penalidad, reserva activa y conflictos. |
+| `cancelar_reserva_equipo(codigo)` | Cancela una reserva propia; devuelve si fue sin penalidad. |
+| `equipos_ocupacion(desde, hasta)` · `mis_reservas_equipos()` | Franjas ocupadas (sin datos personales) y reservas del alumno. |
 | `listar_talleres()` | Devuelve talleres y grupos publicados con horarios y vacantes agregadas, sin exponer quién está inscrito. |
 | `inscribir_taller(grupo_id, version_terminos, acepta_terminos, acepta_declaracion)` | Valida sesión, grupo, plazo, restricciones, términos y cupo. Registra inscripción y aviso en una transacción; recupera la inscripción activa si se reintenta. |
 | `asistir_anuncio(id, asistir)` | Confirma o cancela la asistencia a una actividad validando que no haya terminado y que queden cupos. |
