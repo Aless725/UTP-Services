@@ -40,6 +40,7 @@ export const GROUP_COURSES = [
   'Interacción Hombre Máquina',
   'Desarrollo Web Integrado',
   'Curso Integrador II',
+  'Herramientas de Prototipado',
 ]
 
 /** Grupos de ejemplo con fechas relativas a hoy, para que la demo siempre sea vigente. */
