@@ -313,13 +313,11 @@ export default function SupportPage() {
             ))}
           </ul>
 
-          <p className="mt-8 text-xs text-ink-muted">
-            ¿Prefieres hacerlo tú?{' '}
-            <Link to="/reservas" className="font-semibold text-primary">Reservas</Link>
-            {' · '}
-            <Link to="/grupos" className="font-semibold text-primary">Grupos</Link>
-            {' · '}
-            <Link to="/anuncios" className="font-semibold text-primary">Anuncios</Link>
+          <p className="mt-6 flex flex-wrap items-center justify-center text-xs text-ink-muted">
+            <span className="mr-1">¿Prefieres hacerlo tú?</span>
+            <Link to="/reservas" className="inline-flex min-h-11 items-center px-2 font-semibold text-primary">Reservas</Link>
+            <Link to="/grupos" className="inline-flex min-h-11 items-center px-2 font-semibold text-primary">Grupos</Link>
+            <Link to="/anuncios" className="inline-flex min-h-11 items-center px-2 font-semibold text-primary">Anuncios</Link>
           </p>
         </div>
       ) : (
