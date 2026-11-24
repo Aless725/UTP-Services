@@ -322,3 +322,13 @@
     width: env(viewport-segment-width 0 0);
   }
 }
+
+/* El autocompletado del navegador no debe pintar los campos de azul: se mantiene el color de la app. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--c-card)) inset;
+  -webkit-text-fill-color: rgb(var(--c-ink));
+  caret-color: rgb(var(--c-ink));
+  transition: background-color 9999s ease-out 0s;
+}

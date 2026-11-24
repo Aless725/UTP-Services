@@ -8,7 +8,8 @@ import AuthLayout, { AuthHeading } from './AuthLayout'
 import { useAuth } from './AuthContext'
 import { validateCodigo } from './validation'
 import { safeReturnTo } from './returnTo'
-import { hasSeenOnboarding } from '@/lib/storage'
+import Icon from '@/components/ui/Icon'
+import { getRememberedCode, hasSeenOnboarding, setRememberedCode } from '@/lib/storage'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -18,7 +19,8 @@ export default function LoginPage() {
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('volver') ?? (location.state as { from?: unknown } | null)?.from)
   const { signIn, session } = useAuth()
-  const [usuario, setUsuario] = useState('')
+  const [usuario, setUsuario] = useState(getRememberedCode)
+  const [recordar, setRecordar] = useState(() => getRememberedCode() !== '')
   const [password, setPassword] = useState('')
   const [usuarioError, setUsuarioError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -35,6 +37,7 @@ export default function LoginPage() {
     setStatus('loading')
     try {
       await signIn(usuario, password)
+      setRememberedCode(recordar ? usuario.trim().toUpperCase() : null)
       setStatus('success')
     } catch {
       setStatus('error')
@@ -50,9 +53,9 @@ export default function LoginPage() {
     <>
       <AuthLayout back={{ to: '/onboarding', state: { from: 'login' }, label: 'Ver introducción' }}>
         <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col">
-          <AuthHeading title="Accede" subtitle="Ingresando tus datos de alumno" />
+          <AuthHeading title="Te damos la bienvenida" subtitle="Ingresa con tu código de alumno y tu contraseña." />
 
-          <div className="space-y-4">
+          <div className="stagger space-y-4">
             <TextField
               label="Usuario:"
               value={usuario}
@@ -72,9 +75,25 @@ export default function LoginPage() {
               error={passwordError}
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={recordar}
+              onClick={() => setRecordar((v) => !v)}
+              className="pressable flex min-h-11 items-center gap-2.5 text-xs font-medium text-ink-muted"
+            >
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-md transition-colors ${
+                  recordar ? 'bg-primary text-white' : 'bg-card shadow-card'
+                }`}
+              >
+                {recordar && <Icon name="check" size={14} />}
+              </span>
+              Recordar mi código en este dispositivo
+            </button>
           </div>
 
-          <Button type="submit" full className="mt-8" disabled={status === 'loading'}>
+          <Button type="submit" full className="mt-6" disabled={status === 'loading'}>
             Ingresar
           </Button>
           <Link
