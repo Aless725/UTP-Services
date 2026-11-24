@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import { markOnboardingSeen } from '@/lib/storage'
 import Illustration from './Illustrations'
@@ -7,6 +7,7 @@ import { slides } from './slides'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
+  const volverA = (useLocation().state as { returnTo?: unknown } | null)?.returnTo
   const [index, setIndex] = useState(0)
   const touchX = useRef<number | null>(null)
   const [drag, setDrag] = useState(0)
@@ -16,7 +17,7 @@ export default function OnboardingPage() {
 
   const finish = () => {
     markOnboardingSeen()
-    navigate('/login', { replace: true })
+    navigate('/login', { replace: true, state: typeof volverA === 'string' ? { from: volverA } : undefined })
   }
   const next = () => (isLast ? finish() : setIndex((i) => i + 1))
   const prev = () => setIndex((i) => Math.max(0, i - 1))

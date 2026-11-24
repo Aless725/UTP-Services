@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Presence from '@/components/ui/Presence'
@@ -8,6 +8,7 @@ import AuthLayout, { AuthHeading } from './AuthLayout'
 import { useAuth } from './AuthContext'
 import { validateCodigo } from './validation'
 import { safeReturnTo } from './returnTo'
+import { hasSeenOnboarding } from '@/lib/storage'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -16,7 +17,7 @@ export default function LoginPage() {
   const location = useLocation()
   const [params] = useSearchParams()
   const returnTo = safeReturnTo(params.get('volver') ?? (location.state as { from?: unknown } | null)?.from)
-  const { signIn } = useAuth()
+  const { signIn, session } = useAuth()
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
   const [usuarioError, setUsuarioError] = useState<string | null>(null)
@@ -38,6 +39,11 @@ export default function LoginPage() {
     } catch {
       setStatus('error')
     }
+  }
+
+  // Primer uso en este dispositivo: antes del acceso siempre se ve la introducción.
+  if (!session && !hasSeenOnboarding()) {
+    return <Navigate to="/onboarding" state={{ returnTo }} replace />
   }
 
   return (
