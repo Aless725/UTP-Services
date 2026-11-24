@@ -140,7 +140,7 @@ export default function HomePage() {
         </h2>
         <div className="stagger mt-3 grid grid-cols-2 gap-3">
           <Link
-            to="/mas/biblioteca"
+            to="/biblioteca"
             className="pressable flex min-h-14 items-center gap-2 rounded-card bg-card px-3.5 py-3 shadow-card"
           >
             <Icon name="menu_book" size={20} className="text-primary" />
